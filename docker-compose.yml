@@ -1,0 +1,330 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: onquota_postgres
+    environment:
+      POSTGRES_USER: onquota_user
+      POSTGRES_PASSWORD: onquota_password
+      POSTGRES_DB: onquota_db
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U onquota_user -d onquota_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - onquota_network
+
+  # Redis Cache & Message Broker
+  redis:
+    image: redis:7-alpine
+    container_name: onquota_redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - onquota_network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: onquota_backend
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://onquota_user:onquota_password@postgres:5432/onquota_db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+      - backend_uploads:/app/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    networks:
+      - onquota_network
+
+  # Celery Worker
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: onquota_celery_worker
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://onquota_user:onquota_password@postgres:5432/onquota_db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+      - backend_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A core.celery worker --loglevel=info --concurrency=4
+    networks:
+      - onquota_network
+
+  # Celery Beat (Scheduler)
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: onquota_celery_beat
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://onquota_user:onquota_password@postgres:5432/onquota_db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A core.celery beat --loglevel=info
+    networks:
+      - onquota_network
+
+  # Flower (Celery Monitoring)
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: onquota_flower
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: celery -A core.celery flower --port=5555
+    networks:
+      - onquota_network
+
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: onquota_frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_APP_NAME=OnQuota
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    command: npm run dev
+    networks:
+      - onquota_network
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: onquota_prometheus
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/alerts:/etc/prometheus/alerts
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - onquota_network
+    restart: unless-stopped
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: onquota_grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    depends_on:
+      - prometheus
+    networks:
+      - onquota_network
+    restart: unless-stopped
+
+  # PostgreSQL Exporter
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: onquota_postgres_exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://onquota_user:onquota_password@postgres:5432/onquota_db?sslmode=disable"
+      PG_EXPORTER_EXTEND_QUERY_PATH: "/etc/postgres_exporter/queries.yaml"
+    ports:
+      - "9187:9187"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - onquota_network
+    restart: unless-stopped
+
+  # Redis Exporter
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: onquota_redis_exporter
+    environment:
+      REDIS_ADDR: "redis:6379"
+    ports:
+      - "9121:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - onquota_network
+    restart: unless-stopped
+
+  # Node Exporter (System Metrics)
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: onquota_node_exporter
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    ports:
+      - "9100:9100"
+    networks:
+      - onquota_network
+    restart: unless-stopped
+
+  # cAdvisor (Container Metrics)
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: onquota_cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - onquota_network
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg
+
+  # AlertManager (Alert Management)
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: onquota_alertmanager
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager_data:/alertmanager
+    ports:
+      - "9093:9093"
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    networks:
+      - onquota_network
+    restart: unless-stopped
+
+  # Backup Service (PostgreSQL Automated Backups)
+  backup:
+    image: postgres:15-alpine
+    container_name: onquota_backup
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: onquota_db
+      PGUSER: onquota_user
+      PGPASSWORD: onquota_password
+      BACKUP_RETENTION_DAYS: 30
+      S3_BUCKET: ${S3_BACKUP_BUCKET:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+    volumes:
+      - ./scripts/backup:/scripts
+      - backup_data:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - onquota_network
+    command: sh -c "crond -f -l 2"
+    restart: unless-stopped
+
+networks:
+  onquota_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_uploads:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  alertmanager_data:
+    driver: local
+  backup_data:
+    driver: local

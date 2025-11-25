@@ -1,0 +1,69 @@
+═══════════════════════════════════════════
+    SUPERMERCADOS MI COMISARIATO
+═══════════════════════════════════════════
+
+RUC: 1234509876001
+Sucursal: Centro Comercial El Dorado
+Av. Amazonas y NNUU, Local 105
+Quito - Ecuador
+Tel: 1800-COMISA (266472)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FECHA: 15/11/2025        HORA: 18:45:12
+FACTURA: 001-005-0234567
+CAJERO: Ana Torres       CAJA: 08
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLIENTE: CONSUMIDOR FINAL
+RUC/CI: 9999999999999
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CANT  DESCRIPCIÓN              P.UNIT   TOTAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  2   PAN INTEGRAL 500G         2.25    4.50
+  1   LECHE ENTERA 1L           1.85    1.85
+  3   YOGURT NATURAL 200ML      0.95    2.85
+  1   QUESO FRESCO 500G         4.50    4.50
+  2   JAMÓN AHUMADO 200G        3.75    7.50
+  6   HUEVOS ROJOS (DOCENA)     2.80   16.80
+  1   ACEITE GIRASOL 1L         3.95    3.95
+  2   ARROZ PREMIUM 1KG         1.45    2.90
+  1   AZÚCAR BLANCA 2KG         2.15    2.15
+  4   ATÚN EN AGUA 140G         1.20    4.80
+  1   SAL DE MESA 1KG           0.65    0.65
+  2   FIDEOS SPAGUETTI 500G     1.35    2.70
+  1   SALSA TOMATE 380G         1.95    1.95
+  3   PAPEL HIGIÉNICO X4        3.50   10.50
+  2   SHAMPOO ANTICASPA 400ML   5.25   10.50
+  1   JABÓN LÍQUIDO 500ML       4.80    4.80
+  1   DETERGENTE EN POLVO 1KG   3.65    3.65
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUBTOTAL:                              86.55
+DESCUENTO (TARJETA CLIENTE):           -4.33
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUBTOTAL CON DESCUENTO:                82.22
+IVA 0%:                                26.10
+IVA 12%:                                6.73
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TOTAL A PAGAR:                   USD  88.95
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FORMA DE PAGO: TARJETA MI COMISARIATO
+TARJETA: ****8765
+PUNTOS GANADOS: 89
+PUNTOS ACUMULADOS: 1,245
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ARTÍCULOS: 17
+PRODUCTOS FRESCOS - Consumir antes de:
+  - Leche: 20/11/2025
+  - Queso: 18/11/2025
+  - Jamón: 22/11/2025
+
+═══════════════════════════════════════════
+      ¡GRACIAS POR SU COMPRA!
+   Ahorre más con nuestra tarjeta club
+═══════════════════════════════════════════

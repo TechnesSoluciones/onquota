@@ -1,0 +1,241 @@
+{
+  "dashboard": {
+    "title": "OnQuota - Database Metrics",
+    "tags": ["onquota", "database", "postgresql"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "10s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Database Connections",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "pg_stat_database_numbackends{datname=\"onquota_db\"}",
+            "legendFormat": "Active Connections",
+            "refId": "A"
+          },
+          {
+            "expr": "pg_settings_max_connections",
+            "legendFormat": "Max Connections",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Connections"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Query Rate (queries/s)",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(pg_stat_database_xact_commit{datname=\"onquota_db\"}[5m])",
+            "legendFormat": "Commits",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(pg_stat_database_xact_rollback{datname=\"onquota_db\"}[5m])",
+            "legendFormat": "Rollbacks",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Queries/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Database Size",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "pg_database_size_bytes{datname=\"onquota_db\"}",
+            "legendFormat": "Database Size",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "bytes", "label": "Size"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Cache Hit Ratio (%)",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "(sum(pg_stat_database_blks_hit{datname=\"onquota_db\"}) / (sum(pg_stat_database_blks_hit{datname=\"onquota_db\"}) + sum(pg_stat_database_blks_read{datname=\"onquota_db\"}))) * 100",
+            "legendFormat": "Cache Hit Ratio",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "Hit Ratio", "min": 0, "max": 100},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Locks",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "pg_locks_count",
+            "legendFormat": "{{mode}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Lock Count"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Deadlocks",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(pg_stat_database_deadlocks{datname=\"onquota_db\"}[5m])",
+            "legendFormat": "Deadlocks/sec",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Deadlocks/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Connection Pool Usage (%)",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 24, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "(pg_stat_database_numbackends{datname=\"onquota_db\"} / pg_settings_max_connections) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto",
+          "textMode": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 70, "color": "yellow"},
+                {"value": 85, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Transactions/sec",
+        "type": "stat",
+        "gridPos": {"x": 6, "y": 24, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "rate(pg_stat_database_xact_commit{datname=\"onquota_db\"}[5m]) + rate(pg_stat_database_xact_rollback{datname=\"onquota_db\"}[5m])",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto",
+          "textMode": "auto"
+        }
+      },
+      {
+        "id": 9,
+        "title": "Rollback Rate (%)",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 24, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "(rate(pg_stat_database_xact_rollback{datname=\"onquota_db\"}[5m]) / (rate(pg_stat_database_xact_commit{datname=\"onquota_db\"}[5m]) + rate(pg_stat_database_xact_rollback{datname=\"onquota_db\"}[5m]))) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto",
+          "textMode": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 5, "color": "yellow"},
+                {"value": 10, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Database Size",
+        "type": "stat",
+        "gridPos": {"x": 18, "y": 24, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "pg_database_size_bytes{datname=\"onquota_db\"}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto",
+          "textMode": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "bytes"
+          }
+        }
+      },
+      {
+        "id": 11,
+        "title": "Slow Queries (> 1s)",
+        "type": "table",
+        "gridPos": {"x": 0, "y": 28, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "topk(10, pg_stat_statements_mean_exec_time > 1000)",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ]
+      }
+    ]
+  }
+}

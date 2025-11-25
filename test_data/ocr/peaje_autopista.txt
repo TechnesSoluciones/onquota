@@ -1,0 +1,44 @@
+╔════════════════════════════════════════╗
+║     CONCESIONARIA AUTOPISTA DEL SOL    ║
+║            PEAJE SANTA ELENA           ║
+╚════════════════════════════════════════╝
+
+RUC: 1122334455001
+Km 45 - Autopista del Sol
+Ecuador
+www.autopistadelsol.com
+
+┌────────────────────────────────────────┐
+│  COMPROBANTE DE PEAJE                  │
+└────────────────────────────────────────┘
+
+FECHA: 15/11/2025
+HORA: 09:15:32
+TICKET No: 00045623
+
+────────────────────────────────────────
+
+VEHÍCULO: LIVIANO
+PLACA: XYZ-7890
+EJES: 2
+
+────────────────────────────────────────
+
+CATEGORÍA: 1 - AUTOMÓVIL/CAMIONETA
+
+TARIFA:                    USD   3.50
+
+────────────────────────────────────────
+
+MÉTODO PAGO: EFECTIVO
+CABINA: 05
+OPERADOR: Juan Ramirez
+
+────────────────────────────────────────
+
+           VIAJE SEGURO
+    MANTENGA SU COMPROBANTE
+
+╔════════════════════════════════════════╗
+║  Sistema Automático de Cobro - SAC     ║
+╚════════════════════════════════════════╝

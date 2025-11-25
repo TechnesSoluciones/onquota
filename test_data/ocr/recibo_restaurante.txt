@@ -1,0 +1,45 @@
+╔═══════════════════════════════════╗
+║    RESTAURANTE LA CASA GRANDE     ║
+╚═══════════════════════════════════╝
+
+RUC: 0987654321001
+Dirección: Calle 10 de Agosto #456
+Ciudad: Guayaquil
+Teléfono: (04) 987-6543
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FECHA: 15/11/2025
+HORA: 13:45:00
+MESA: 12
+MESERO: Carlos Mendez
+FACTURA: 001-002-0008765
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DETALLE DEL CONSUMO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CANT  DESCRIPCIÓN           P.UNIT  TOTAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  2   Almuerzo Ejecutivo     8.50   17.00
+  3   Bebida Gaseosa         1.50    4.50
+  1   Postre del Día         3.00    3.00
+  2   Café Americano         1.75    3.50
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUBTOTAL:                         28.00
+SERVICIO 10%:                      2.80
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IVA 12%:                           3.70
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TOTAL A PAGAR:              USD 34.50
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FORMA DE PAGO: TARJETA VISA
+ÚLTIMOS 4 DÍGITOS: ****4532
+AUTORIZACIÓN: 123456
+
+╔═══════════════════════════════════╗
+║   ¡GRACIAS POR SU VISITA!         ║
+║   Esperamos verle pronto          ║
+╚═══════════════════════════════════╝

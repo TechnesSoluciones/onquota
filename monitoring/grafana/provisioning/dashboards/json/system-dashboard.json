@@ -1,0 +1,271 @@
+{
+  "dashboard": {
+    "title": "OnQuota - System Metrics",
+    "tags": ["onquota", "system", "infrastructure"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "10s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "CPU Usage (%)",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "{{instance}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "CPU %", "min": 0, "max": 100},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Memory Usage",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
+            "legendFormat": "Used Memory",
+            "refId": "A"
+          },
+          {
+            "expr": "node_memory_MemTotal_bytes",
+            "legendFormat": "Total Memory",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "bytes", "label": "Memory"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Disk Usage",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "node_filesystem_size_bytes{fstype!~\"tmpfs|fuse.lxcfs\"} - node_filesystem_avail_bytes",
+            "legendFormat": "{{mountpoint}} - Used",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "bytes", "label": "Disk"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Disk I/O",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(node_disk_read_bytes_total[5m])",
+            "legendFormat": "{{device}} - Read",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(node_disk_written_bytes_total[5m])",
+            "legendFormat": "{{device}} - Write",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "Bps", "label": "Bytes/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Network Traffic",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(node_network_receive_bytes_total{device!~\"lo\"}[5m])",
+            "legendFormat": "{{device}} - Receive",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(node_network_transmit_bytes_total{device!~\"lo\"}[5m])",
+            "legendFormat": "{{device}} - Transmit",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "Bps", "label": "Bytes/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Container CPU Usage",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(container_cpu_usage_seconds_total{name=~\"onquota.*\"}[5m]) * 100",
+            "legendFormat": "{{name}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "CPU %"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Container Memory Usage",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 24, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "container_memory_usage_bytes{name=~\"onquota.*\"}",
+            "legendFormat": "{{name}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "bytes", "label": "Memory"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Container Network I/O",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 24, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(container_network_receive_bytes_total{name=~\"onquota.*\"}[5m])",
+            "legendFormat": "{{name}} - Receive",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(container_network_transmit_bytes_total{name=~\"onquota.*\"}[5m])",
+            "legendFormat": "{{name}} - Transmit",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "Bps", "label": "Bytes/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 9,
+        "title": "System Load (1m)",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 32, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "node_load1",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto",
+          "textMode": "auto"
+        }
+      },
+      {
+        "id": 10,
+        "title": "Memory Usage (%)",
+        "type": "stat",
+        "gridPos": {"x": 6, "y": 32, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto",
+          "textMode": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 75, "color": "yellow"},
+                {"value": 85, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 11,
+        "title": "Disk Usage (%)",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 32, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"})) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto",
+          "textMode": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 80, "color": "yellow"},
+                {"value": 90, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 12,
+        "title": "Uptime",
+        "type": "stat",
+        "gridPos": {"x": 18, "y": 32, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "node_time_seconds - node_boot_time_seconds",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "none",
+          "orientation": "auto",
+          "textMode": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        }
+      }
+    ]
+  }
+}

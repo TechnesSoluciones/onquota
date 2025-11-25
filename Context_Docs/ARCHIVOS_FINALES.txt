@@ -1,0 +1,242 @@
+ARCHIVOS CREADOS Y MODIFICADOS - RUTAS ABSOLUTAS
+================================================
+
+ARCHIVOS CREADOS:
+=================
+
+1. /Users/josegomez/Documents/Code/OnQuota/frontend/lib/validations/expense.ts
+   Líneas: 57
+   Contenido: Esquemas Zod para validación de gastos
+   Exports: createExpenseSchema, updateExpenseSchema, CreateExpenseFormData, UpdateExpenseFormData
+   Status: Compilable
+
+2. /Users/josegomez/Documents/Code/OnQuota/frontend/components/expenses/CreateExpenseModal.tsx
+   Líneas: 312
+   Contenido: Modal para crear nuevos gastos
+   Features: react-hook-form, Zod, Toast, Loading states, Responsive
+   Compilable: SI
+   
+3. /Users/josegomez/Documents/Code/OnQuota/frontend/components/expenses/EditExpenseModal.tsx
+   Líneas: 349
+   Contenido: Modal para editar gastos
+   Features: Pre-relleno de datos, Validación parcial, Mismas features que Create
+   Compilable: SI
+
+ARCHIVOS MODIFICADOS:
+====================
+
+4. /Users/josegomez/Documents/Code/OnQuota/frontend/app/(dashboard)/expenses/page.tsx
+   Cambios: 
+   - Agregado: imports de modales y useState
+   - Agregado: estados para manejar modales
+   - Modificado: Botón "Nuevo Gasto" abre modal
+   - Modificado: Botón "Ver" reemplazado por "Editar"
+   - Agregado: componentes CreateExpenseModal y EditExpenseModal
+   Compilable: SI
+
+ARCHIVOS DE DOCUMENTACIÓN:
+==========================
+
+5. /Users/josegomez/Documents/Code/OnQuota/frontend/EXPENSE_MODALS_IMPLEMENTATION.md
+   Descripción: Documentación completa de implementación
+   Incluye: Resumen, ejemplos, notas técnicas, plan de testing
+
+6. /Users/josegomez/Documents/Code/OnQuota/frontend/ARCHIVOS_MODALES_GASTOS.txt
+   Descripción: Resumen rápido de cambios y funcionalidades
+
+7. /Users/josegomez/Documents/Code/OnQuota/frontend/QUICK_START_MODALES.md
+   Descripción: Guía rápida de uso con ejemplos
+
+8. /Users/josegomez/Documents/Code/OnQuota/frontend/ARCHIVOS_FINALES.txt
+   Descripción: Este archivo con rutas absolutas
+
+DIRECTORIOS CREADOS:
+===================
+
+/Users/josegomez/Documents/Code/OnQuota/frontend/lib/validations/
+- Creado automaticamente por Write
+
+COMPONENTES UTILIZADOS:
+=======================
+
+De @radix-ui:
+- Dialog (DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter)
+- Select (Select, SelectContent, SelectItem, SelectTrigger, SelectValue)
+
+De proyecto:
+- Button (/components/ui/button)
+- Input (/components/ui/input)
+- Label (/components/ui/label)
+- Textarea (/components/ui/textarea)
+- useToast (/hooks/use-toast)
+
+De lucide-react:
+- Plus (icono para "Nuevo Gasto")
+- Edit (icono para "Editar")
+- Loader2 (spinner en botón)
+
+LIBRERÍAS NPM:
+==============
+
+Requeridas (deben estar instaladas):
+- react-hook-form (^7.x)
+- @hookform/resolvers (^3.x)
+- zod (^3.x)
+- lucide-react (^x.x)
+- @radix-ui/react-dialog
+- @radix-ui/react-select
+
+TIPOS IMPORTADOS:
+=================
+
+De /types/expense.ts:
+- ExpenseCategoryResponse
+- ExpenseWithCategory
+- ExpenseCreate
+- ExpenseUpdate
+
+VALIDACIÓN:
+===========
+
+createExpenseSchema:
+  - amount: number positivo, min 0.01
+  - currency: string 3 caracteres
+  - date: string ISO, no futura
+  - category_id: UUID opcional
+  - description: string 5-500 caracteres
+  - vendor_name: string 0-255 caracteres
+  - receipt_url: URL válida opcional
+  - receipt_number: string 0-100 caracteres
+  - notes: string 0-1000 caracteres
+
+updateExpenseSchema:
+  - Todos los campos son opcionales (Partial)
+
+API ENDPOINTS:
+==============
+
+GET  /api/v1/expense-categories
+     Usado para cargar categorías en los modales
+
+POST /api/v1/expenses
+     Usado en CreateExpenseModal para crear gastos
+
+PUT  /api/v1/expenses/{id}
+     Usado en EditExpenseModal para actualizar gastos
+
+FEATURES IMPLEMENTADAS:
+=======================
+
+Validación:
+  [x] Zod schemas
+  [x] Mensajes personalizados en español
+  [x] Validación en tiempo real
+  [x] Mostrar errores debajo de campos
+
+Formularios:
+  [x] react-hook-form integrado
+  [x] Controller para Select
+  [x] register para inputs/textareas
+  [x] handleSubmit para envío
+
+UX:
+  [x] Modales responsive
+  [x] Loading states
+  [x] Spinner animado
+  [x] Toast notifications
+  [x] Auto-cierre después de éxito
+  [x] Reset de formulario
+
+Accesibilidad:
+  [x] IDs HTML únicos
+  [x] Labels asociados a inputs
+  [x] aria-invalid en campos con error
+  [x] Focus management
+  [x] Navegación por teclado
+
+API:
+  [x] Carga dinámmica de categorías
+  [x] POST para crear
+  [x] PUT para editar
+  [x] Manejo de errores
+  [x] Refresh automático
+
+TESTING RECOMENDADO:
+====================
+
+Crear Gasto:
+1. Click "Nuevo Gasto"
+2. Llenar formulario completo
+3. Click "Crear Gasto"
+4. Verificar toast de éxito
+5. Verificar que aparece en tabla
+
+Editar Gasto:
+1. Click "Editar" en tabla
+2. Verificar pre-relleno de datos
+3. Modificar un campo
+4. Click "Guardar Cambios"
+5. Verificar toast de éxito
+6. Verificar cambios en tabla
+
+Validación:
+1. Intentar enviar sin llenar campos
+2. Verificar errores en campos
+3. Intentar fecha futura
+4. Verificar error "La fecha no puede ser futura"
+5. Intentar monto negativo
+6. Verificar error "El monto debe ser mayor a 0"
+
+NOTAS IMPORTANTES:
+==================
+
+1. Los modales cargan categorías solo cuando se abren
+2. El formulario se resetea automáticamente después de éxito
+3. Los estados de loading previenen envios múltiples
+4. Los strings vacíos se convierten a undefined antes de enviar
+5. Los números se convierten explícitamente antes de enviar
+6. El componente EditExpenseModal retorna null si no hay gasto
+
+MEJORAS FUTURAS POSIBLES:
+=========================
+
+1. Upload de archivos de recibo
+2. Autocompletado de proveedores
+3. Previsualización de URLs de recibos
+4. Historial de monedas usadas recientemente
+5. Guardado en localStorage como borrador
+6. Conversión automática entre divisas
+7. Validación más agresiva en tiempo real
+8. Confirmación de cierre con cambios sin guardar
+9. Atajos de teclado (Ctrl+N para nuevo gasto)
+10. Historial de cambios y auditoría
+
+COMPILACIÓN:
+============
+
+Para compilar el proyecto:
+$ npm run build
+
+Errores relacionados a los modales: NINGUNO
+Warnings sobre propiedades: Solo "any" types que pueden ignorarse
+
+ARCHIVO PUNTUAL PARA COPIAR SI FALTA:
+====================================
+
+Si necesitas resetear los archivos, están en estas ubicaciones:
+
+1. lib/validations/expense.ts
+2. components/expenses/CreateExpenseModal.tsx
+3. components/expenses/EditExpenseModal.tsx
+4. app/(dashboard)/expenses/page.tsx (modificar, no reemplazar)
+
+RESUMEN RÁPIDO:
+===============
+
+Creados: 3 archivos (validación + 2 modales)
+Modificados: 1 archivo (página de gastos)
+Líneas de código: ~700 líneas
+Documentación: 4 archivos
+Status: IMPLEMENTACIÓN COMPLETA
+Compilable: SI
+

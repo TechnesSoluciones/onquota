@@ -1,0 +1,291 @@
+ESTRUCTURA DE AUTENTICACIÓN - OnQuota Frontend
+===============================================
+
+1. ARQUITECTURA GENERAL
+======================
+
+┌─────────────────────────────────────────────────────────────────┐
+│                         RootLayout                              │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │            AuthProvider (Contexto Global)                │  │
+│  │  ┌──────────────────────────────────────────────────────┐ │  │
+│  │  │        Middleware (Next.js - Server)                │ │  │
+│  │  │  • Valida tokens en acceso a rutas                  │ │  │
+│  │  │  • Redirige sin autenticación                       │ │  │
+│  │  │  • Bloquea rutas autenticadas cuando hay sesión     │ │  │
+│  │  └──────────────────────────────────────────────────────┘ │  │
+│  │  ┌──────────────────────────────────────────────────────┐ │  │
+│  │  │        Aplicación (Client Components)               │ │  │
+│  │  │  ┌───────────────────────────────────────────────┐  │ │  │
+│  │  │  │      ProtectedRoute (Client Protection)      │  │ │  │
+│  │  │  │  • Verifica autenticación nuevamente         │  │ │  │
+│  │  │  │  • Valida roles si es necesario             │  │ │  │
+│  │  │  │  • Redirige si no está autorizado           │  │ │  │
+│  │  │  │  ┌─────────────────────────────────────────┐ │  │ │  │
+│  │  │  │  │    useAuth Hook (Estado Local)         │ │  │ │  │
+│  │  │  │  │  • Maneja login/register/logout        │ │  │ │  │
+│  │  │  │  │  • Controla estado de carga            │ │  │ │  │
+│  │  │  │  │  • useAuthStore (Zustand)             │ │  │ │  │
+│  │  │  │  │  ┌──────────────────────────────────┐ │ │  │ │  │
+│  │  │  │  │  │  useRole (Control de Roles)    │ │ │  │ │  │
+│  │  │  │  │  │ • Verifica permisos            │ │ │  │ │  │
+│  │  │  │  │  │ • Lógica RBAC                 │ │ │  │ │  │
+│  │  │  │  │  └──────────────────────────────┘ │ │  │ │  │
+│  │  │  │  └─────────────────────────────────────┘ │  │ │  │
+│  │  │  └───────────────────────────────────────────┘  │ │  │
+│  │  └──────────────────────────────────────────────────┘ │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+
+
+2. FLUJO DE ARCHIVOS
+====================
+
+/contexts/
+├── AuthContext.tsx          [NUEVO] Proveedor global de autenticación
+│   ├── AuthProvider         → Wrapper de la app
+│   └── useAuthContext()     → Hook para acceder al contexto
+
+/hooks/
+├── useAuth.ts               [EXISTENTE] Lógica de autenticación
+│   ├── login()
+│   ├── register()
+│   ├── logout()
+│   ├── checkAuth()
+│   └── refreshUser()
+└── useRole.ts               [NUEVO] Control de roles basado en acceso
+    ├── hasRole()
+    ├── isAdmin()
+    ├── canApproveExpenses()
+    ├── canViewAnalytics()
+    └── canManageUsers()
+
+/components/auth/
+└── ProtectedRoute.tsx       [MEJORADO] Protección de rutas
+    └── Props: requireAuth, requireRoles, redirectTo, etc.
+
+/middleware.ts               [EXISTENTE] Protección a nivel servidor
+    └── Valida tokens y redirige automáticamente
+
+/app/
+├── layout.tsx               [ACTUALIZADO] RootLayout con AuthProvider
+├── (auth)/
+│   └── layout.tsx           → Diseño para login/register
+└── (dashboard)/
+    └── layout.tsx           → Usa ProtectedRoute para proteger
+
+
+3. COMPONENTES Y HOOKS DISPONIBLES
+===================================
+
+CONTEXTO GLOBAL:
+───────────────
+AuthProvider
+  Envuelve toda la app
+  Props: { children }
+  
+useAuthContext()
+  Accede al contexto de autenticación
+  Retorna: { user, isAuthenticated, login, logout, ... }
+
+
+AUTENTICACIÓN:
+──────────────
+useAuth()
+  Maneja login, registro, logout
+  Retorna:
+    - user: UserResponse | null
+    - isAuthenticated: boolean
+    - isLoading: boolean
+    - error: string | null
+    - login(credentials): Promise
+    - register(data): Promise
+    - logout(): Promise
+    - checkAuth(): Promise<boolean>
+    - refreshUser(): Promise
+
+
+CONTROL DE ROLES:
+─────────────────
+useRole()
+  Verifica permisos basados en roles
+  Retorna:
+    - hasRole(roles): boolean
+    - isAdmin(): boolean
+    - isSalesRep(): boolean
+    - isSupervisor(): boolean
+    - isAnalyst(): boolean
+    - canApproveExpenses(): boolean
+    - canViewAnalytics(): boolean
+    - canManageUsers(): boolean
+    - currentRole: UserRole | null
+
+
+PROTECCIÓN DE RUTAS:
+───────────────────
+<ProtectedRoute
+  requireAuth={true}
+  requireRoles={[UserRole.ADMIN]}
+  redirectTo="/login"
+  unauthorizedRedirectTo="/dashboard"
+  loadingComponent={<Loading />}
+>
+  {children}
+</ProtectedRoute>
+
+
+4. ROLES Y PERMISOS
+===================
+
+ROLES DISPONIBLES:
+──────────────────
+- admin:      Acceso completo
+- sales_rep:  Representante de ventas
+- supervisor: Supervisor de equipo
+- analyst:    Analista de datos
+
+
+MATRIZ DE PERMISOS:
+───────────────────
+                    | admin | supervisor | analyst | sales_rep |
+────────────────────┼───────┼────────────┼─────────┼───────────┤
+Ver Dashboard       │  ✓    │     ✓      │    ✓    │     ✓     │
+Aprobar Gastos      │  ✓    │     ✓      │    ✗    │     ✗     │
+Ver Análisis        │  ✓    │     ✓      │    ✓    │     ✗     │
+Gestionar Usuarios  │  ✓    │     ✗      │    ✗    │     ✗     │
+
+
+5. FLUJOS DE AUTENTICACIÓN
+===========================
+
+FLUJO 1: PRIMER ACCESO (REGISTRO)
+─────────────────────────────────
+Usuario abre app
+    ↓
+Middleware revisa cookies (sin token)
+    ↓
+Redirige a /login (ProtectedRoute)
+    ↓
+Usuario completa formulario de registro
+    ↓
+useAuth.register() → API /register
+    ↓
+Token guardado en localStorage
+    ↓
+AuthStore actualizado
+    ↓
+Redirect a /dashboard
+    ↓
+ProtectedRoute verifica token ✓
+    ↓
+Dashboard renderizado
+
+
+FLUJO 2: ACCESO REPETIDO (LOGIN)
+─────────────────────────────────
+Usuario abre app
+    ↓
+AuthProvider verifica localStorage (token existe)
+    ↓
+useAuth.checkAuth() → Valida token
+    ↓
+AuthStore actualizado con datos del usuario
+    ↓
+ProtectedRoute da acceso ✓
+    ↓
+Página renderizada
+
+
+FLUJO 3: VALIDACIÓN DE ROL
+──────────────────────────
+Usuario accede a /admin/users (requiere ADMIN)
+    ↓
+Middleware verifica token ✓
+    ↓
+ProtectedRoute verifica requireRoles=[ADMIN]
+    ↓
+useRole().hasRole(UserRole.ADMIN)
+    ↓
+Si user.role != ADMIN:
+    → Redirect a /dashboard
+Else:
+    → Renderiza página ✓
+
+
+FLUJO 4: LOGOUT
+───────────────
+Usuario click "Cerrar Sesión"
+    ↓
+useAuth.logout()
+    ↓
+API llama a logout endpoint
+    ↓
+clearAuth() limpia tokens
+    ↓
+authStore se resetea
+    ↓
+Redirect a /login
+    ↓
+Middleware bloquea acceso al dashboard
+
+
+6. ALMACENAMIENTO DE TOKENS
+============================
+
+localStorage:
+  - access_token
+  - refresh_token
+  - auth-storage (Zustand persisted state)
+
+API Client:
+  - Automáticamente envía access_token en headers
+  - Maneja refreshes de token automáticamente
+
+
+7. ARCHIVOS CREADOS/MODIFICADOS
+================================
+
+[NUEVO]
+  • /contexts/AuthContext.tsx
+  • /hooks/useRole.ts
+  • /AUTHENTICATION_IMPLEMENTATION.md
+  • /AUTHENTICATION_USAGE_EXAMPLES.md
+  • /AUTH_STRUCTURE.txt (este archivo)
+
+[MODIFICADO]
+  • /app/layout.tsx                    (agregado AuthProvider + Toaster)
+  • /components/auth/ProtectedRoute.tsx (agregado soporte de roles)
+
+[EXISTENTE - SIN CAMBIOS]
+  • /middleware.ts
+  • /hooks/useAuth.ts
+  • /store/authStore.ts
+  • /app/(dashboard)/layout.tsx
+
+
+8. CHECKLIST DE VERIFICACIÓN
+=============================
+
+✓ Middleware funciona correctamente
+✓ AuthProvider envuelve toda la app
+✓ ProtectedRoute protege rutas
+✓ useRole hook proporciona RBAC
+✓ RootLayout actualizado con AuthProvider y Toaster
+✓ Dashboard layout usa ProtectedRoute
+✓ No hay errores de TypeScript críticos
+✓ Código sigue eslint rules
+✓ Documentación completa
+✓ Ejemplos de uso incluidos
+
+
+9. PRÓXIMOS PASOS (OPCIONALES)
+==============================
+
+1. Implementar refresh token automático
+2. Agregar timeout de sesión
+3. Implementar 2FA
+4. Crear página 401/403 personalizada
+5. Agregar logging de accesos
+6. Implementar auditoría de cambios por rol
+7. Agregar tests unitarios
+8. Implementar rate limiting

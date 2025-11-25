@@ -1,0 +1,70 @@
+# Celery worker alerts for OnQuota
+
+groups:
+  - name: celery_alerts
+    interval: 30s
+    rules:
+      # No active Celery workers
+      - alert: CeleryNoActiveWorkers
+        expr: |
+          flower_worker_online == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: celery
+        annotations:
+          summary: "No active Celery workers"
+          description: "All Celery workers are offline"
+          runbook: "https://docs.onquota.com/runbooks/celery-no-workers"
+
+      # High task failure rate
+      - alert: CeleryHighTaskFailureRate
+        expr: |
+          rate(flower_task_failed_total[5m]) / rate(flower_task_total[5m]) > 0.10
+        for: 5m
+        labels:
+          severity: warning
+          component: celery
+        annotations:
+          summary: "High Celery task failure rate"
+          description: "Task failure rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+          runbook: "https://docs.onquota.com/runbooks/celery-high-failure-rate"
+
+      # Tasks stuck in queue
+      - alert: CeleryTasksStuckInQueue
+        expr: |
+          flower_task_queued > 100
+        for: 10m
+        labels:
+          severity: warning
+          component: celery
+        annotations:
+          summary: "Tasks stuck in Celery queue"
+          description: "{{ $value }} tasks have been queued for more than 10 minutes (threshold: 100)"
+          runbook: "https://docs.onquota.com/runbooks/celery-tasks-stuck"
+
+      # Long-running tasks
+      - alert: CeleryLongRunningTasks
+        expr: |
+          flower_task_runtime_seconds > 300
+        for: 5m
+        labels:
+          severity: info
+          component: celery
+        annotations:
+          summary: "Long-running Celery tasks detected"
+          description: "Task {{ $labels.task_name }} has been running for {{ $value }}s (threshold: 300s)"
+          runbook: "https://docs.onquota.com/runbooks/celery-long-running"
+
+      # Worker memory high
+      - alert: CeleryWorkerHighMemory
+        expr: |
+          flower_worker_memory_usage_bytes > 1073741824
+        for: 10m
+        labels:
+          severity: warning
+          component: celery
+        annotations:
+          summary: "High memory usage on Celery worker {{ $labels.worker }}"
+          description: "Worker is using {{ $value | humanize }}B of memory (threshold: 1GB)"
+          runbook: "https://docs.onquota.com/runbooks/celery-high-memory"

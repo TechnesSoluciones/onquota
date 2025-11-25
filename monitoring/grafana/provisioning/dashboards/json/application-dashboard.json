@@ -1,0 +1,235 @@
+{
+  "dashboard": {
+    "title": "OnQuota - Application Metrics",
+    "tags": ["onquota", "application", "fastapi"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "10s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Request Rate (req/s)",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"onquota-backend\"}[5m])",
+            "legendFormat": "{{method}} {{path}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "reqps", "label": "Requests/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Response Time (p50, p95, p99)",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job=\"onquota-backend\"}[5m]))",
+            "legendFormat": "p50",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"onquota-backend\"}[5m]))",
+            "legendFormat": "p95",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job=\"onquota-backend\"}[5m]))",
+            "legendFormat": "p99",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Duration"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "HTTP Status Codes",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"onquota-backend\",status=~\"2..\"}[5m])",
+            "legendFormat": "2xx Success",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(http_requests_total{job=\"onquota-backend\",status=~\"4..\"}[5m])",
+            "legendFormat": "4xx Client Error",
+            "refId": "B"
+          },
+          {
+            "expr": "rate(http_requests_total{job=\"onquota-backend\",status=~\"5..\"}[5m])",
+            "legendFormat": "5xx Server Error",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {"format": "reqps", "label": "Requests/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Error Rate (%)",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"onquota-backend\",status=~\"5..\"}[5m]) / rate(http_requests_total{job=\"onquota-backend\"}[5m]) * 100",
+            "legendFormat": "5xx Error Rate",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "Error %"},
+          {"format": "short"}
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [5], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "1m",
+          "handler": 1,
+          "name": "High Error Rate",
+          "noDataState": "no_data",
+          "notifications": []
+        }
+      },
+      {
+        "id": 5,
+        "title": "Active Requests",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 16, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "http_requests_inprogress{job=\"onquota-backend\"}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto",
+          "textMode": "auto"
+        }
+      },
+      {
+        "id": 6,
+        "title": "Total Requests (24h)",
+        "type": "stat",
+        "gridPos": {"x": 6, "y": 16, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "sum(increase(http_requests_total{job=\"onquota-backend\"}[24h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto",
+          "textMode": "auto"
+        }
+      },
+      {
+        "id": 7,
+        "title": "Avg Response Time",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 16, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "rate(http_request_duration_seconds_sum{job=\"onquota-backend\"}[5m]) / rate(http_request_duration_seconds_count{job=\"onquota-backend\"}[5m])",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto",
+          "textMode": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Success Rate (%)",
+        "type": "stat",
+        "gridPos": {"x": 18, "y": 16, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "(1 - (rate(http_requests_total{job=\"onquota-backend\",status=~\"5..\"}[5m]) / rate(http_requests_total{job=\"onquota-backend\"}[5m]))) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto",
+          "textMode": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 95, "color": "yellow"},
+                {"value": 99, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Top Endpoints by Request Count",
+        "type": "table",
+        "gridPos": {"x": 0, "y": 20, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "topk(10, sum by (method, path) (rate(http_requests_total{job=\"onquota-backend\"}[5m])))",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Slowest Endpoints (p95)",
+        "type": "table",
+        "gridPos": {"x": 12, "y": 20, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "topk(10, histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"onquota-backend\"}[5m])))",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ]
+      }
+    ]
+  }
+}

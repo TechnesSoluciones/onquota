@@ -1,0 +1,104 @@
+product,client,date,quantity,unit_price,discount,cost
+Laptop HP ProBook 450,Acme Corporation,2024-07-15,10,820.50,10,500
+Monitor Dell 27",TechStart Inc,2024-07-20,25,340.00,0,200
+Keyboard Logitech MX Keys,Global Solutions LLC,2024-08-05,50,115.00,5,60
+Mouse Logitech MX Master,Innovation Labs,2024-08-10,30,95.00,0,50
+Webcam Logitech C920,Digital Dynamics,2024-08-22,15,78.00,15,40
+Headset Jabra Evolve 65,Smart Systems Co,2024-09-01,20,145.00,10,75
+Docking Station USB-C,Future Tech Group,2024-09-10,12,210.00,0,100
+Cable HDMI 2m,Advanced Computing,2024-09-15,100,14.50,0,5
+USB Hub 7 Ports,Enterprise Solutions,2024-10-01,40,38.00,5,20
+External SSD 1TB,Prime Technology,2024-10-10,18,175.00,10,90
+RAM DDR4 16GB,Quantum Systems,2024-10-20,35,88.00,0,45
+Graphics Card RTX 3060,Alpha Industries,2024-11-01,8,460.00,20,300
+Power Supply 650W,Beta Technologies,2024-11-05,22,105.00,5,60
+CPU Cooler Noctua,Gamma Enterprises,2024-11-10,30,82.00,0,45
+Motherboard ASUS,Delta Corporation,2024-11-15,15,225.00,15,120
+Case Fractal Design,Epsilon Group,2024-12-01,25,128.00,10,70
+Thermal Paste Arctic,Zeta Solutions,2024-12-05,80,9.50,0,3
+WiFi Adapter PCIe,Eta Systems,2024-12-10,28,43.00,5,25
+Sound Card Creative,Theta Tech,2024-12-15,12,118.00,20,60
+RGB LED Strip 5m,Iota Innovations,2024-12-20,45,32.00,10,15
+Laptop HP ProBook 450,Acme Corporation,2024-07-25,15,805.00,12,500
+Monitor Dell 27",TechStart Inc,2024-08-15,30,355.00,5,200
+Keyboard Logitech MX Keys,Global Solutions LLC,2024-09-20,60,120.00,0,60
+Mouse Logitech MX Master,Innovation Labs,2024-10-25,35,102.00,10,50
+Webcam Logitech C920,Digital Dynamics,2024-11-20,20,80.00,0,40
+Laptop HP ProBook 450,Smart Systems Co,2024-12-01,8,790.00,15,500
+Monitor Dell 27",Future Tech Group,2024-07-30,20,345.00,8,200
+Keyboard Logitech MX Keys,Advanced Computing,2024-08-25,45,118.00,5,60
+Mouse Logitech MX Master,Enterprise Solutions,2024-09-25,28,98.00,0,50
+Webcam Logitech C920,Prime Technology,2024-10-30,18,82.00,12,40
+Headset Jabra Evolve 65,Quantum Systems,2024-11-25,22,150.00,0,75
+Docking Station USB-C,Alpha Industries,2024-12-02,10,195.00,10,100
+Cable HDMI 2m,Beta Technologies,2024-07-18,90,15.00,0,5
+USB Hub 7 Ports,Gamma Enterprises,2024-08-18,35,41.00,8,20
+External SSD 1TB,Delta Corporation,2024-09-18,16,180.00,5,90
+RAM DDR4 16GB,Epsilon Group,2024-10-18,32,91.00,0,45
+Graphics Card RTX 3060,Zeta Solutions,2024-11-18,6,445.00,25,300
+Power Supply 650W,Eta Systems,2024-12-03,20,112.00,10,60
+CPU Cooler Noctua,Theta Tech,2024-07-22,25,85.00,5,45
+Motherboard ASUS,Iota Innovations,2024-08-28,12,218.00,0,120
+Case Fractal Design,Acme Corporation,2024-09-28,20,135.00,15,70
+Thermal Paste Arctic,TechStart Inc,2024-10-28,75,10.00,0,3
+WiFi Adapter PCIe,Global Solutions LLC,2024-11-28,30,46.00,10,25
+Sound Card Creative,Innovation Labs,2024-12-04,10,125.00,18,60
+RGB LED Strip 5m,Digital Dynamics,2024-07-28,50,35.00,5,15
+Laptop HP ProBook 450,Smart Systems Co,2024-08-30,12,815.00,8,500
+Monitor Dell 27",Future Tech Group,2024-09-30,28,350.00,0,200
+Keyboard Logitech MX Keys,Advanced Computing,2024-10-31,55,122.00,10,60
+Mouse Logitech MX Master,Enterprise Solutions,2024-12-05,32,100.00,12,50
+Webcam Logitech C920,Prime Technology,2024-07-31,22,79.00,0,40
+External SSD 1TB,Quantum Systems,2024-08-31,14,178.00,15,90
+Docking Station USB-C,Alpha Industries,2024-09-29,9,205.00,0,100
+Graphics Card RTX 3060,Beta Technologies,2024-10-29,7,455.00,22,300
+Headset Jabra Evolve 65,Gamma Enterprises,2024-11-29,24,148.00,5,75
+Power Supply 650W,Delta Corporation,2024-12-06,18,108.00,8,60
+RAM DDR4 16GB,Epsilon Group,2024-07-27,38,89.00,0,45
+CPU Cooler Noctua,Zeta Solutions,2024-08-27,28,84.00,10,45
+Motherboard ASUS,Eta Systems,2024-09-27,14,222.00,12,120
+Case Fractal Design,Theta Tech,2024-10-27,22,132.00,5,70
+Thermal Paste Arctic,Iota Innovations,2024-11-27,85,9.80,0,3
+WiFi Adapter PCIe,Acme Corporation,2024-12-07,26,44.00,8,25
+Sound Card Creative,TechStart Inc,2024-07-29,11,122.00,15,60
+RGB LED Strip 5m,Global Solutions LLC,2024-08-29,42,33.00,10,15
+USB Hub 7 Ports,Innovation Labs,2024-09-26,38,39.00,0,20
+Cable HDMI 2m,Digital Dynamics,2024-10-26,95,14.80,5,5
+Laptop HP ProBook 450,Smart Systems Co,2024-11-26,11,800.00,10,500
+Monitor Dell 27",Future Tech Group,2024-12-08,26,348.00,12,200
+Keyboard Logitech MX Keys,Advanced Computing,2024-07-26,52,119.00,0,60
+Mouse Logitech MX Master,Enterprise Solutions,2024-08-26,30,99.00,8,50
+Webcam Logitech C920,Prime Technology,2024-09-24,19,81.00,10,40
+Headset Jabra Evolve 65,Quantum Systems,2024-10-24,21,147.00,5,75
+Docking Station USB-C,Alpha Industries,2024-11-24,11,198.00,0,100
+External SSD 1TB,Beta Technologies,2024-12-09,15,182.00,18,90
+Power Supply 650W,Gamma Enterprises,2024-07-24,19,110.00,0,60
+CPU Cooler Noctua,Delta Corporation,2024-08-24,26,83.00,8,45
+Motherboard ASUS,Epsilon Group,2024-09-23,13,220.00,10,120
+Case Fractal Design,Zeta Solutions,2024-10-23,23,130.00,12,70
+Thermal Paste Arctic,Eta Systems,2024-11-23,78,10.20,0,3
+WiFi Adapter PCIe,Theta Tech,2024-12-10,27,45.00,5,25
+Sound Card Creative,Iota Innovations,2024-07-23,12,120.00,20,60
+RGB LED Strip 5m,Acme Corporation,2024-08-23,48,34.00,8,15
+Cable HDMI 2m,TechStart Inc,2024-09-22,98,15.20,0,5
+USB Hub 7 Ports,Global Solutions LLC,2024-10-22,36,40.00,10,20
+RAM DDR4 16GB,Innovation Labs,2024-11-22,33,90.00,5,45
+Graphics Card RTX 3060,Digital Dynamics,2024-12-11,9,450.00,25,300
+Laptop HP ProBook 450,Smart Systems Co,2024-07-21,13,810.00,15,500
+Monitor Dell 27",Future Tech Group,2024-08-21,24,352.00,5,200
+Keyboard Logitech MX Keys,Advanced Computing,2024-09-21,58,121.00,0,60
+Mouse Logitech MX Master,Enterprise Solutions,2024-10-21,34,101.00,10,50
+Webcam Logitech C920,Prime Technology,2024-11-21,17,79.50,8,40
+Headset Jabra Evolve 65,Quantum Systems,2024-12-12,23,149.00,12,75
+Docking Station USB-C,Alpha Industries,2024-07-19,10,202.00,0,100
+External SSD 1TB,Beta Technologies,2024-08-19,17,177.00,15,90
+Power Supply 650W,Gamma Enterprises,2024-09-19,21,106.00,5,60
+CPU Cooler Noctua,Delta Corporation,2024-10-19,27,86.00,0,45
+Motherboard ASUS,Epsilon Group,2024-11-19,16,224.00,18,120
+Case Fractal Design,Zeta Solutions,2024-12-13,24,129.00,10,70
+Thermal Paste Arctic,Eta Systems,2024-07-17,82,9.90,0,3
+WiFi Adapter PCIe,Theta Tech,2024-08-17,29,44.50,8,25
+Sound Card Creative,Iota Innovations,2024-09-17,13,119.00,15,60
+RGB LED Strip 5m,Acme Corporation,2024-10-17,46,33.50,5,15
+Cable HDMI 2m,TechStart Inc,2024-11-17,92,14.90,0,5
+USB Hub 7 Ports,Global Solutions LLC,2024-12-14,37,39.50,10,20

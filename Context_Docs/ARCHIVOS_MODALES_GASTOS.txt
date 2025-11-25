@@ -1,0 +1,211 @@
+ARCHIVOS CREADOS - MODALES DE GASTOS
+=====================================
+
+CREADOS
+-------
+
+1. /lib/validations/expense.ts
+   - Esquema Zod para validación de gastos
+   - createExpenseSchema: Para crear gastos
+   - updateExpenseSchema: Para editar gastos
+   - Tipos TypeScript: CreateExpenseFormData, UpdateExpenseFormData
+   - Líneas: 57
+
+2. /components/expenses/CreateExpenseModal.tsx
+   - Modal de creación de gastos
+   - Integración con API para cargar categorías
+   - Validación con react-hook-form + Zod
+   - Toast notifications para éxito/error
+   - Responsive design (mobile-first)
+   - Accesibilidad (aria-invalid, labels, IDs únicos)
+   - Líneas: 312
+
+3. /components/expenses/EditExpenseModal.tsx
+   - Modal de edición de gastos
+   - Pre-carga datos del gasto existente
+   - Validación parcial con updateExpenseSchema
+   - Mismas características de UX que Create
+   - Manejo seguro de estado nulo
+   - Líneas: 349
+
+ACTUALIZADOS
+-----------
+
+4. /app/(dashboard)/expenses/page.tsx
+   - Cambios:
+     * Agregado useState para manejar estados de modales
+     * Botón "Nuevo Gasto" abre modal en lugar de navegar
+     * Botón "Ver" reemplazado por "Editar" que abre modal
+     * Integración de CreateExpenseModal
+     * Integración de EditExpenseModal
+     * Callback refresh() para actualizar lista
+
+TOTAL: 3 archivos creados + 1 actualizado
+
+ARCHIVOS DE DOCUMENTACIÓN
+--------------------------
+
+- EXPENSE_MODALS_IMPLEMENTATION.md
+  - Documentación completa de implementación
+  - Guía de uso
+  - Ejemplos de código
+  - Notas técnicas
+  - Plan de testing
+  - Mejoras futuras
+
+- ARCHIVOS_MODALES_GASTOS.txt (este archivo)
+  - Resumen rápido de cambios
+
+COMPONENTES UTILIZADOS (UI)
+---------------------------
+
+- Dialog (Radix UI)
+- Button
+- Input
+- Label
+- Textarea
+- Select (Radix UI)
+- Toast (para notificaciones)
+
+LIBRERÍAS UTILIZADAS
+-------------------
+
+- react-hook-form: Gestión de formularios
+- @hookform/resolvers: Integración Zod con react-hook-form
+- zod: Validación de esquemas
+- lucide-react: Iconos (Plus, Edit, Loader2)
+- react: Hooks (useState, useEffect)
+
+FUNCIONALIDADES IMPLEMENTADAS
+-----------------------------
+
+[x] Validación Zod completa
+[x] Formularios con react-hook-form
+[x] Carga dinámica de categorías
+[x] Loading states y spinners
+[x] Toast notifications
+[x] Manejo de errores
+[x] Conversión de tipos
+[x] Responsiveness
+[x] Accesibilidad (WCAG)
+[x] Mensajes en español
+[x] IDs HTML únicos
+[x] aria-invalid attributes
+[x] Refresh automático de lista
+[x] Pre-relleno de datos en edición
+
+CAMPOS DEL FORMULARIO
+--------------------
+
+Obligatorios (*):
+- Monto (number, > 0, min 0.01)
+- Moneda (select: COP, USD, EUR)
+- Fecha del Gasto (date, no futura)
+- Descripción (textarea, 5-500 chars)
+
+Opcionales:
+- Categoría (select from backend)
+- Proveedor (text, max 255)
+- Número de Recibo (text, max 100)
+- URL de Recibo (url)
+- Notas Adicionales (textarea, max 1000)
+
+ESTADOS Y MANEJO
+---------------
+
+Modal Create:
+- Abre al click en "Nuevo Gasto"
+- Carga categorías al abrir
+- Valida formulario
+- Envía POST a /api/v1/expenses
+- Muestra toast de éxito
+- Recarga lista de gastos
+- Se cierra automáticamente
+
+Modal Edit:
+- Abre al click en "Editar" en tabla
+- Pre-rellena con datos del gasto
+- Carga categorías al abrir
+- Valida formulario
+- Envía PUT a /api/v1/expenses/{id}
+- Muestra toast de éxito
+- Recarga lista de gastos
+- Limpia estado seleccionado
+
+ERRORES Y MANEJO
+---------------
+
+Errores de Validación:
+- Mostrados debajo de cada campo
+- En color rojo
+- Mensajes personalizados en español
+
+Errores de API:
+- Capturados con try-catch
+- Mostrados en toast notificación
+- Con fallback a mensaje genérico
+
+Estado Loading:
+- Desabilita todo el formulario
+- Spinner en botón de envío
+- Previene multiple submissions
+
+TESTING
+-------
+
+Crear Gasto:
+1. Click "Nuevo Gasto"
+2. Llenar formulario
+3. Click "Crear Gasto"
+4. Verificar toast éxito
+5. Verificar en tabla
+
+Editar Gasto:
+1. Click "Editar" en fila
+2. Modificar datos
+3. Click "Guardar Cambios"
+4. Verificar toast éxito
+5. Verificar cambios en tabla
+
+Validación:
+1. Intentar enviar vacío
+2. Ver errores en campos
+3. Intentar fecha futura
+4. Ver error específico
+
+RESPONSIVE
+----------
+
+Desktop (md+):
+- Grid 2 columnas
+- Dialogo max-width: 2xl
+- Overflow scroll automático
+
+Mobile:
+- Grid 1 columna
+- Dialogo responsive
+- Touch-friendly buttons
+
+ACCESIBILIDAD
+-----------
+
+- IDs HTML únicos
+- Labels asociados a inputs
+- aria-invalid en campos con error
+- Focus visible en botones
+- Contraste de colores WCAG AA
+- Mensajes de error claros
+- Spinner animado con aria-busy
+
+PRÓXIMAS MEJORAS
+---------------
+
+1. Upload de archivos de recibo
+2. Autocompletado de proveedores
+3. Previsualización de URLs
+4. Historial de divisas
+5. Guardado en localStorage
+6. Conversión entre divisas
+7. Validación en tiempo real más agresiva
+8. Confirmación al cerrar con cambios sin guardar
+

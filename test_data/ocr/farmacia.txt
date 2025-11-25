@@ -1,0 +1,108 @@
+╔═════════════════════════════════════════╗
+║      FARMACIAS CRUZ AZUL S.A.           ║
+║         "Su salud es primero"           ║
+╚═════════════════════════════════════════╝
+
+RUC: 0912345678001
+Sucursal No. 045 - Matriz
+Av. 9 de Octubre 1234 y Malecón
+Guayaquil, Ecuador
+Tel: (04) 2-345-678
+Emergencias: 1800-FARMA (32762)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FECHA: 15/11/2025          HORA: 16:20:45
+FACTURA No: 001-045-0156789
+ATENDIÓ: Farm. Patricia Moreno
+Reg. Prof: MSP-FRM-12345
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLIENTE: JUAN CARLOS PÉREZ LÓPEZ
+CI: 0912345678
+TELÉFONO: 0987654321
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CANT  DESCRIPCIÓN              P.UNIT    TOTAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MEDICAMENTOS CON RECETA
+──────────────────────────────────────────
+  1   LOSARTAN 50MG X30 TAB    12.50    12.50
+      Lote: L2025-089
+      Venc: 03/2026
+      RM: Receta No. R-2025-1234
+
+  2   METFORMINA 850MG X60     8.75     17.50
+      Lote: M2025-156
+      Venc: 08/2026
+      RM: Receta No. R-2025-1234
+
+MEDICAMENTOS SIN RECETA (OTC)
+──────────────────────────────────────────
+  1   PARACETAMOL 500MG X20    3.25      3.25
+      Lote: P2025-234
+      Venc: 12/2026
+
+  2   VITAMINA C 1000MG X30    9.50     19.00
+      Lote: V2025-078
+      Venc: 06/2027
+
+OTROS PRODUCTOS
+──────────────────────────────────────────
+  1   ALCOHOL GEL 250ML        4.80      4.80
+  3   MASCARILLAS KN95 X10     5.50     16.50
+  1   TERMÓMETRO DIGITAL       15.00    15.00
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SUBTOTAL:                               88.55
+DESCUENTO TERCERA EDAD (10%):           -8.86
+──────────────────────────────────────────
+SUBTOTAL CON DESCUENTO:                 79.69
+IVA 12%:                                 4.35
+──────────────────────────────────────────
+TOTAL A PAGAR:                    USD  84.04
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FORMA DE PAGO: TARJETA DÉBITO
+BANCO: BANCO PICHINCHA
+ÚLTIMOS 4 DÍGITOS: ****2345
+AUTORIZACIÓN: 789456123
+LOTE: 001234
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RECETA MÉDICA REGISTRADA
+Dr. Roberto Sánchez
+Ced. Prof: 1234-56789
+Especialidad: Medicina General
+
+PRODUCTOS: 7
+ARTÍCULOS: 10
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+INSTRUCCIONES DE CONSUMO:
+
+⚕ LOSARTAN: Tomar 1 tableta cada 24h
+             En ayunas. Duración: 1 mes
+
+⚕ METFORMINA: Tomar 1 tableta cada 12h
+              Con alimentos. Duración: 2 meses
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PUNTOS FARMACLUB GANADOS: 84
+PUNTOS ACUMULADOS: 1,523
+
+Canjea tus puntos por descuentos
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠ ADVERTENCIA: Mantenga los medicamentos
+fuera del alcance de los niños
+
+╔═════════════════════════════════════════╗
+║    ¡GRACIAS POR SU CONFIANZA!           ║
+║   Delivery 24/7: 1800-DELIVERY          ║
+╚═════════════════════════════════════════╝

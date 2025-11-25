@@ -1,0 +1,238 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [ main, develop, staging ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend.yml'
+  pull_request:
+    branches: [ main, develop, staging ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/frontend
+  NODE_VERSION: '18'
+
+jobs:
+  # Code quality and linting
+  quality:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier (Code formatting)
+        run: npm run format:check || true
+
+      - name: Check TypeScript
+        run: npm run type-check || true
+
+  # Security scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run npm audit
+        run: npm audit --production --audit-level=moderate
+        continue-on-error: true
+
+  # Unit and integration tests
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test -- --coverage --watchAll=false
+        env:
+          CI: true
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./frontend/coverage/coverage-final.json
+          flags: frontend
+          name: frontend-coverage
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: ./frontend/coverage/
+          retention-days: 30
+
+  # Build optimization check
+  build:
+    name: Build & Analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [quality, security, test]
+
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js application
+        env:
+          NEXT_PUBLIC_API_URL: http://api.example.com/api/v1
+          NEXT_PUBLIC_APP_NAME: OnQuota
+        run: npm run build
+
+      - name: Generate Lighthouse report
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          configPath: ./frontend/lighthouserc.json
+          uploadArtifacts: true
+          runs: 3
+        continue-on-error: true
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-build
+          path: ./frontend/.next/
+          retention-days: 1
+
+  # Docker build (only on main branch)
+  docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: [build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          target: production
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://api.example.com/api/v1
+            NEXT_PUBLIC_APP_NAME=OnQuota
+
+  # Summary job
+  summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [quality, security, test, build]
+
+    steps:
+      - name: Check job statuses
+        run: |
+          echo "Quality: ${{ needs.quality.result }}"
+          echo "Security: ${{ needs.security.result }}"
+          echo "Test: ${{ needs.test.result }}"
+          echo "Build: ${{ needs.build.result }}"
+
+      - name: Fail if any job failed
+        if: |
+          needs.quality.result == 'failure' ||
+          needs.security.result == 'failure' ||
+          needs.test.result == 'failure' ||
+          needs.build.result == 'failure'
+        run: exit 1

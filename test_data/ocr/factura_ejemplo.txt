@@ -1,0 +1,46 @@
+====================================
+         FACTURA DE VENTA
+====================================
+
+TEXACO ESTACIÓN DE SERVICIO
+RUC: 1234567890001
+Av. Principal #123
+Quito, Ecuador
+Tel: (02) 123-4567
+
+------------------------------------
+FECHA: 15/11/2025
+HORA: 14:30:25
+FACTURA No: 001-001-0012345
+------------------------------------
+
+CLIENTE: CONSUMIDOR FINAL
+RUC/CI: 9999999999999
+
+------------------------------------
+DETALLE DE CONSUMO
+------------------------------------
+
+PRODUCTO         CANT    P.UNIT    TOTAL
+------------------------------------
+SUPER 95         12.50    2.55    31.88
+(Litros)
+
+SUBTOTAL:                        31.88
+IVA 12%:                          3.83
+------------------------------------
+TOTAL A PAGAR:              USD 35.71
+------------------------------------
+
+FORMA DE PAGO: EFECTIVO
+RECIBIDO:                   USD 40.00
+CAMBIO:                     USD  4.29
+
+------------------------------------
+CAJERO: Maria Lopez
+PLACA VEHICULO: ABC-1234
+KILOMETRAJE: 45,230 km
+
+====================================
+   GRACIAS POR SU PREFERENCIA
+====================================

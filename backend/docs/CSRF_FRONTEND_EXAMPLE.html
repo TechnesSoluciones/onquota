@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSRF Protection - Frontend Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <h1>CSRF Protection - Frontend Example</h1>
+
+    <div class="section">
+        <h2>1. Initialize CSRF Token</h2>
+        <p>First, get a CSRF token from the server:</p>
+        <button onclick="initializeCSRF()">Get CSRF Token</button>
+        <div id="csrf-status"></div>
+    </div>
+
+    <div class="section">
+        <h2>2. Test Safe Request (GET)</h2>
+        <p>GET requests don't require CSRF token:</p>
+        <button onclick="testSafeRequest()">Test GET Request</button>
+        <div id="safe-status"></div>
+    </div>
+
+    <div class="section">
+        <h2>3. Test Protected Request (POST)</h2>
+        <p>POST requests require CSRF token:</p>
+        <button onclick="testProtectedRequest()">Test POST with CSRF</button>
+        <button onclick="testProtectedRequestWithoutCSRF()">Test POST without CSRF</button>
+        <div id="protected-status"></div>
+    </div>
+
+    <div class="section">
+        <h2>4. Complete Example</h2>
+        <p>Create an expense (requires CSRF + Auth):</p>
+        <form id="expense-form">
+            <input type="number" id="amount" placeholder="Amount" required>
+            <input type="text" id="description" placeholder="Description" required>
+            <button type="submit">Create Expense</button>
+        </form>
+        <div id="form-status"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/api/v1';
+        let csrfToken = null;
+
+        // Display status message
+        function showStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        // 1. Initialize CSRF Token
+        async function initializeCSRF() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/csrf-token`, {
+                    method: 'GET',
+                    credentials: 'include' // Important: include cookies
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                csrfToken = data.csrf_token;
+
+                // Store in localStorage for persistence
+                localStorage.setItem('csrf_token', csrfToken);
+
+                showStatus('csrf-status', `
+                    <strong class="success">CSRF Token Retrieved Successfully!</strong><br>
+                    Token: <code>${csrfToken.substring(0, 20)}...</code><br>
+                    Cookie set: ✓<br>
+                    Stored in localStorage: ✓
+                `, 'success');
+
+                console.log('CSRF Token:', csrfToken);
+            } catch (error) {
+                showStatus('csrf-status', `
+                    <strong class="error">Failed to get CSRF token</strong><br>
+                    Error: ${error.message}
+                `, 'error');
+                console.error('CSRF initialization error:', error);
+            }
+        }
+
+        // 2. Test Safe Request (GET - no CSRF needed)
+        async function testSafeRequest() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/expenses`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                showStatus('safe-status', `
+                    <strong class="success">GET Request Successful!</strong><br>
+                    Status: ${response.status} ${response.statusText}<br>
+                    CSRF Token Required: ✗ (Safe method)<br>
+                    Note: May return 401 if not authenticated
+                `, 'success');
+
+            } catch (error) {
+                showStatus('safe-status', `
+                    <strong class="error">Request Failed</strong><br>
+                    Error: ${error.message}
+                `, 'error');
+            }
+        }
+
+        // 3. Test Protected Request WITH CSRF
+        async function testProtectedRequest() {
+            if (!csrfToken) {
+                showStatus('protected-status', `
+                    <strong class="error">No CSRF Token</strong><br>
+                    Please click "Get CSRF Token" first
+                `, 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/expenses`, {
+                    method: 'POST',
+                    credentials: 'include', // Include cookies
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken // Include CSRF token
+                    },
+                    body: JSON.stringify({
+                        amount: 100.50,
+                        description: 'Test expense with CSRF'
+                    })
+                });
+
+                const responseText = await response.text();
+                let responseData;
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch {
+                    responseData = { raw: responseText };
+                }
+
+                if (response.status === 403) {
+                    showStatus('protected-status', `
+                        <strong class="error">CSRF Validation Failed!</strong><br>
+                        Status: ${response.status}<br>
+                        Error: ${responseData.detail || 'Unknown error'}
+                    `, 'error');
+                } else {
+                    showStatus('protected-status', `
+                        <strong class="success">POST Request with CSRF Successful!</strong><br>
+                        Status: ${response.status} ${response.statusText}<br>
+                        CSRF Token: ✓ Valid<br>
+                        Note: May return 401 if not authenticated
+                    `, 'success');
+                }
+
+            } catch (error) {
+                showStatus('protected-status', `
+                    <strong class="error">Request Failed</strong><br>
+                    Error: ${error.message}
+                `, 'error');
+            }
+        }
+
+        // 4. Test Protected Request WITHOUT CSRF (should fail)
+        async function testProtectedRequestWithoutCSRF() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/expenses`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                        // NO X-CSRF-Token header
+                    },
+                    body: JSON.stringify({
+                        amount: 100.50,
+                        description: 'Test expense without CSRF'
+                    })
+                });
+
+                const responseData = await response.json();
+
+                if (response.status === 403) {
+                    showStatus('protected-status', `
+                        <strong class="success">CSRF Protection Working!</strong><br>
+                        Status: ${response.status} (Forbidden)<br>
+                        Error: ${responseData.detail}<br>
+                        Error Code: ${responseData.error}<br>
+                        Hint: ${responseData.hint}<br>
+                        ✓ Request blocked as expected
+                    `, 'info');
+                } else {
+                    showStatus('protected-status', `
+                        <strong class="error">WARNING: CSRF Protection Not Working!</strong><br>
+                        Request should have been blocked but succeeded<br>
+                        Status: ${response.status}
+                    `, 'error');
+                }
+
+            } catch (error) {
+                showStatus('protected-status', `
+                    <strong class="error">Request Failed</strong><br>
+                    Error: ${error.message}
+                `, 'error');
+            }
+        }
+
+        // 5. Complete Example with Form
+        document.getElementById('expense-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const amount = document.getElementById('amount').value;
+            const description = document.getElementById('description').value;
+
+            if (!csrfToken) {
+                showStatus('form-status', `
+                    <strong class="error">No CSRF Token</strong><br>
+                    Please click "Get CSRF Token" first
+                `, 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/expenses`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken,
+                        // In real app, also include Authorization header:
+                        // 'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        amount: parseFloat(amount),
+                        description: description
+                    })
+                });
+
+                const responseData = await response.json();
+
+                if (response.ok) {
+                    showStatus('form-status', `
+                        <strong class="success">Expense Created!</strong><br>
+                        <pre>${JSON.stringify(responseData, null, 2)}</pre>
+                    `, 'success');
+                    document.getElementById('expense-form').reset();
+                } else if (response.status === 403) {
+                    showStatus('form-status', `
+                        <strong class="error">CSRF Error</strong><br>
+                        ${responseData.detail}<br>
+                        ${responseData.hint}
+                    `, 'error');
+                } else if (response.status === 401) {
+                    showStatus('form-status', `
+                        <strong class="error">Authentication Required</strong><br>
+                        Please log in first. In a real app, you would:<br>
+                        1. Redirect to login<br>
+                        2. Include Authorization header with token
+                    `, 'error');
+                } else {
+                    showStatus('form-status', `
+                        <strong class="error">Error</strong><br>
+                        Status: ${response.status}<br>
+                        ${JSON.stringify(responseData, null, 2)}
+                    `, 'error');
+                }
+
+            } catch (error) {
+                showStatus('form-status', `
+                    <strong class="error">Request Failed</strong><br>
+                    Error: ${error.message}
+                `, 'error');
+            }
+        });
+
+        // Auto-initialize CSRF token on page load
+        window.addEventListener('load', () => {
+            // Try to get token from localStorage
+            const storedToken = localStorage.getItem('csrf_token');
+            if (storedToken) {
+                csrfToken = storedToken;
+                showStatus('csrf-status', `
+                    <strong class="info">CSRF Token loaded from localStorage</strong><br>
+                    Token: <code>${csrfToken.substring(0, 20)}...</code><br>
+                    Note: Click "Get CSRF Token" to refresh if expired
+                `, 'info');
+            } else {
+                showStatus('csrf-status', `
+                    <strong class="info">No CSRF Token</strong><br>
+                    Click "Get CSRF Token" to initialize
+                `, 'info');
+            }
+        });
+    </script>
+
+    <div class="section">
+        <h2>Notes</h2>
+        <ul>
+            <li><strong>credentials: 'include'</strong> is required to send cookies</li>
+            <li><strong>X-CSRF-Token</strong> header must match the cookie value</li>
+            <li>GET requests don't need CSRF tokens</li>
+            <li>POST/PUT/DELETE/PATCH requests require CSRF tokens</li>
+            <li>Token expires after 1 hour</li>
+            <li>In production, also include Authorization header for authentication</li>
+        </ul>
+    </div>
+</body>
+</html>

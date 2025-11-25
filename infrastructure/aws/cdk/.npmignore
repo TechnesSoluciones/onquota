@@ -1,0 +1,15 @@
+*.ts
+!*.d.ts
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# IDE
+.idea
+.vscode
+
+# Tests
+*.test.ts
+test/
+coverage/

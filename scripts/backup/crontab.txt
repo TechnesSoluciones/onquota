@@ -1,0 +1,23 @@
+# OnQuota Automated Backup Schedule
+# Install with: crontab -e and paste the contents, or use: crontab crontab.txt
+
+# PostgreSQL backups - Every 6 hours (02:00, 08:00, 14:00, 20:00)
+0 2,8,14,20 * * * /scripts/backup/backup-postgres.sh >> /var/log/backup.log 2>&1
+
+# PostgreSQL full backup - Daily at 2:00 AM
+0 2 * * * /scripts/backup/backup-postgres.sh >> /var/log/backup.log 2>&1
+
+# Redis backups - Every 4 hours (01:00, 05:00, 09:00, 13:00, 17:00, 21:00)
+0 1,5,9,13,17,21 * * * /scripts/backup/backup-redis.sh >> /var/log/backup.log 2>&1
+
+# Redis incremental - Every hour
+0 * * * * /scripts/backup/backup-redis.sh >> /var/log/backup.log 2>&1
+
+# Backup log rotation - Weekly on Sunday at 23:00
+0 23 * * 0 find /var/log -name "backup.log" -size +100M -exec logrotate {} \;
+
+# Backup verification - Daily at 03:00 AM
+0 3 * * * /scripts/backup/verify-backups.sh >> /var/log/backup-verify.log 2>&1
+
+# Database maintenance - Weekly on Sunday at 04:00 AM
+0 4 * * 0 /scripts/backup/database-maintenance.sh >> /var/log/maintenance.log 2>&1

@@ -1,0 +1,49 @@
+Codigo,Descripcion,Cantidad,Precio_Unitario,Descuento,Total,Fecha,Cliente,Vendedor,Categoria
+P001,Laptop Dell XPS 15,5,1200.00,10,5400.00,2025-01-15,Empresa ABC,Juan Perez,Tecnologia
+P002,Mouse Logitech MX Master,25,80.00,5,1900.00,2025-01-15,Empresa ABC,Juan Perez,Accesorios
+P003,Teclado Mecanico RGB,15,150.00,15,1912.50,2025-01-16,Tech Solutions,Maria Garcia,Accesorios
+P004,Monitor Samsung 27",10,350.00,8,3220.00,2025-01-16,Tech Solutions,Maria Garcia,Tecnologia
+P005,Webcam Logitech C920,30,120.00,12,3168.00,2025-01-17,Distribuidora XYZ,Carlos Lopez,Accesorios
+P001,Laptop Dell XPS 15,8,1200.00,15,8160.00,2025-01-18,Corporativo SA,Juan Perez,Tecnologia
+P006,Auriculares Sony WH-1000XM4,20,300.00,10,5400.00,2025-01-18,Corporativo SA,Ana Martinez,Accesorios
+P007,Tablet Samsung Galaxy Tab,12,450.00,20,4320.00,2025-01-19,Empresa ABC,Maria Garcia,Tecnologia
+P008,Cable HDMI 2.1,100,15.00,25,1125.00,2025-01-19,Tech Solutions,Carlos Lopez,Accesorios
+P009,Hub USB-C 7 puertos,40,45.00,18,1476.00,2025-01-20,Distribuidora XYZ,Juan Perez,Accesorios
+P010,Impresora HP LaserJet,6,800.00,12,4224.00,2025-01-21,Empresa ABC,Ana Martinez,Oficina
+P004,Monitor Samsung 27",15,350.00,10,4725.00,2025-01-21,Tech Solutions,Maria Garcia,Tecnologia
+P011,Router TP-Link AX6000,8,180.00,15,1224.00,2025-01-22,Corporativo SA,Carlos Lopez,Redes
+P012,Switch Gigabit 24 puertos,4,250.00,20,800.00,2025-01-22,Distribuidora XYZ,Juan Perez,Redes
+P001,Laptop Dell XPS 15,12,1200.00,18,11808.00,2025-01-23,Empresa ABC,Maria Garcia,Tecnologia
+P013,Disco SSD NVMe 1TB,50,120.00,22,4680.00,2025-01-23,Tech Solutions,Ana Martinez,Almacenamiento
+P014,Memoria RAM DDR5 32GB,30,180.00,15,4590.00,2025-01-24,Corporativo SA,Carlos Lopez,Componentes
+P015,Tarjeta Grafica RTX 4070,3,650.00,25,1462.50,2025-01-24,Distribuidora XYZ,Juan Perez,Componentes
+P016,Fuente Poder 850W 80+ Gold,10,120.00,10,1080.00,2025-01-25,Empresa ABC,Maria Garcia,Componentes
+P017,Gabinete NZXT H510,8,90.00,12,633.60,2025-01-25,Tech Solutions,Ana Martinez,Componentes
+P018,Pasta Termica Arctic MX-4,60,8.00,30,336.00,2025-01-26,Corporativo SA,Carlos Lopez,Accesorios
+P001,Laptop Dell XPS 15,20,1200.00,20,19200.00,2025-01-27,Distribuidora XYZ,Juan Perez,Tecnologia
+P019,UPS APC 1500VA,7,280.00,15,1666.00,2025-01-27,Empresa ABC,Maria Garcia,Energia
+P020,Camara IP 4K PoE,15,200.00,18,2460.00,2025-01-28,Tech Solutions,Ana Martinez,Seguridad
+P006,Auriculares Sony WH-1000XM4,18,300.00,12,4752.00,2025-01-28,Corporativo SA,Carlos Lopez,Accesorios
+P021,Microfono Blue Yeti,10,140.00,10,1260.00,2025-01-29,Distribuidora XYZ,Juan Perez,Audio
+P022,Luces LED Panel RGB,25,65.00,20,1300.00,2025-01-29,Empresa ABC,Maria Garcia,Iluminacion
+P023,Brazo Monitor Dual,12,85.00,15,867.00,2025-01-30,Tech Solutions,Ana Martinez,Accesorios
+P024,Adaptador Thunderbolt 3,35,55.00,25,1443.75,2025-01-30,Corporativo SA,Carlos Lopez,Accesorios
+P025,Cargador GaN 100W,45,40.00,18,1476.00,2025-01-31,Distribuidora XYZ,Juan Perez,Accesorios
+P010,Impresora HP LaserJet,9,800.00,14,6192.00,2025-02-01,Empresa ABC,Maria Garcia,Oficina
+P026,Escaner Epson FastFoto,5,450.00,12,1980.00,2025-02-01,Tech Solutions,Ana Martinez,Oficina
+P027,Proyector BenQ 4K,3,1200.00,22,2808.00,2025-02-02,Corporativo SA,Carlos Lopez,Presentacion
+P028,Pantalla Portatil 15.6",20,220.00,15,3740.00,2025-02-02,Distribuidora XYZ,Juan Perez,Accesorios
+P029,Base Enfriadora Laptop,30,35.00,20,840.00,2025-02-03,Empresa ABC,Maria Garcia,Accesorios
+P030,Maletin Laptop 17",22,50.00,25,825.00,2025-02-03,Tech Solutions,Ana Martinez,Accesorios
+P004,Monitor Samsung 27",18,350.00,12,5544.00,2025-02-04,Corporativo SA,Carlos Lopez,Tecnologia
+P031,Webcam 4K Razer Kiyo Pro,12,180.00,10,1944.00,2025-02-04,Distribuidora XYZ,Juan Perez,Accesorios
+P032,Estacion Dock USB-C,16,95.00,18,1243.20,2025-02-05,Empresa ABC,Maria Garcia,Accesorios
+P033,Kit Limpieza Electronica,80,12.00,30,672.00,2025-02-05,Tech Solutions,Ana Martinez,Mantenimiento
+P001,Laptop Dell XPS 15,15,1200.00,25,13500.00,2025-02-06,Corporativo SA,Carlos Lopez,Tecnologia
+P034,Mousepad XL Gamer,40,25.00,15,850.00,2025-02-06,Distribuidora XYZ,Juan Perez,Accesorios
+P035,Organizador Cables,100,8.00,35,520.00,2025-02-07,Empresa ABC,Maria Garcia,Accesorios
+P036,Soporte Laptop Ajustable,28,42.00,12,1033.92,2025-02-07,Tech Solutions,Ana Martinez,Accesorios
+P037,Lampara LED Escritorio,18,55.00,15,841.50,2025-02-08,Corporativo SA,Carlos Lopez,Iluminacion
+P038,Regleta 8 Tomas Protegida,35,28.00,20,784.00,2025-02-08,Distribuidora XYZ,Juan Perez,Energia
+P039,Silla Ergonomica Oficina,10,350.00,18,2870.00,2025-02-09,Empresa ABC,Maria Garcia,Mobiliario
+P040,Escritorio Altura Ajustable,5,800.00,15,3400.00,2025-02-09,Tech Solutions,Ana Martinez,Mobiliario

@@ -1,0 +1,33 @@
+SKU,Product_Name,Qty,Unit_Price,Discount_Pct,Net_Amount,Sale_Date,Customer_ID,Region,Category
+SKU001,Servidor Dell PowerEdge R750,2,4500.00,15,7650.00,2025-01-10,CUST001,Norte,Servidores
+SKU002,Switch Cisco Catalyst 9300,5,2800.00,12,12320.00,2025-01-11,CUST002,Centro,Redes
+SKU003,Firewall Fortinet FortiGate,3,3200.00,10,8640.00,2025-01-12,CUST003,Sur,Seguridad
+SKU004,Storage NetApp FAS2750,1,12000.00,8,11040.00,2025-01-13,CUST001,Norte,Almacenamiento
+SKU005,Licencias VMware vSphere,50,280.00,20,11200.00,2025-01-14,CUST004,Este,Software
+SKU001,Servidor Dell PowerEdge R750,4,4500.00,18,14760.00,2025-01-15,CUST002,Centro,Servidores
+SKU006,Backup Veeam Enterprise,25,450.00,15,9562.50,2025-01-16,CUST005,Oeste,Software
+SKU007,Access Point Ubiquiti UniFi,30,180.00,22,4212.00,2025-01-17,CUST003,Sur,Redes
+SKU008,UPS Eaton 9PX 6000VA,8,2100.00,10,15120.00,2025-01-18,CUST001,Norte,Energia
+SKU009,Rack 42U APC NetShelter,6,1800.00,12,9504.00,2025-01-19,CUST004,Este,Infraestructura
+SKU010,Licencias Microsoft 365 E5,100,55.00,25,4125.00,2025-01-20,CUST002,Centro,Software
+SKU002,Switch Cisco Catalyst 9300,8,2800.00,15,19040.00,2025-01-21,CUST005,Oeste,Redes
+SKU011,Cableado Estructurado Cat6A,500,3.50,30,1225.00,2025-01-22,CUST003,Sur,Infraestructura
+SKU012,Camara Axis P3255-LVE,40,520.00,18,17056.00,2025-01-23,CUST001,Norte,Seguridad
+SKU001,Servidor Dell PowerEdge R750,6,4500.00,20,21600.00,2025-01-24,CUST004,Este,Servidores
+SKU013,Panel Patcheo 48 Puertos,20,85.00,15,1445.00,2025-01-25,CUST002,Centro,Infraestructura
+SKU014,PDU APC Metered Rack,15,380.00,10,5130.00,2025-01-26,CUST005,Oeste,Energia
+SKU015,Licencias AutoCAD,12,1800.00,22,16848.00,2025-01-27,CUST003,Sur,Software
+SKU003,Firewall Fortinet FortiGate,7,3200.00,12,19712.00,2025-01-28,CUST001,Norte,Seguridad
+SKU016,Telefonia IP Cisco 8861,50,280.00,18,11480.00,2025-01-29,CUST004,Este,Comunicaciones
+SKU017,Central Telefonica Elastix,2,3500.00,15,5950.00,2025-01-30,CUST002,Centro,Comunicaciones
+SKU004,Storage NetApp FAS2750,2,12000.00,10,21600.00,2025-01-31,CUST005,Oeste,Almacenamiento
+SKU018,Tarjetas Transceivers SFP+,60,95.00,25,4275.00,2025-02-01,CUST003,Sur,Redes
+SKU019,Consola KVM IP 16 Puertos,4,850.00,12,2992.00,2025-02-02,CUST001,Norte,Infraestructura
+SKU020,Sistema Deteccion Intrusos,3,4200.00,20,10080.00,2025-02-03,CUST004,Este,Seguridad
+SKU005,Licencias VMware vSphere,80,280.00,22,17472.00,2025-02-04,CUST002,Centro,Software
+SKU021,Aire Acondicionado Precision,2,8500.00,8,15640.00,2025-02-05,CUST005,Oeste,Climatizacion
+SKU002,Switch Cisco Catalyst 9300,10,2800.00,18,22960.00,2025-02-06,CUST003,Sur,Redes
+SKU022,Escaner Documentos Fujitsu,15,680.00,15,8670.00,2025-02-07,CUST001,Norte,Oficina
+SKU023,Videoconferencia Poly Studio X50,5,2400.00,10,10800.00,2025-02-08,CUST004,Este,Comunicaciones
+SKU024,Licencias Adobe Creative Cloud,35,600.00,20,16800.00,2025-02-09,CUST002,Centro,Software
+SKU001,Servidor Dell PowerEdge R750,8,4500.00,25,27000.00,2025-02-10,CUST005,Oeste,Servidores

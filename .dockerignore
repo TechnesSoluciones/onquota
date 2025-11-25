@@ -1,0 +1,41 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+README.md
+Context_Docs/
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Environment
+.env
+.env.local
+
+# Dependencies
+**/node_modules/
+**/__pycache__/
+**/venv/
+**/env/
+
+# Build outputs
+**/build/
+**/dist/
+**/.next/
+**/out/
+
+# Logs
+**/*.log
+
+# Testing
+**/coverage/
+**/.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db

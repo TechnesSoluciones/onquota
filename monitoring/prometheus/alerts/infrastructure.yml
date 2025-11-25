@@ -1,0 +1,120 @@
+# Infrastructure-level alerts for OnQuota
+
+groups:
+  - name: infrastructure_alerts
+    interval: 30s
+    rules:
+      # Database connection pool exhaustion
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          (pg_stat_database_numbackends / pg_settings_max_connections) > 0.80
+        for: 5m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "{{ $value | humanizePercentage }} of connections in use (threshold: 80%)"
+          runbook: "https://docs.onquota.com/runbooks/db-pool-exhausted"
+
+      # Database slow queries
+      - alert: DatabaseSlowQueries
+        expr: |
+          rate(pg_stat_statements_mean_exec_time[5m]) > 1000
+        for: 10m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database has slow queries"
+          description: "Average query time is {{ $value }}ms (threshold: 1000ms)"
+          runbook: "https://docs.onquota.com/runbooks/slow-queries"
+
+      # PostgreSQL down
+      - alert: PostgreSQLDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL has been unreachable for more than 1 minute"
+          runbook: "https://docs.onquota.com/runbooks/postgres-down"
+
+      # Redis down
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been unreachable for more than 1 minute"
+          runbook: "https://docs.onquota.com/runbooks/redis-down"
+
+      # Redis high memory usage
+      - alert: RedisHighMemoryUsage
+        expr: |
+          (redis_memory_used_bytes / redis_memory_max_bytes) > 0.90
+        for: 5m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Redis memory usage is high"
+          description: "Redis is using {{ $value | humanizePercentage }} of max memory (threshold: 90%)"
+          runbook: "https://docs.onquota.com/runbooks/redis-memory"
+
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}% (threshold: 80%)"
+          runbook: "https://docs.onquota.com/runbooks/high-cpu"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.85
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value | humanizePercentage }} (threshold: 85%)"
+          runbook: "https://docs.onquota.com/runbooks/high-memory"
+
+      # Disk space low
+      - alert: DiskSpaceLow
+        expr: |
+          (1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs"} / node_filesystem_size_bytes)) > 0.80
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk usage is {{ $value | humanizePercentage }} on {{ $labels.mountpoint }} (threshold: 80%)"
+          runbook: "https://docs.onquota.com/runbooks/low-disk-space"
+
+      # Disk space critical
+      - alert: DiskSpaceCritical
+        expr: |
+          (1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs"} / node_filesystem_size_bytes)) > 0.90
+        for: 5m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: "Critical disk space on {{ $labels.instance }}"
+          description: "Disk usage is {{ $value | humanizePercentage }} on {{ $labels.mountpoint }} (threshold: 90%)"
+          runbook: "https://docs.onquota.com/runbooks/low-disk-space"
