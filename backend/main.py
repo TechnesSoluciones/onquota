@@ -22,6 +22,10 @@ from modules.auth.router import router as auth_router
 from modules.expenses.router import router as expenses_router
 from modules.clients.router import router as clients_router
 from modules.sales.router import router as sales_router
+from modules.sales.product_lines.router import router as product_lines_router
+from modules.sales.quotations.router import router as quotations_router
+from modules.sales.controls.router import router as sales_controls_router
+from modules.sales.quotas.router import router as quotas_router
 from modules.dashboard.router import router as dashboard_router
 from modules.transport.router import router as transport_router
 from modules.ocr.router import router as ocr_router
@@ -30,6 +34,9 @@ from modules.notifications.router import router as notifications_router
 from modules.opportunities.router import router as opportunities_router
 from modules.analytics.router import router as analytics_router
 from modules.visits.router import router as visits_router
+from modules.visits.router_enhanced import router as visit_topics_router
+from modules.visits.commitment_router import router as commitments_router
+from modules.spa.router import router as spa_router
 
 logger = get_logger(__name__)
 
@@ -128,6 +135,10 @@ app.include_router(auth_router, prefix=settings.API_PREFIX)
 app.include_router(expenses_router, prefix=settings.API_PREFIX)
 app.include_router(clients_router, prefix=settings.API_PREFIX)
 app.include_router(sales_router, prefix=settings.API_PREFIX)
+app.include_router(product_lines_router, prefix=settings.API_PREFIX)
+app.include_router(quotations_router, prefix=settings.API_PREFIX)
+app.include_router(sales_controls_router, prefix=settings.API_PREFIX)
+app.include_router(quotas_router, prefix=settings.API_PREFIX)
 app.include_router(dashboard_router, prefix=settings.API_PREFIX)
 app.include_router(transport_router, prefix=settings.API_PREFIX)
 app.include_router(ocr_router, prefix=settings.API_PREFIX)
@@ -136,6 +147,9 @@ app.include_router(notifications_router, prefix=settings.API_PREFIX)
 app.include_router(opportunities_router, prefix=settings.API_PREFIX)
 app.include_router(analytics_router, prefix=settings.API_PREFIX)
 app.include_router(visits_router, prefix=settings.API_PREFIX)
+app.include_router(visit_topics_router, prefix=settings.API_PREFIX)
+app.include_router(commitments_router, prefix=settings.API_PREFIX)
+app.include_router(spa_router, prefix=settings.API_PREFIX)
 
 
 @app.get("/")

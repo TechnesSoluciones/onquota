@@ -16,6 +16,36 @@ from models.transport import (
     ShipmentExpense,
     ExpenseType,
 )
+from models.client import Client, ClientStatus, ClientType, Industry
+from models.ocr_job import OCRJob, OCRJobStatus
+from models.notification import Notification, NotificationType, NotificationCategory
+from models.opportunity import Opportunity, OpportunityStage
+from models.analysis import Analysis, AnalysisStatus, FileType
+from models.account_plan import AccountPlan, Milestone, SWOTItem, PlanStatus, MilestoneStatus, SWOTCategory
+from models.visit import (
+    Visit,
+    Call,
+    VisitStatus,
+    VisitType,
+    CallType,
+    CallStatus,
+    VisitTopic,
+    VisitTopicDetail,
+    VisitOpportunity,
+    Commitment,
+    CommitmentType,
+    CommitmentPriority,
+    CommitmentStatus,
+)
+from models.spa import SPAAgreement, SPAUploadLog
+from models.quotation import Quotation, QuoteStatus
+from models.sales_control import (
+    SalesControl,
+    SalesControlStatus,
+    SalesProductLine,
+    SalesControlLine,
+)
+from models.quota import Quota, QuotaLine
 
 # All models must be imported here for Alembic autogenerate to work
 __all__ = [
@@ -38,4 +68,47 @@ __all__ = [
     "ShipmentStatus",
     "ShipmentExpense",
     "ExpenseType",
+    "Client",
+    "ClientStatus",
+    "ClientType",
+    "Industry",
+    "OCRJob",
+    "OCRJobStatus",
+    "Notification",
+    "NotificationType",
+    "NotificationCategory",
+    "Opportunity",
+    "OpportunityStage",
+    "Analysis",
+    "AnalysisStatus",
+    "FileType",
+    "AccountPlan",
+    "Milestone",
+    "SWOTItem",
+    "PlanStatus",
+    "MilestoneStatus",
+    "SWOTCategory",
+    "Visit",
+    "Call",
+    "VisitStatus",
+    "VisitType",
+    "CallType",
+    "CallStatus",
+    "VisitTopic",
+    "VisitTopicDetail",
+    "VisitOpportunity",
+    "Commitment",
+    "CommitmentType",
+    "CommitmentPriority",
+    "CommitmentStatus",
+    "SPAAgreement",
+    "SPAUploadLog",
+    "Quotation",
+    "QuoteStatus",
+    "SalesControl",
+    "SalesControlStatus",
+    "SalesProductLine",
+    "SalesControlLine",
+    "Quota",
+    "QuotaLine",
 ]

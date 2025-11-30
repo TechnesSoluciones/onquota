@@ -19,6 +19,9 @@ import {
   Target,
   Bell,
   MapPin,
+  AlertTriangle,
+  FileText,
+  CheckCircle2,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -39,6 +42,11 @@ const navigation: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
+    name: 'Alertas',
+    href: '/alerts',
+    icon: AlertTriangle,
+  },
+  {
     name: 'Oportunidades',
     href: '/opportunities',
     icon: Target,
@@ -48,8 +56,9 @@ const navigation: NavItem[] = [
     href: '/expenses',
     icon: Receipt,
     children: [
-      { name: 'Lista', href: '/expenses' },
-      { name: 'Estadísticas', href: '/expenses/stats' },
+      { name: 'Nuevo Gasto', href: '/expenses/new' },
+      { name: 'Histórico', href: '/expenses' },
+      { name: 'Comparación Mensual', href: '/expenses/comparison' },
     ],
   },
   {
@@ -57,22 +66,33 @@ const navigation: NavItem[] = [
     href: '/clients',
     icon: Users,
     children: [
-      { name: 'Lista', href: '/clients' },
-      { name: 'Estadísticas', href: '/clients/stats' },
+      { name: 'Listado de Clientes', href: '/clients' },
+      { name: 'Registrar Nuevo Cliente', href: '/clients/new' },
     ],
   },
   {
     name: 'Visitas',
     href: '/visits',
     icon: MapPin,
+    children: [
+      { name: 'Listado de Visitas', href: '/visits' },
+      { name: 'Nueva Visita', href: '/visits/new' },
+    ],
+  },
+  {
+    name: 'Compromisos',
+    href: '/commitments',
+    icon: CheckCircle2,
   },
   {
     name: 'Ventas',
     href: '/sales',
     icon: TrendingUp,
     children: [
-      { name: 'Lista', href: '/sales' },
-      { name: 'Estadísticas', href: '/sales/stats' },
+      { name: 'Dashboard de Cuotas', href: '/sales/quotas' },
+      { name: 'Cotizaciones', href: '/sales/quotations' },
+      { name: 'Controles de Venta', href: '/sales/controls' },
+      { name: 'Líneas de Producto', href: '/sales/product-lines' },
     ],
   },
   {
@@ -82,6 +102,15 @@ const navigation: NavItem[] = [
     children: [
       { name: 'Vehículos', href: '/transport/vehicles' },
       { name: 'Envíos', href: '/transport/shipments' },
+    ],
+  },
+  {
+    name: 'SPAs',
+    href: '/spa',
+    icon: FileText,
+    children: [
+      { name: 'Listado de SPAs', href: '/spa' },
+      { name: 'Cargar archivo', href: '/spa/upload' },
     ],
   },
   {
