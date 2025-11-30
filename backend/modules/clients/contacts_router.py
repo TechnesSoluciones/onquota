@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.deps import get_current_user
+from api.dependencies import get_current_user
 from models.user import User
 from models.client import Client
 from models.client_contact import ClientContact

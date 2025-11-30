@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, condecimal
 
 from models.quotation import QuoteStatus
 
@@ -22,7 +22,7 @@ class QuotationBase(BaseModel):
     quote_date: date = Field(..., description="Date quote was created")
     client_id: UUID = Field(..., description="Client ID")
     opportunity_id: Optional[UUID] = Field(None, description="Opportunity ID (optional)")
-    quoted_amount: Decimal = Field(..., ge=0, max_digits=15, decimal_places=2, description="Total quote value")
+    quoted_amount: condecimal(ge=0, max_digits=15, decimal_places=2) = Field(..., description="Total quote value")
     currency: str = Field(default="USD", min_length=3, max_length=3, description="Currency code")
     status: QuoteStatus = Field(default=QuoteStatus.COTIZADO, description="Quote status")
     notes: Optional[str] = Field(None, max_length=10000, description="Additional notes")
@@ -51,7 +51,7 @@ class QuotationUpdate(BaseModel):
     client_id: Optional[UUID] = None
     opportunity_id: Optional[UUID] = None
     assigned_to: Optional[UUID] = None
-    quoted_amount: Optional[Decimal] = Field(None, ge=0, max_digits=15, decimal_places=2)
+    quoted_amount: Optional[condecimal(ge=0, max_digits=15, decimal_places=2)] = None
     currency: Optional[str] = Field(None, min_length=3, max_length=3)
     status: Optional[QuoteStatus] = None
     notes: Optional[str] = Field(None, max_length=10000)

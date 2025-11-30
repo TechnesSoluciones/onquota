@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, condecimal, model_validator
 
 
 # ============================================
@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 class QuotaLineBase(BaseModel):
     """Base quota line schema"""
     product_line_id: UUID = Field(..., description="Product line ID")
-    quota_amount: Decimal = Field(..., ge=0, max_digits=15, decimal_places=2, description="Quota for this product line")
+    quota_amount: condecimal(ge=0, max_digits=15, decimal_places=2) = Field(..., description="Quota for this product line")
 
 
 class QuotaLineCreate(QuotaLineBase):
@@ -27,7 +27,7 @@ class QuotaLineCreate(QuotaLineBase):
 
 class QuotaLineUpdate(BaseModel):
     """Schema for updating a quota line"""
-    quota_amount: Optional[Decimal] = Field(None, ge=0, max_digits=15, decimal_places=2)
+    quota_amount: Optional[condecimal(ge=0, max_digits=15, decimal_places=2)] = None
 
 
 class QuotaLineResponse(QuotaLineBase):

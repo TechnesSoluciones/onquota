@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator, condecimal
 
 from models.sales_control import SalesControlStatus
 
@@ -19,7 +19,7 @@ from models.sales_control import SalesControlStatus
 class SalesControlLineBase(BaseModel):
     """Base sales control line schema"""
     product_line_id: UUID = Field(..., description="Product line ID")
-    line_amount: Decimal = Field(..., ge=0, max_digits=15, decimal_places=2, description="Amount for this product line")
+    line_amount: condecimal(ge=0, max_digits=15, decimal_places=2) = Field(..., description="Amount for this product line")
     description: Optional[str] = Field(None, max_length=1000, description="Line description")
 
 
@@ -31,7 +31,7 @@ class SalesControlLineCreate(SalesControlLineBase):
 class SalesControlLineUpdate(BaseModel):
     """Schema for updating a sales control line"""
     product_line_id: Optional[UUID] = None
-    line_amount: Optional[Decimal] = Field(None, ge=0, max_digits=15, decimal_places=2)
+    line_amount: Optional[condecimal(ge=0, max_digits=15, decimal_places=2)] = None
     description: Optional[str] = Field(None, max_length=1000)
 
 
@@ -61,7 +61,7 @@ class SalesControlBase(BaseModel):
     lead_time_days: Optional[int] = Field(None, ge=0, le=365, description="Lead time in days")
     client_id: UUID = Field(..., description="Client ID")
     quotation_id: Optional[UUID] = Field(None, description="Quotation ID (optional)")
-    sales_control_amount: Decimal = Field(..., ge=0, max_digits=15, decimal_places=2, description="Order value")
+    sales_control_amount: condecimal(ge=0, max_digits=15, decimal_places=2) = Field(..., description="Order value")
     currency: str = Field(default="USD", min_length=3, max_length=3, description="Currency code")
     status: SalesControlStatus = Field(default=SalesControlStatus.PENDING, description="Order status")
     concept: Optional[str] = Field(None, max_length=5000, description="PO description/concept")
@@ -105,7 +105,7 @@ class SalesControlUpdate(BaseModel):
     client_id: Optional[UUID] = None
     quotation_id: Optional[UUID] = None
     assigned_to: Optional[UUID] = None
-    sales_control_amount: Optional[Decimal] = Field(None, ge=0, max_digits=15, decimal_places=2)
+    sales_control_amount: Optional[condecimal(ge=0, max_digits=15, decimal_places=2)] = None
     currency: Optional[str] = Field(None, min_length=3, max_length=3)
     status: Optional[SalesControlStatus] = None
     concept: Optional[str] = Field(None, max_length=5000)
