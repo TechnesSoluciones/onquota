@@ -73,6 +73,7 @@ class Client(BaseModel):
     # Business Information
     industry: Mapped[Optional[Industry]] = mapped_column(String(50), nullable=True, index=True)
     tax_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    bpid: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, index=True, unique=True, comment="Business Partner ID for SPA linking")
 
     # CRM Status
     status: Mapped[ClientStatus] = mapped_column(String(20), nullable=False, default=ClientStatus.LEAD, index=True)
@@ -101,6 +102,9 @@ class Client(BaseModel):
 
     # Status
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    # Relationships
+    contacts = relationship("ClientContact", back_populates="client", cascade="all, delete-orphan", lazy="selectin")
 
     def __repr__(self) -> str:
         return f"<Client(id={self.id}, name='{self.name}', status='{self.status}')>"

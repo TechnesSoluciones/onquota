@@ -17,6 +17,7 @@ from models.transport import (
     ExpenseType,
 )
 from models.client import Client, ClientStatus, ClientType, Industry
+from models.client_contact import ClientContact
 from models.ocr_job import OCRJob, OCRJobStatus
 from models.notification import Notification, NotificationType, NotificationCategory
 from models.opportunity import Opportunity, OpportunityStage
@@ -72,6 +73,7 @@ __all__ = [
     "ClientStatus",
     "ClientType",
     "Industry",
+    "ClientContact",
     "OCRJob",
     "OCRJobStatus",
     "Notification",

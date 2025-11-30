@@ -21,6 +21,7 @@ from core.csrf_router import router as csrf_router
 from modules.auth.router import router as auth_router
 from modules.expenses.router import router as expenses_router
 from modules.clients.router import router as clients_router
+from modules.clients.contacts_router import router as client_contacts_router
 from modules.sales.router import router as sales_router
 from modules.sales.product_lines.router import router as product_lines_router
 from modules.sales.quotations.router import router as quotations_router
@@ -134,6 +135,7 @@ app.include_router(csrf_router, prefix=settings.API_PREFIX, tags=["Security"])
 app.include_router(auth_router, prefix=settings.API_PREFIX)
 app.include_router(expenses_router, prefix=settings.API_PREFIX)
 app.include_router(clients_router, prefix=settings.API_PREFIX)
+app.include_router(client_contacts_router, prefix=settings.API_PREFIX)
 app.include_router(sales_router, prefix=settings.API_PREFIX)
 app.include_router(product_lines_router, prefix=settings.API_PREFIX)
 app.include_router(quotations_router, prefix=settings.API_PREFIX)

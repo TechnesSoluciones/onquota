@@ -1,0 +1,1 @@
+export { ClientContactsManager } from './ClientContactsManager'

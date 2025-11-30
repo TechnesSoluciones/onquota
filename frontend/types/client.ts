@@ -72,6 +72,7 @@ export interface ClientCreate {
   // Business Information
   industry?: Industry | null
   tax_id?: string | null
+  bpid?: string | null
 
   // CRM Status
   status?: ClientStatus
@@ -128,6 +129,7 @@ export interface ClientUpdate {
   // Business Information
   industry?: Industry | null
   tax_id?: string | null
+  bpid?: string | null
 
   // CRM Status
   status?: ClientStatus | null
@@ -187,6 +189,7 @@ export interface ClientResponse {
   // Business Information
   industry: Industry | null
   tax_id: string | null
+  bpid: string | null
 
   // CRM Status
   status: ClientStatus
@@ -268,3 +271,46 @@ export interface ClientFilters {
  * Alias for ClientResponse
  */
 export type Client = ClientResponse
+
+/**
+ * Client Contact (Employee) Types
+ * Synced with: backend/schemas/client.py - ClientContact schemas
+ */
+
+export interface ClientContactBase {
+  name: string
+  email?: string | null
+  phone?: string | null
+  position?: string | null
+  is_primary?: boolean
+  is_active?: boolean
+}
+
+export interface ClientContactCreate extends ClientContactBase {}
+
+export interface ClientContactUpdate {
+  name?: string | null
+  email?: string | null
+  phone?: string | null
+  position?: string | null
+  is_primary?: boolean | null
+  is_active?: boolean | null
+}
+
+export interface ClientContact extends ClientContactBase {
+  id: string
+  tenant_id: string
+  client_id: string
+  is_primary: boolean
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface ClientContactListResponse {
+  items: ClientContact[]
+  total: number
+  page: number
+  page_size: number
+  pages: number
+}

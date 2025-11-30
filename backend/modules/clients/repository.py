@@ -124,6 +124,34 @@ class ClientRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def get_by_bpid(
+        self,
+        bpid: str,
+        tenant_id: UUID
+    ) -> Optional[Client]:
+        """
+        Get client by Business Partner ID (BPID)
+
+        Used for SPA linking and external system integration.
+
+        Args:
+            bpid: Business Partner ID from external system
+            tenant_id: Tenant ID for security isolation
+
+        Returns:
+            Client if found, None otherwise
+        """
+        result = await self.session.execute(
+            select(Client).where(
+                and_(
+                    Client.bpid == bpid,
+                    Client.tenant_id == tenant_id,
+                    Client.is_deleted == False
+                )
+            )
+        )
+        return result.scalar_one_or_none()
+
     async def list_clients(
         self,
         tenant_id: UUID,

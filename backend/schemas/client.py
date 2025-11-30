@@ -10,6 +10,7 @@ from uuid import UUID
 from datetime import date, datetime
 
 from models.client import ClientStatus, ClientType, Industry
+from core.constants import CURRENCY_CODES
 
 
 # ============================================================================
@@ -41,6 +42,7 @@ class ClientCreate(BaseModel):
     # Business Information
     industry: Optional[Industry] = Field(None, description="Industry sector")
     tax_id: Optional[str] = Field(None, max_length=50, description="Tax ID / VAT number")
+    bpid: Optional[str] = Field(None, max_length=50, description="Business Partner ID for SPA linking")
 
     # CRM Status
     status: ClientStatus = Field(default=ClientStatus.LEAD, description="Client status")
@@ -73,10 +75,12 @@ class ClientCreate(BaseModel):
     @field_validator("preferred_currency")
     @classmethod
     def validate_currency(cls, v):
-        """Validate currency code format"""
-        if v and len(v) != 3:
-            raise ValueError("Currency code must be 3 characters (e.g., USD, EUR)")
-        return v.upper() if v else v
+        """Validate currency code"""
+        if v:
+            v = v.upper()
+            if v not in CURRENCY_CODES:
+                raise ValueError(f"Currency must be one of: {', '.join(CURRENCY_CODES)}")
+        return v
 
     @field_validator("website", "linkedin_url")
     @classmethod
@@ -123,6 +127,7 @@ class ClientUpdate(BaseModel):
     # Business Information
     industry: Optional[Industry] = None
     tax_id: Optional[str] = Field(None, max_length=50)
+    bpid: Optional[str] = Field(None, max_length=50)
 
     # CRM Status
     status: Optional[ClientStatus] = None
@@ -155,10 +160,12 @@ class ClientUpdate(BaseModel):
     @field_validator("preferred_currency")
     @classmethod
     def validate_currency(cls, v):
-        """Validate currency code format"""
-        if v and len(v) != 3:
-            raise ValueError("Currency code must be 3 characters (e.g., USD, EUR)")
-        return v.upper() if v else v
+        """Validate currency code"""
+        if v:
+            v = v.upper()
+            if v not in CURRENCY_CODES:
+                raise ValueError(f"Currency must be one of: {', '.join(CURRENCY_CODES)}")
+        return v
 
     @field_validator("website", "linkedin_url")
     @classmethod
@@ -204,6 +211,7 @@ class ClientResponse(BaseModel):
     # Business Information
     industry: Optional[Industry] = None
     tax_id: Optional[str] = None
+    bpid: Optional[str] = None
 
     # CRM Status
     status: ClientStatus
@@ -264,6 +272,65 @@ class ClientSummary(BaseModel):
     inactive_count: int
     lost_count: int
     by_industry: list[dict]  # [{"industry": "technology", "count": 10}, ...]
+
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
+# Client Contact Schemas
+# ============================================================================
+
+class ClientContactBase(BaseModel):
+    """Base schema for client contact"""
+    name: str = Field(..., min_length=1, max_length=255, description="Contact name")
+    email: Optional[EmailStr] = Field(None, description="Contact email")
+    phone: Optional[str] = Field(None, max_length=50, description="Contact phone")
+    position: Optional[str] = Field(None, max_length=200, description="Job title/position")
+    is_primary: bool = Field(default=False, description="Is primary contact")
+    is_active: bool = Field(default=True, description="Is contact active")
+
+    class Config:
+        from_attributes = True
+
+
+class ClientContactCreate(ClientContactBase):
+    """Schema for creating a new client contact"""
+    pass
+
+
+class ClientContactUpdate(BaseModel):
+    """Schema for updating a client contact"""
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = Field(None, max_length=50)
+    position: Optional[str] = Field(None, max_length=200)
+    is_primary: Optional[bool] = None
+    is_active: Optional[bool] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ClientContactResponse(ClientContactBase):
+    """Schema for client contact response"""
+    id: UUID
+    tenant_id: UUID
+    client_id: UUID
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ClientContactListResponse(BaseModel):
+    """Schema for paginated client contact list"""
+    items: list[ClientContactResponse]
+    total: int
+    page: int
+    page_size: int
+    pages: int
 
     class Config:
         from_attributes = True
