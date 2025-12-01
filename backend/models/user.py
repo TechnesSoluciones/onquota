@@ -53,7 +53,7 @@ class User(Base):
 
     # Role and permissions
     role = Column(
-        SQLEnum(UserRole, name="user_role"),
+        SQLEnum(UserRole, name="user_role", values_callable=lambda x: [e.value for e in x]),
         default=UserRole.SALES_REP,
         nullable=False,
         index=True,
