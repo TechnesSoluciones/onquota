@@ -22,7 +22,7 @@ from modules.reports.schemas import (
 )
 
 
-router = APIRouter(prefix="/api/v1/reports", tags=["Reports"])
+router = APIRouter(prefix="/reports", tags=["Reports"])
 
 
 # ============================================================================
