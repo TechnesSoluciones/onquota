@@ -22,8 +22,9 @@ import {
 } from '@/components/ui/select'
 import { Loader2, Plus, Trash2, Calculator } from 'lucide-react'
 import { getClients } from '@/lib/api/clients'
+import { quotationsApi } from '@/lib/api/quotations'
 import { formatDate } from '@/lib/utils'
-import type { SalesControl, SalesControlCreate, SalesControlUpdate } from '@/types/sales'
+import type { SalesControl, SalesControlCreate, SalesControlUpdate, QuotationListItem } from '@/types/sales'
 import type { ClientResponse } from '@/types/client'
 import type { ProductLine } from '@/types/sales'
 
@@ -36,6 +37,7 @@ const salesControlSchema = z.object({
   po_reception_date: z.string().min(1, 'PO reception date is required'),
   lead_time_days: z.number().int().min(0).max(365).optional().nullable(),
   client_id: z.string().min(1, 'Client is required'),
+  quotation_id: z.string().optional().nullable(),
   assigned_to: z.string().min(1, 'Assigned to is required'),
   total_amount: z.number().min(0.01, 'Total amount must be greater than 0'),
   currency: z.string().default('COP'),
@@ -65,6 +67,7 @@ const CURRENCIES = [
   { value: 'USD', label: 'USD - US Dollar' },
   { value: 'EUR', label: 'EUR - Euro' },
   { value: 'MXN', label: 'MXN - Mexican Peso' },
+  { value: 'DOP', label: 'DOP - Dominican Peso' },
 ]
 
 export function SalesControlForm({
@@ -78,6 +81,8 @@ export function SalesControlForm({
   const isEditing = !!salesControl
   const [clients, setClients] = useState<ClientResponse[]>([])
   const [loadingClients, setLoadingClients] = useState(false)
+  const [quotations, setQuotations] = useState<QuotationListItem[]>([])
+  const [loadingQuotations, setLoadingQuotations] = useState(false)
   const [promiseDate, setPromiseDate] = useState<string>('')
 
   const {
@@ -95,6 +100,7 @@ export function SalesControlForm({
       po_reception_date: salesControl?.po_reception_date || new Date().toISOString().split('T')[0],
       lead_time_days: salesControl?.lead_time_days || 30,
       client_id: salesControl?.client_id || '',
+      quotation_id: salesControl?.quotation_id || '',
       assigned_to: salesControl?.assigned_to || '',
       total_amount: salesControl?.total_amount || 0,
       currency: salesControl?.currency || 'COP',
@@ -114,6 +120,7 @@ export function SalesControlForm({
   const leadTimeDays = watch('lead_time_days')
   const lines = watch('lines')
   const totalAmount = watch('total_amount')
+  const clientId = watch('client_id')
 
   // Calculate promise date
   useEffect(() => {
@@ -143,6 +150,32 @@ export function SalesControlForm({
     fetchClients()
   }, [])
 
+  // Fetch quotations when client is selected
+  useEffect(() => {
+    const fetchQuotations = async () => {
+      if (!clientId) {
+        setQuotations([])
+        return
+      }
+
+      try {
+        setLoadingQuotations(true)
+        const response = await quotationsApi.getQuotations({
+          client_id: clientId,
+          page: 1,
+          page_size: 100,
+        })
+        setQuotations(response.items)
+      } catch (error) {
+        console.error('Failed to load quotations:', error)
+        setQuotations([])
+      } finally {
+        setLoadingQuotations(false)
+      }
+    }
+    fetchQuotations()
+  }, [clientId])
+
   useEffect(() => {
     if (salesControl) {
       reset({
@@ -151,6 +184,7 @@ export function SalesControlForm({
         po_reception_date: salesControl.po_reception_date,
         lead_time_days: salesControl.lead_time_days || 30,
         client_id: salesControl.client_id,
+        quotation_id: salesControl.quotation_id || '',
         assigned_to: salesControl.assigned_to,
         total_amount: salesControl.total_amount,
         currency: salesControl.currency || 'COP',
@@ -171,6 +205,7 @@ export function SalesControlForm({
     const submitData = {
       ...data,
       lead_time_days: data.lead_time_days || null,
+      quotation_id: data.quotation_id || null,
       concept: data.concept || null,
       notes: data.notes || null,
     }
@@ -338,6 +373,47 @@ export function SalesControlForm({
             <p className="text-sm text-red-500">{errors.assigned_to.message}</p>
           )}
         </div>
+      </div>
+
+      {/* Quotation Selection (Optional) */}
+      <div className="space-y-2">
+        <Label htmlFor="quotation_id">
+          Related Quotation (Optional)
+        </Label>
+        <Controller
+          name="quotation_id"
+          control={control}
+          render={({ field }) => (
+            <Select
+              onValueChange={field.onChange}
+              value={field.value || ''}
+              disabled={isLoading || loadingQuotations || !clientId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={
+                  !clientId
+                    ? "Select a client first"
+                    : loadingQuotations
+                    ? "Loading quotations..."
+                    : quotations.length === 0
+                    ? "No quotations found for this client"
+                    : "Select a quotation"
+                } />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None (No quotation)</SelectItem>
+                {quotations.map((quotation) => (
+                  <SelectItem key={quotation.id} value={quotation.id}>
+                    {quotation.quotation_number} - {quotation.currency} {quotation.total_amount.toLocaleString()} ({quotation.status})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
+        <p className="text-xs text-muted-foreground">
+          Link this sales control to a quotation to track which quote was won
+        </p>
       </div>
 
       {/* Total Amount and Currency */}

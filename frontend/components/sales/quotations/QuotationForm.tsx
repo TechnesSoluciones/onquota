@@ -52,6 +52,7 @@ const CURRENCIES = [
   { value: 'USD', label: 'USD - US Dollar' },
   { value: 'EUR', label: 'EUR - Euro' },
   { value: 'MXN', label: 'MXN - Mexican Peso' },
+  { value: 'DOP', label: 'DOP - Dominican Peso' },
 ]
 
 export function QuotationForm({
