@@ -96,6 +96,8 @@ class User(Base):
         cascade="all, delete-orphan",
     )
     quotations = relationship("Quotation", back_populates="sales_rep", lazy="select")
+    sales_controls = relationship("SalesControl", back_populates="sales_rep", lazy="select")
+    quotas = relationship("Quota", back_populates="user", lazy="select")
 
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', role='{self.role}')>"

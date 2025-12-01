@@ -106,6 +106,7 @@ class Client(BaseModel):
     # Relationships
     contacts = relationship("ClientContact", back_populates="client", cascade="all, delete-orphan", lazy="selectin")
     quotations = relationship("Quotation", back_populates="client", lazy="select")
+    sales_controls = relationship("SalesControl", back_populates="client", lazy="select")
 
     def __repr__(self) -> str:
         return f"<Client(id={self.id}, name='{self.name}', status='{self.status}')>"
