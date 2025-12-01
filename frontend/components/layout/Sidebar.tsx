@@ -21,6 +21,7 @@ import {
   AlertTriangle,
   FileText,
   CheckCircle2,
+  BarChart3,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -102,6 +103,11 @@ const navigation: NavItem[] = [
       { name: 'Listado de SPAs', href: '/spa' },
       { name: 'Cargar archivo', href: '/spa/upload' },
     ],
+  },
+  {
+    name: 'Reportes',
+    href: '/reports',
+    icon: BarChart3,
   },
   {
     name: 'Notificaciones',
