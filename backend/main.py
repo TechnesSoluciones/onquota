@@ -39,6 +39,7 @@ from modules.visits.router_enhanced import router as visit_topics_router
 from modules.visits.commitment_router import router as commitments_router
 from modules.spa.router import router as spa_router
 from modules.lta.router import router as lta_router
+from modules.reports.router import router as reports_router
 
 logger = get_logger(__name__)
 
@@ -154,6 +155,7 @@ app.include_router(visit_topics_router, prefix=settings.API_PREFIX)
 app.include_router(commitments_router, prefix=settings.API_PREFIX)
 app.include_router(spa_router, prefix=settings.API_PREFIX)
 app.include_router(lta_router, prefix=settings.API_PREFIX)
+app.include_router(reports_router, prefix=settings.API_PREFIX)
 
 
 @app.get("/")
