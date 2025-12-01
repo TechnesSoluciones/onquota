@@ -14,7 +14,6 @@ import {
   Users,
   TrendingUp,
   Settings,
-  Car,
   ChevronDown,
   Target,
   Bell,
@@ -93,15 +92,6 @@ const navigation: NavItem[] = [
       { name: 'Cotizaciones', href: '/sales/quotations' },
       { name: 'Controles de Venta', href: '/sales/controls' },
       { name: 'Líneas de Producto', href: '/sales/product-lines' },
-    ],
-  },
-  {
-    name: 'Transporte',
-    href: '/transport',
-    icon: Car,
-    children: [
-      { name: 'Vehículos', href: '/transport/vehicles' },
-      { name: 'Envíos', href: '/transport/shipments' },
     ],
   },
   {
