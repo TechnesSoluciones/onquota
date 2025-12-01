@@ -46,7 +46,7 @@ const EXPENSE_CATEGORIES = [
   'Other',
 ]
 
-const CURRENCIES = ['USD', 'EUR', 'GBP', 'MXN', 'CAD']
+const CURRENCIES = ['USD', 'EUR', 'GBP', 'MXN', 'CAD', 'DOP', 'COP']
 
 export function OCRReview({ job, onConfirm }: OCRReviewProps) {
   const { confirmExtraction, isLoading } = useOCR()

@@ -9,6 +9,7 @@ from uuid import UUID
 from decimal import Decimal
 from pydantic import BaseModel, Field, field_validator, ValidationInfo
 from models.expense import ExpenseStatus
+from core.constants import CURRENCY_CODES
 
 
 # ============================================================================
@@ -106,9 +107,9 @@ class ExpenseCreate(BaseModel):
     def validate_currency(cls, v):
         # Convert to uppercase
         v = v.upper()
-        # Simple validation (in production, use a list of valid currencies)
-        if len(v) != 3:
-            raise ValueError("Currency must be 3 characters (e.g., USD, EUR)")
+        # Validate against supported currencies
+        if v not in CURRENCY_CODES:
+            raise ValueError(f"Currency must be one of: {', '.join(CURRENCY_CODES)}")
         return v
 
 

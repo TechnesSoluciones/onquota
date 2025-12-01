@@ -2,7 +2,7 @@
 Visits and Calls Module
 Customer visit and phone call tracking with GPS
 """
-from modules.visits.models import Visit, Call, VisitStatus, CallType, CallStatus
+from models.visit import Visit, Call, VisitStatus, CallType, CallStatus
 from modules.visits.schemas import (
     VisitCreate,
     VisitUpdate,

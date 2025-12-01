@@ -13,7 +13,7 @@ from unittest.mock import Mock, patch, AsyncMock
 from modules.ocr.repository import OCRRepository
 from modules.ocr.processor import ImageProcessor, ImageValidationError
 from modules.ocr.engine import OCREngine
-from modules.ocr.models import OCRJobStatus
+from models.ocr_job import OCRJobStatus
 from modules.ocr.schemas import OCRJobStatusUpdate, ExtractedDataUpdate
 from modules.auth.repository import AuthRepository
 from models.user import UserRole

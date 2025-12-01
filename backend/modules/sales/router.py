@@ -6,12 +6,14 @@ from datetime import date, datetime
 from typing import Optional, List
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 import math
 
 from core.database import get_db
 from core.exceptions import NotFoundError, ForbiddenError
+from core.export_utils import create_excel_comparison, create_pdf_comparison
 from models.user import User, UserRole
 from models.quote import SaleStatus
 from schemas.quote import (
@@ -705,3 +707,406 @@ async def delete_quote_item(
 
     await db.commit()
     return None
+
+
+@router.get("/comparison/monthly")
+async def get_monthly_sales_comparison(
+    year: int = Query(..., ge=2000, le=2100, description="Year to compare"),
+    comparison_type: str = Query("monthly", description="Type: monthly, yearly, quarter"),
+    client_id: Optional[UUID] = Query(None, description="Filter by client"),
+    assigned_to_id: Optional[UUID] = Query(None, description="Filter by sales rep"),
+    start_date: Optional[date] = Query(None, description="Custom start date"),
+    end_date: Optional[date] = Query(None, description="Custom end date"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get monthly sales comparison
+
+    Compares sales/quotes month by month for the specified year vs previous year.
+    Returns data suitable for charts and analysis.
+
+    **Access Control:**
+    - Sales reps see only their own quotes
+    - Supervisors and admins see all tenant quotes
+    """
+    from sqlalchemy import func, extract, case
+    from models.quote import Quote
+    from datetime import datetime
+
+    repo = SalesRepository(db)
+
+    # Determine user filter
+    user_filter = current_user.id if current_user.role == UserRole.SALES_REP else None
+
+    # Build base query for current year
+    query_current = db.query(
+        extract('month', Quote.created_at).label('month'),
+        func.coalesce(func.sum(Quote.total_amount), 0).label('total'),
+        func.count(Quote.id).label('count'),
+        func.count(case((Quote.status == SaleStatus.ACCEPTED, 1))).label('accepted_count'),
+    ).filter(
+        Quote.tenant_id == current_user.tenant_id,
+        Quote.is_deleted == False,
+        extract('year', Quote.created_at) == year
+    )
+
+    # Build base query for previous year
+    query_previous = db.query(
+        extract('month', Quote.created_at).label('month'),
+        func.coalesce(func.sum(Quote.total_amount), 0).label('total'),
+        func.count(Quote.id).label('count'),
+        func.count(case((Quote.status == SaleStatus.ACCEPTED, 1))).label('accepted_count'),
+    ).filter(
+        Quote.tenant_id == current_user.tenant_id,
+        Quote.is_deleted == False,
+        extract('year', Quote.created_at) == year - 1
+    )
+
+    if user_filter:
+        query_current = query_current.filter(Quote.sales_rep_id == user_filter)
+        query_previous = query_previous.filter(Quote.sales_rep_id == user_filter)
+
+    # Group by month
+    query_current = query_current.group_by(extract('month', Quote.created_at))
+    query_previous = query_previous.group_by(extract('month', Quote.created_at))
+
+    # Execute queries
+    current_results = await db.execute(query_current)
+    previous_results = await db.execute(query_previous)
+
+    # Convert to dict
+    current_data = {
+        int(row.month): {
+            "total": float(row.total),
+            "count": row.count,
+            "accepted_count": row.accepted_count
+        } for row in current_results
+    }
+    previous_data = {
+        int(row.month): {
+            "total": float(row.total),
+            "count": row.count,
+            "accepted_count": row.accepted_count
+        } for row in previous_results
+    }
+
+    # Build monthly comparison
+    months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+    monthly_data = []
+
+    for month_num in range(1, 13):
+        current = current_data.get(month_num, {"total": 0, "count": 0, "accepted_count": 0})
+        previous = previous_data.get(month_num, {"total": 0, "count": 0, "accepted_count": 0})
+
+        monthly_data.append({
+            "month": months[month_num - 1],
+            "month_num": month_num,
+            "actual": current["total"],
+            "previous": previous["total"],
+            "count": current["count"],
+            "prevCount": previous["count"],
+            "accepted_count": current["accepted_count"],
+        })
+
+    # Calculate summary statistics
+    total_actual = sum(item["actual"] for item in monthly_data)
+    total_previous = sum(item["previous"] for item in monthly_data)
+    total_count = sum(item["count"] for item in monthly_data)
+    total_accepted = sum(item["accepted_count"] for item in monthly_data)
+    avg_ticket = total_actual / total_count if total_count > 0 else 0
+
+    # Find min and max months
+    months_with_data = [item for item in monthly_data if item["actual"] > 0]
+    max_month = max(months_with_data, key=lambda x: x["actual"]) if months_with_data else None
+
+    # Calculate percentage change
+    pct_change = ((total_actual - total_previous) / total_previous * 100) if total_previous > 0 else 0
+
+    # Calculate acceptance rate
+    acceptance_rate = (total_accepted / total_count * 100) if total_count > 0 else 0
+
+    return {
+        "year": year,
+        "monthly_data": monthly_data,
+        "summary": {
+            "total_actual": total_actual,
+            "total_previous": total_previous,
+            "total_quotes": total_count,
+            "average_ticket": avg_ticket,
+            "percent_change": round(pct_change, 2),
+            "acceptance_rate": round(acceptance_rate, 2),
+            "max_month": {
+                "name": max_month["month"],
+                "amount": max_month["actual"]
+            } if max_month else None,
+        }
+    }
+
+
+@router.get("/comparison/export/excel")
+async def export_comparison_excel(
+    year: int = Query(..., ge=2000, le=2100, description="Year to export"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Export monthly sales comparison to Excel
+
+    Downloads an Excel file with monthly comparison data and summary statistics.
+    """
+    from sqlalchemy import select, func, extract, case
+    from models.quote import Quote
+
+    # Build base query with tenant and role filtering
+    base_filter = [
+        Quote.tenant_id == current_user.tenant_id,
+        Quote.is_deleted == False,
+    ]
+
+    # Sales reps only see their own quotes
+    if current_user.role == UserRole.SALES_REP:
+        base_filter.append(Quote.assigned_to_id == current_user.id)
+
+    # Build query for current year
+    query_current = select(
+        extract('month', Quote.created_at).label('month'),
+        func.coalesce(func.sum(Quote.total_amount), 0).label('total'),
+        func.count(Quote.id).label('count'),
+        func.count(case((Quote.status == SaleStatus.ACCEPTED, 1))).label('accepted_count'),
+    ).where(
+        *base_filter,
+        extract('year', Quote.created_at) == year
+    ).group_by(extract('month', Quote.created_at))
+
+    # Build query for previous year
+    query_previous = select(
+        extract('month', Quote.created_at).label('month'),
+        func.coalesce(func.sum(Quote.total_amount), 0).label('total'),
+        func.count(Quote.id).label('count'),
+    ).where(
+        *base_filter,
+        extract('year', Quote.created_at) == year - 1
+    ).group_by(extract('month', Quote.created_at))
+
+    # Execute queries
+    result_current = await db.execute(query_current)
+    result_previous = await db.execute(query_previous)
+
+    current_data = {
+        row.month: {
+            "total": float(row.total),
+            "count": row.count,
+            "accepted_count": row.accepted_count
+        }
+        for row in result_current.all()
+    }
+    previous_data = {
+        row.month: {"total": float(row.total), "count": row.count}
+        for row in result_previous.all()
+    }
+
+    # Build monthly data
+    month_names = ["Ene", "Feb", "Mar", "Abr", "May", "Jun",
+                   "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+
+    monthly_data = []
+    total_actual = 0
+    total_previous = 0
+    total_count = 0
+    total_accepted = 0
+
+    for month_num in range(1, 13):
+        current = current_data.get(month_num, {"total": 0, "count": 0, "accepted_count": 0})
+        previous = previous_data.get(month_num, {"total": 0, "count": 0})
+
+        monthly_data.append({
+            "month": month_names[month_num - 1],
+            "month_num": month_num,
+            "actual": current["total"],
+            "previous": previous["total"],
+            "count": current["count"],
+            "prevCount": previous["count"],
+            "accepted_count": current["accepted_count"]
+        })
+
+        total_actual += current["total"]
+        total_previous += previous["total"]
+        total_count += current["count"]
+        total_accepted += current["accepted_count"]
+
+    # Calculate statistics
+    avg_ticket = total_actual / total_count if total_count > 0 else 0
+    pct_change = ((total_actual - total_previous) / total_previous * 100) if total_previous > 0 else 0
+    acceptance_rate = (total_accepted / total_count * 100) if total_count > 0 else 0
+
+    # Find max month
+    months_with_data = [m for m in monthly_data if m["actual"] > 0]
+    max_month = max(months_with_data, key=lambda x: x["actual"]) if months_with_data else None
+
+    data = {
+        "year": year,
+        "monthly_data": monthly_data,
+        "summary": {
+            "total_actual": total_actual,
+            "total_previous": total_previous,
+            "total_quotes": total_count,
+            "average_ticket": avg_ticket,
+            "percent_change": round(pct_change, 2),
+            "acceptance_rate": round(acceptance_rate, 2),
+            "max_month": {
+                "name": max_month["month"],
+                "amount": max_month["actual"]
+            } if max_month else None,
+        }
+    }
+
+    # Generate Excel file
+    excel_file = create_excel_comparison(
+        data=data,
+        title="Comparación de Ventas",
+        year=year,
+        company_name="OnQuota"
+    )
+
+    # Return as download
+    filename = f"ventas_comparacion_{year}.xlsx"
+    return StreamingResponse(
+        excel_file,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@router.get("/comparison/export/pdf")
+async def export_comparison_pdf(
+    year: int = Query(..., ge=2000, le=2100, description="Year to export"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Export monthly sales comparison to PDF
+
+    Downloads a PDF file with monthly comparison data and summary statistics.
+    """
+    from sqlalchemy import select, func, extract, case
+    from models.quote import Quote
+
+    # Build base query with tenant and role filtering
+    base_filter = [
+        Quote.tenant_id == current_user.tenant_id,
+        Quote.is_deleted == False,
+    ]
+
+    # Sales reps only see their own quotes
+    if current_user.role == UserRole.SALES_REP:
+        base_filter.append(Quote.assigned_to_id == current_user.id)
+
+    # Build query for current year
+    query_current = select(
+        extract('month', Quote.created_at).label('month'),
+        func.coalesce(func.sum(Quote.total_amount), 0).label('total'),
+        func.count(Quote.id).label('count'),
+        func.count(case((Quote.status == SaleStatus.ACCEPTED, 1))).label('accepted_count'),
+    ).where(
+        *base_filter,
+        extract('year', Quote.created_at) == year
+    ).group_by(extract('month', Quote.created_at))
+
+    # Build query for previous year
+    query_previous = select(
+        extract('month', Quote.created_at).label('month'),
+        func.coalesce(func.sum(Quote.total_amount), 0).label('total'),
+        func.count(Quote.id).label('count'),
+    ).where(
+        *base_filter,
+        extract('year', Quote.created_at) == year - 1
+    ).group_by(extract('month', Quote.created_at))
+
+    # Execute queries
+    result_current = await db.execute(query_current)
+    result_previous = await db.execute(query_previous)
+
+    current_data = {
+        row.month: {
+            "total": float(row.total),
+            "count": row.count,
+            "accepted_count": row.accepted_count
+        }
+        for row in result_current.all()
+    }
+    previous_data = {
+        row.month: {"total": float(row.total), "count": row.count}
+        for row in result_previous.all()
+    }
+
+    # Build monthly data
+    month_names = ["Ene", "Feb", "Mar", "Abr", "May", "Jun",
+                   "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+
+    monthly_data = []
+    total_actual = 0
+    total_previous = 0
+    total_count = 0
+    total_accepted = 0
+
+    for month_num in range(1, 13):
+        current = current_data.get(month_num, {"total": 0, "count": 0, "accepted_count": 0})
+        previous = previous_data.get(month_num, {"total": 0, "count": 0})
+
+        monthly_data.append({
+            "month": month_names[month_num - 1],
+            "month_num": month_num,
+            "actual": current["total"],
+            "previous": previous["total"],
+            "count": current["count"],
+            "prevCount": previous["count"],
+            "accepted_count": current["accepted_count"]
+        })
+
+        total_actual += current["total"]
+        total_previous += previous["total"]
+        total_count += current["count"]
+        total_accepted += current["accepted_count"]
+
+    # Calculate statistics
+    avg_ticket = total_actual / total_count if total_count > 0 else 0
+    pct_change = ((total_actual - total_previous) / total_previous * 100) if total_previous > 0 else 0
+    acceptance_rate = (total_accepted / total_count * 100) if total_count > 0 else 0
+
+    # Find max month
+    months_with_data = [m for m in monthly_data if m["actual"] > 0]
+    max_month = max(months_with_data, key=lambda x: x["actual"]) if months_with_data else None
+
+    data = {
+        "year": year,
+        "monthly_data": monthly_data,
+        "summary": {
+            "total_actual": total_actual,
+            "total_previous": total_previous,
+            "total_quotes": total_count,
+            "average_ticket": avg_ticket,
+            "percent_change": round(pct_change, 2),
+            "acceptance_rate": round(acceptance_rate, 2),
+            "max_month": {
+                "name": max_month["month"],
+                "amount": max_month["actual"]
+            } if max_month else None,
+        }
+    }
+
+    # Generate PDF file
+    pdf_file = create_pdf_comparison(
+        data=data,
+        title="Comparación de Ventas",
+        year=year,
+        company_name="OnQuota"
+    )
+
+    # Return as download
+    filename = f"ventas_comparacion_{year}.pdf"
+    return StreamingResponse(
+        pdf_file,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )

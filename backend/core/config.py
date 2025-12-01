@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     DB_MAX_OVERFLOW: int = 10
 
     # Redis
-    REDIS_URL: str
+    REDIS_URL: str = ""
     REDIS_CACHE_DB: int = 1
 
     # API
@@ -52,8 +52,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # Celery
-    CELERY_BROKER_URL: str
-    CELERY_RESULT_BACKEND: str
+    CELERY_BROKER_URL: str = ""
+    CELERY_RESULT_BACKEND: str = ""
     CELERY_TASK_TRACK_STARTED: bool = True
     CELERY_TASK_TIME_LIMIT: int = 300
 
@@ -63,6 +63,9 @@ class Settings(BaseSettings):
     GOOGLE_VISION_API_KEY: str = ""
     OCR_CONFIDENCE_THRESHOLD: float = 0.85
     MAX_IMAGE_SIZE_MB: int = 10
+
+    # Geolocation
+    GOOGLE_MAPS_API_KEY: str = ""
 
     # Storage
     STORAGE_TYPE: str = "local"  # local, s3, minio

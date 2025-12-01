@@ -34,7 +34,7 @@ __all__ = [
 ]
 
 from modules.ocr.router import router
-from modules.ocr.models import OCRJob, OCRJobStatus
+from models.ocr_job import OCRJob, OCRJobStatus
 from modules.ocr.repository import OCRRepository
 from modules.ocr.processor import ImageProcessor
 from modules.ocr.engine import OCREngine

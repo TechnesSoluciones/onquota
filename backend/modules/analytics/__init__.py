@@ -9,7 +9,7 @@ Provides sales performance analysis from Excel/CSV files including:
 - Monthly trends and insights
 """
 
-from modules.analytics.models import Analysis, AnalysisStatus, FileType
+from models.analysis import Analysis, AnalysisStatus, FileType
 from modules.analytics.schemas import (
     AnalysisCreate,
     AnalysisResponse,

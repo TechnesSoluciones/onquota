@@ -8,7 +8,7 @@ from typing import Optional, List, Tuple
 from uuid import UUID
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
-from modules.ocr.models import OCRJob, OCRJobStatus
+from models.ocr_job import OCRJob, OCRJobStatus
 from modules.ocr.schemas import OCRJobStatusUpdate, ExtractedDataUpdate
 from core.logging import get_logger
 

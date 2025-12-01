@@ -9,7 +9,7 @@ from sqlalchemy import select, func, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
-from modules.analytics.models import Analysis, AnalysisStatus, FileType
+from models.analysis import Analysis, AnalysisStatus, FileType
 from modules.analytics.schemas import AnalysisCreate
 from core.exceptions import NotFoundError, ValidationError
 import logging

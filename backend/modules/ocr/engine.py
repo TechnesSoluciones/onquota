@@ -53,6 +53,15 @@ class OCREngine:
         "GBP": "GBP",
         "¥": "JPY",
         "JPY": "JPY",
+        "RD$": "DOP",
+        "DOP$": "DOP",
+        "DOP": "DOP",
+        "COP": "COP",
+        "COL$": "COP",
+        "MXN": "MXN",
+        "MEX$": "MXN",
+        "BRL": "BRL",
+        "R$": "BRL",
     }
 
     def __init__(self, lang: str = None):
@@ -205,7 +214,7 @@ class OCREngine:
             # $XX.XX at end of line
             r"\$\s*([\d,]+\.\d{2})\s*$",
             # XX.XX USD
-            r"([\d,]+\.\d{2})\s*(USD|EUR|GBP|JPY)",
+            r"([\d,]+\.\d{2})\s*(USD|EUR|GBP|JPY|DOP|COP|MXN)",
             # Amount: XX.XX
             r"amount[:\s]+\$?\s*([\d,]+\.?\d*)",
             # Grand Total: XX.XX

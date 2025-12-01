@@ -29,34 +29,13 @@ def upgrade() -> None:
     """
 
     # Create PlanStatus enum
-    op.execute("""
-        CREATE TYPE plan_status AS ENUM (
-            'draft',
-            'active',
-            'completed',
-            'cancelled'
-        )
-    """)
+    
 
     # Create MilestoneStatus enum
-    op.execute("""
-        CREATE TYPE milestone_status AS ENUM (
-            'pending',
-            'in_progress',
-            'completed',
-            'cancelled'
-        )
-    """)
+    
 
     # Create SWOTCategory enum
-    op.execute("""
-        CREATE TYPE swot_category AS ENUM (
-            'strength',
-            'weakness',
-            'opportunity',
-            'threat'
-        )
-    """)
+    
 
     # Create account_plans table
     op.create_table(

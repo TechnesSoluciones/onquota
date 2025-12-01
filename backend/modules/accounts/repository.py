@@ -9,7 +9,7 @@ from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
 
-from modules.accounts.models import AccountPlan, Milestone, SWOTItem, PlanStatus, MilestoneStatus, SWOTCategory
+from models.account_plan import AccountPlan, Milestone, SWOTItem, PlanStatus, MilestoneStatus, SWOTCategory
 from modules.accounts.schemas import (
     AccountPlanCreate,
     AccountPlanUpdate,

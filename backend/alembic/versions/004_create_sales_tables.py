@@ -18,7 +18,6 @@ depends_on = None
 
 def upgrade() -> None:
     # Create sale_status enum
-    op.execute("CREATE TYPE sale_status AS ENUM ('draft', 'sent', 'accepted', 'rejected', 'expired')")
 
     # Create quotes table
     op.create_table(

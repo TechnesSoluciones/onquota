@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_, update
 from sqlalchemy.orm import joinedload
 
-from modules.notifications.models import Notification, NotificationType, NotificationCategory
+from models.notification import Notification, NotificationType, NotificationCategory
 from modules.notifications.schemas import NotificationCreate
 from core.exceptions import NotFoundError
 

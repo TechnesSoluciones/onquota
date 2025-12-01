@@ -14,9 +14,9 @@ from models.base import Base
 from models.tenant import Tenant
 from models.user import User, UserRole
 from models.client import Client, ClientStatus
-from modules.opportunities.models import Opportunity, OpportunityStage
-from modules.notifications.models import Notification, NotificationType, NotificationCategory
-from modules.accounts.models import AccountPlan, Milestone, SWOTItem, PlanStatus, MilestoneStatus, SWOTCategory
+from models.opportunity import Opportunity, OpportunityStage
+from models.notification import Notification, NotificationType, NotificationCategory
+from models.account_plan import AccountPlan, Milestone, SWOTItem, PlanStatus, MilestoneStatus, SWOTCategory
 from core.config import settings
 
 # Test database URL

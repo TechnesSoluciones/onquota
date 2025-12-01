@@ -1,0 +1,625 @@
+"""
+SPA Service Layer
+Contiene toda la lógica de negocio para Special Pricing Agreements.
+"""
+from typing import List, Tuple, Optional
+from uuid import UUID, uuid4
+from decimal import Decimal
+from datetime import datetime, date
+import logging
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, and_, or_, func
+from fastapi import UploadFile, Depends
+
+from models.spa import SPAAgreement, SPAUploadLog
+from models.client import Client
+from modules.spa.repository import SPARepository
+from modules.spa.schemas import (
+    SPAUploadResult,
+    SPARowData,
+    SPADiscountSearchRequest,
+    SPADiscountResponse,
+    SPASearchParams,
+    SPAListResponse,
+    SPAAgreementResponse,
+    SPAAgreementWithClient,
+    SPAStatsResponse,
+)
+from modules.spa.excel_parser import ExcelParserService
+from modules.spa.exceptions import (
+    SPAFileInvalidException,
+    SPABPIDNotFoundException,
+    SPAClientNotFoundException,
+    SPACalculationException
+)
+from modules.clients.repository import ClientRepository
+from core.database import get_db
+
+logger = logging.getLogger(__name__)
+
+
+class SPAService:
+    """Servicio de lógica de negocio para SPAs."""
+
+    def __init__(self, spa_repo: SPARepository, client_repo: ClientRepository):
+        self.spa_repo = spa_repo
+        self.client_repo = client_repo
+        self.parser = ExcelParserService()
+
+    async def upload_spa_file(
+        self,
+        file: UploadFile,
+        user_id: UUID,
+        tenant_id: UUID,
+        auto_create_clients: bool,
+        db: AsyncSession
+    ) -> SPAUploadResult:
+        """
+        Procesa archivo SPA completo con manejo robusto de errores.
+
+        Flujo:
+        1. Valida archivo (tipo, tamaño)
+        2. Parsea con ExcelParserService
+        3. Valida datos de negocio
+        4. Crea/vincula clientes por BPID
+        5. Calcula descuentos
+        6. Inserta SPAs en batch
+        7. Crea log de upload
+        8. Retorna resultado detallado
+
+        Args:
+            file: Archivo Excel/TSV subido
+            user_id: ID del usuario que sube
+            tenant_id: ID del tenant
+            auto_create_clients: Si crear clientes automáticamente
+            db: Sesión de base de datos
+
+        Returns:
+            SPAUploadResult con estadísticas y errores
+        """
+        batch_id = uuid4()
+        start_time = datetime.utcnow()
+
+        try:
+            # 1. Validar archivo
+            await self._validate_file(file)
+
+            # 2. Parsear archivo
+            logger.info(f"Parsing file {file.filename} for batch {batch_id}")
+            parsed_records, parse_errors = await self.parser.parse_file(file)
+
+            total_rows = len(parsed_records) + len(parse_errors)
+            logger.info(f"Parsed {len(parsed_records)} valid records, {len(parse_errors)} errors")
+
+            # 3. Procesar registros válidos
+            spa_agreements, processing_errors = await self.process_spa_records(
+                records=parsed_records,
+                tenant_id=tenant_id,
+                user_id=user_id,
+                batch_id=batch_id,
+                auto_create_clients=auto_create_clients,
+                db=db
+            )
+
+            # 4. Insertar SPAs en batch
+            created_count = 0
+            if spa_agreements:
+                created_spas = await self.spa_repo.bulk_create(spa_agreements, db)
+                created_count = len(created_spas)
+                logger.info(f"Created {created_count} SPA records in batch")
+
+            # 5. Consolidar errores
+            all_errors = parse_errors + processing_errors
+            error_count = len(all_errors)
+
+            # 6. Crear log de upload
+            duration = (datetime.utcnow() - start_time).total_seconds()
+            upload_log = await self._create_upload_log(
+                batch_id=batch_id,
+                filename=file.filename,
+                user_id=user_id,
+                tenant_id=tenant_id,
+                total_rows=total_rows,
+                success_count=created_count,
+                error_count=error_count,
+                duration=duration,
+                db=db
+            )
+
+            # 7. Preparar resultado
+            result = SPAUploadResult(
+                batch_id=batch_id,
+                total_rows=total_rows,
+                success_count=created_count,
+                error_count=error_count,
+                errors=all_errors[:100],  # Limitar errores en respuesta
+                duration_seconds=duration,
+                upload_log_id=upload_log.id
+            )
+
+            logger.info(
+                f"Upload complete - Batch: {batch_id}, "
+                f"Success: {created_count}/{total_rows}, "
+                f"Errors: {error_count}"
+            )
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Upload failed for batch {batch_id}: {str(e)}", exc_info=True)
+
+            # Crear log de fallo
+            duration = (datetime.utcnow() - start_time).total_seconds()
+            await self._create_upload_log(
+                batch_id=batch_id,
+                filename=file.filename,
+                user_id=user_id,
+                tenant_id=tenant_id,
+                total_rows=0,
+                success_count=0,
+                error_count=1,
+                duration=duration,
+                db=db,
+                error_message=str(e)
+            )
+
+            raise
+
+    async def process_spa_records(
+        self,
+        records: List[SPARowData],
+        tenant_id: UUID,
+        user_id: UUID,
+        batch_id: UUID,
+        auto_create_clients: bool,
+        db: AsyncSession
+    ) -> Tuple[List[SPAAgreement], List[dict]]:
+        """
+        Procesa lista de registros parseados y convierte a objetos SPAAgreement.
+
+        Args:
+            records: Lista de datos parseados
+            tenant_id: ID del tenant
+            user_id: ID del usuario
+            batch_id: ID del batch de upload
+            auto_create_clients: Si crear clientes automáticamente
+            db: Sesión de base de datos
+
+        Returns:
+            Tupla de (SPAs creados, lista de errores)
+        """
+        spa_agreements: List[SPAAgreement] = []
+        errors: List[dict] = []
+
+        for idx, record in enumerate(records, start=1):
+            try:
+                # 1. Buscar o crear cliente por BPID
+                client_id = await self.find_or_create_client_by_bpid(
+                    bpid=record.bpid,
+                    ship_to_name=record.ship_to_name,
+                    tenant_id=tenant_id,
+                    auto_create=auto_create_clients,
+                    db=db
+                )
+
+                if not client_id:
+                    raise SPAClientNotFoundException(
+                        f"Client not found for BPID {record.bpid} and auto_create is False"
+                    )
+
+                # 2. Calcular descuento
+                discount_percent = await self.calculate_discount(
+                    list_price=record.list_price,
+                    app_net_price=record.app_net_price
+                )
+
+                # 3. Validar fechas
+                await self._validate_dates(record.start_date, record.end_date)
+
+                # 4. Determinar estado activo
+                is_active = await self._is_agreement_active(
+                    record.start_date,
+                    record.end_date
+                )
+
+                # 5. Crear objeto SPA
+                spa = SPAAgreement(
+                    id=uuid4(),
+                    tenant_id=tenant_id,
+                    client_id=client_id,
+                    batch_id=batch_id,
+                    bpid=record.bpid,
+                    ship_to_name=record.ship_to_name,
+                    article_number=record.article_number,
+                    article_description=record.article_description,
+                    list_price=record.list_price,
+                    app_net_price=record.app_net_price,
+                    discount_percent=discount_percent,
+                    uom=record.uom,
+                    start_date=record.start_date,
+                    end_date=record.end_date,
+                    is_active=is_active,
+                    created_by=user_id
+                )
+
+                spa_agreements.append(spa)
+
+            except Exception as e:
+                logger.warning(f"Error processing record {idx}: {str(e)}")
+                errors.append({
+                    "row": idx,
+                    "bpid": record.bpid,
+                    "article": record.article_number,
+                    "error": str(e)
+                })
+
+        return spa_agreements, errors
+
+    async def find_or_create_client_by_bpid(
+        self,
+        bpid: str,
+        ship_to_name: str,
+        tenant_id: UUID,
+        auto_create: bool,
+        db: AsyncSession
+    ) -> Optional[UUID]:
+        """
+        Busca cliente por BPID, opcionalmente lo crea si no existe.
+
+        Args:
+            bpid: Business Partner ID
+            ship_to_name: Nombre del cliente
+            tenant_id: ID del tenant
+            auto_create: Si crear cliente automáticamente
+            db: Sesión de base de datos
+
+        Returns:
+            UUID del cliente o None si no se encuentra y auto_create=False
+        """
+        # Buscar cliente existente por BPID
+        client = await self.client_repo.find_by_bpid(bpid, tenant_id, db)
+
+        if client:
+            return client.id
+
+        if not auto_create:
+            return None
+
+        # Crear nuevo cliente
+        logger.info(f"Auto-creating client for BPID: {bpid}")
+        new_client = Client(
+            id=uuid4(),
+            tenant_id=tenant_id,
+            bpid=bpid,
+            name=ship_to_name,
+            is_active=True,
+            # Campos adicionales con defaults
+            email=None,
+            phone=None,
+            address=None,
+            city=None,
+            state=None,
+            country=None,
+            postal_code=None
+        )
+
+        db.add(new_client)
+        await db.flush()
+
+        return new_client.id
+
+    async def calculate_discount(
+        self,
+        list_price: Decimal,
+        app_net_price: Decimal
+    ) -> Decimal:
+        """
+        Calcula el porcentaje de descuento.
+
+        Formula: ((list_price - app_net_price) / list_price) * 100
+
+        Args:
+            list_price: Precio de lista
+            app_net_price: Precio neto aprobado
+
+        Returns:
+            Porcentaje de descuento (0-100)
+
+        Raises:
+            SPACalculationException: Si list_price es 0 o negativo
+        """
+        if list_price <= 0:
+            raise SPACalculationException(
+                f"Invalid list_price: {list_price}. Must be greater than 0"
+            )
+
+        if app_net_price < 0:
+            raise SPACalculationException(
+                f"Invalid app_net_price: {app_net_price}. Cannot be negative"
+            )
+
+        discount = ((list_price - app_net_price) / list_price) * Decimal('100')
+
+        # Redondear a 2 decimales
+        discount = discount.quantize(Decimal('0.01'))
+
+        # Validar rango
+        if discount < 0:
+            discount = Decimal('0')
+        elif discount > 100:
+            discount = Decimal('100')
+
+        return discount
+
+    async def search_discount(
+        self,
+        request: SPADiscountSearchRequest,
+        tenant_id: UUID,
+        db: AsyncSession
+    ) -> SPADiscountResponse:
+        """
+        Busca descuento para producto/cliente específico.
+
+        Retorna el SPA activo que coincida con:
+        - client_id
+        - article_number
+        - Fechas activas
+
+        Args:
+            request: Parámetros de búsqueda
+            tenant_id: ID del tenant
+            db: Sesión de base de datos
+
+        Returns:
+            SPADiscountResponse con resultado de búsqueda
+        """
+        spa = await self.spa_repo.find_active_discount(
+            client_id=request.client_id,
+            article_number=request.article_number,
+            tenant_id=tenant_id,
+            db=db
+        )
+
+        if not spa:
+            return SPADiscountResponse(
+                found=False,
+                client_id=request.client_id,
+                article_number=request.article_number,
+                discount=None
+            )
+
+        discount_match = SPADiscountMatch(
+            spa_id=spa.id,
+            discount_percent=spa.discount_percent,
+            app_net_price=spa.app_net_price,
+            list_price=spa.list_price,
+            uom=spa.uom,
+            start_date=spa.start_date,
+            end_date=spa.end_date,
+            article_description=spa.article_description
+        )
+
+        return SPADiscountResponse(
+            found=True,
+            client_id=request.client_id,
+            article_number=request.article_number,
+            discount=discount_match
+        )
+
+    async def list_spas(
+        self,
+        params: SPASearchParams,
+        tenant_id: UUID,
+        db: AsyncSession
+    ) -> SPAListResponse:
+        """
+        Lista SPAs con filtros y paginación.
+
+        Args:
+            params: Parámetros de búsqueda y paginación
+            tenant_id: ID del tenant
+            db: Sesión de base de datos
+
+        Returns:
+            SPAListResponse con items y metadata de paginación
+        """
+        spas, total = await self.spa_repo.list_with_filters(
+            tenant_id=tenant_id,
+            params=params,
+            db=db
+        )
+
+        return SPAListResponse(
+            items=[SPAAgreementResponse.from_orm(spa) for spa in spas],
+            total=total,
+            page=params.page,
+            page_size=params.page_size,
+            total_pages=(total + params.page_size - 1) // params.page_size
+        )
+
+    async def get_spa_detail(
+        self,
+        spa_id: UUID,
+        tenant_id: UUID,
+        db: AsyncSession
+    ) -> SPAAgreementWithClient:
+        """
+        Obtiene detalle de SPA con información del cliente.
+
+        Args:
+            spa_id: ID del SPA
+            tenant_id: ID del tenant
+            db: Sesión de base de datos
+
+        Returns:
+            SPAAgreementWithClient con toda la información
+        """
+        spa = await self.spa_repo.get_with_client(spa_id, tenant_id, db)
+
+        if not spa:
+            raise SPAClientNotFoundException(f"SPA {spa_id} not found")
+
+        return SPAAgreementWithClient.from_orm(spa)
+
+    async def get_client_spas(
+        self,
+        client_id: UUID,
+        tenant_id: UUID,
+        active_only: bool,
+        db: AsyncSession
+    ) -> List[SPAAgreementResponse]:
+        """
+        Obtiene todos los SPAs de un cliente.
+
+        Args:
+            client_id: ID del cliente
+            tenant_id: ID del tenant
+            active_only: Solo SPAs activos
+            db: Sesión de base de datos
+
+        Returns:
+            Lista de SPAAgreementResponse
+        """
+        spas = await self.spa_repo.find_by_client(
+            client_id=client_id,
+            tenant_id=tenant_id,
+            active_only=active_only,
+            db=db
+        )
+
+        return [SPAAgreementResponse.from_orm(spa) for spa in spas]
+
+    async def get_stats(
+        self,
+        tenant_id: UUID,
+        db: AsyncSession
+    ) -> SPAStatsResponse:
+        """
+        Obtiene estadísticas de SPAs del tenant.
+
+        Args:
+            tenant_id: ID del tenant
+            db: Sesión de base de datos
+
+        Returns:
+            SPAStatsResponse con métricas
+        """
+        stats = await self.spa_repo.get_stats(tenant_id, db)
+        return SPAStatsResponse(**stats)
+
+    async def delete_spa(
+        self,
+        spa_id: UUID,
+        tenant_id: UUID,
+        db: AsyncSession
+    ) -> bool:
+        """
+        Soft delete de SPA.
+
+        Args:
+            spa_id: ID del SPA
+            tenant_id: ID del tenant
+            db: Sesión de base de datos
+
+        Returns:
+            True si se eliminó correctamente
+        """
+        return await self.spa_repo.soft_delete(spa_id, tenant_id, db)
+
+    async def get_upload_history(
+        self,
+        tenant_id: UUID,
+        limit: int,
+        db: AsyncSession
+    ) -> List[SPAUploadLog]:
+        """
+        Obtiene historial de uploads.
+
+        Args:
+            tenant_id: ID del tenant
+            limit: Cantidad máxima de registros
+            db: Sesión de base de datos
+
+        Returns:
+            Lista de SPAUploadLog
+        """
+        return await self.spa_repo.get_upload_history(tenant_id, limit, db)
+
+    # --- Helper Methods ---
+
+    async def _validate_file(self, file: UploadFile) -> None:
+        """Valida tipo y tamaño de archivo."""
+        MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+        ALLOWED_EXTENSIONS = {'.xls', '.xlsx', '.tsv'}
+
+        # Validar extensión
+        file_ext = file.filename.split('.')[-1].lower()
+        if f'.{file_ext}' not in ALLOWED_EXTENSIONS:
+            raise SPAFileInvalidException(
+                f"Invalid file type. Allowed: {ALLOWED_EXTENSIONS}"
+            )
+
+        # Validar tamaño (aproximado)
+        file.file.seek(0, 2)
+        file_size = file.file.tell()
+        file.file.seek(0)
+
+        if file_size > MAX_FILE_SIZE:
+            raise SPAFileInvalidException(
+                f"File too large. Max size: {MAX_FILE_SIZE / 1024 / 1024}MB"
+            )
+
+    async def _validate_dates(self, start_date: date, end_date: date) -> None:
+        """Valida que las fechas sean coherentes."""
+        if end_date < start_date:
+            raise SPACalculationException(
+                f"end_date ({end_date}) cannot be before start_date ({start_date})"
+            )
+
+    async def _is_agreement_active(self, start_date: date, end_date: date) -> bool:
+        """Determina si un acuerdo está activo según fechas."""
+        today = date.today()
+        return start_date <= today <= end_date
+
+    async def _create_upload_log(
+        self,
+        batch_id: UUID,
+        filename: str,
+        user_id: UUID,
+        tenant_id: UUID,
+        total_rows: int,
+        success_count: int,
+        error_count: int,
+        duration: float,
+        db: AsyncSession,
+        error_message: Optional[str] = None
+    ) -> SPAUploadLog:
+        """Crea registro de log de upload."""
+        upload_log = SPAUploadLog(
+            id=uuid4(),
+            batch_id=batch_id,
+            filename=filename,
+            uploaded_by=user_id,
+            tenant_id=tenant_id,
+            total_rows=total_rows,
+            success_count=success_count,
+            error_count=error_count,
+            duration_seconds=duration,
+            error_message=error_message
+        )
+
+        db.add(upload_log)
+        await db.flush()
+
+        return upload_log
+
+
+# Dependency Injection Helper
+async def get_spa_service(
+    db: AsyncSession = Depends(get_db)
+) -> SPAService:
+    """Dependency injection para SPAService."""
+    spa_repo = SPARepository()
+    client_repo = ClientRepository()
+    return SPAService(spa_repo, client_repo)

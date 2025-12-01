@@ -17,9 +17,6 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Create user_role enum
-    op.execute("CREATE TYPE user_role AS ENUM ('admin', 'sales_rep', 'supervisor', 'analyst')")
-
     # Create tenants table
     op.create_table(
         'tenants',

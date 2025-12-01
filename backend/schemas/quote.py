@@ -10,6 +10,7 @@ from uuid import UUID
 from decimal import Decimal
 from pydantic import BaseModel, Field, field_validator
 from models.quote import SaleStatus
+from core.constants import CURRENCY_CODES
 
 
 # ============================================================================
@@ -147,8 +148,8 @@ class QuoteCreate(BaseModel):
     @classmethod
     def validate_currency(cls, v):
         v = v.upper()
-        if len(v) != 3:
-            raise ValueError("Currency must be 3 characters (e.g., USD, EUR)")
+        if v not in CURRENCY_CODES:
+            raise ValueError(f"Currency must be one of: {', '.join(CURRENCY_CODES)}")
         return v
 
     @field_validator("valid_until")
@@ -192,8 +193,8 @@ class QuoteUpdate(BaseModel):
     def validate_currency(cls, v):
         if v is not None:
             v = v.upper()
-            if len(v) != 3:
-                raise ValueError("Currency must be 3 characters (e.g., USD, EUR)")
+            if v not in CURRENCY_CODES:
+                raise ValueError(f"Currency must be one of: {', '.join(CURRENCY_CODES)}")
         return v
 
     @field_validator("valid_until")

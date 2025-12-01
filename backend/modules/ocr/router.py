@@ -15,7 +15,7 @@ from core.logging import get_logger
 from core.exceptions import NotFoundError, ValidationError, ForbiddenError
 from api.dependencies import get_current_user
 from models.user import User
-from modules.ocr.models import OCRJobStatus
+from models.ocr_job import OCRJobStatus
 from modules.ocr.schemas import (
     OCRJobResponse,
     OCRJobListResponse,
@@ -346,12 +346,56 @@ async def confirm_extraction(
 
     logger.info(f"Confirmed OCR job {job_id}")
 
-    # TODO: If create_expense is True, create expense from confirmed_data
+    # Create expense from confirmed OCR data if requested
     if confirm_data.create_expense:
         logger.info(f"Creating expense from OCR job {job_id}")
-        # Import expenses module and create expense
-        # This would integrate with the expenses module
-        pass
+
+        try:
+            from modules.expenses.repository import ExpenseRepository
+            from datetime import date as date_type
+
+            # Extract confirmed data
+            data = confirm_data.confirmed_data
+
+            # Validate required fields for expense creation
+            if not data.amount or not data.date:
+                logger.error("Cannot create expense: missing required fields (amount or date)")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Cannot create expense: amount and date are required"
+                )
+
+            # Create expense repository
+            expense_repo = ExpenseRepository(db)
+
+            # Prepare expense data
+            expense_amount = data.amount
+            expense_date = data.date if isinstance(data.date, date_type) else date_type.fromisoformat(str(data.date))
+            expense_description = data.description or f"Expense from receipt: {job.original_filename}"
+
+            # Create expense
+            expense = await expense_repo.create_expense(
+                tenant_id=current_user.tenant_id,
+                user_id=current_user.id,
+                amount=expense_amount,
+                currency=data.currency or "USD",
+                description=expense_description,
+                expense_date=expense_date,
+                category_id=None,  # User can assign category later
+                receipt_url=job.image_path,  # Link to OCR image
+                receipt_number=data.receipt_number,
+                vendor_name=data.provider,
+                notes=f"Auto-created from OCR job {job_id}",
+            )
+
+            logger.info(
+                f"Successfully created expense {expense.id} from OCR job {job_id}"
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to create expense from OCR job {job_id}: {e}")
+            # Don't fail the confirmation, just log the error
+            # The OCR job is still confirmed, expense creation can be retried manually
 
     return job
 

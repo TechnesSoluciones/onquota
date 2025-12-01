@@ -1,0 +1,104 @@
+version: '3.8'
+
+# Local development configuration
+# Uses existing onecloud postgres and redis
+# Runs only backend and frontend on alternative ports
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      platforms:
+        - linux/arm64
+    container_name: onquota-backend-local
+    ports:
+      - "8001:8000"
+    environment:
+      # Database - Connect to onecloud postgres on host
+      DATABASE_URL: postgresql://postgres:postgres@host.docker.internal:5432/onquota_db
+
+      # Redis - Connect to onecloud redis on host (use DB 1 to avoid conflicts)
+      REDIS_URL: redis://host.docker.internal:6379/1
+
+      # Celery - Use onecloud redis DB 1
+      CELERY_BROKER_URL: redis://host.docker.internal:6379/1
+      CELERY_RESULT_BACKEND: redis://host.docker.internal:6379/1
+
+      # Security
+      SECRET_KEY: local-dev-secret-key-min-32-chars-OnQuota2025
+
+      # General
+      DEBUG: "true"
+      ENVIRONMENT: development
+
+      # API
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+
+      # CORS - Allow frontend on port 3001
+      CORS_ORIGINS: http://localhost:3001,http://localhost:8001
+
+      # OCR
+      TESSERACT_PATH: /usr/bin/tesseract
+      TESSERACT_LANG: spa+eng
+
+      # Storage
+      STORAGE_TYPE: local
+
+      # Email
+      EMAIL_PROVIDER: sendgrid
+      FROM_EMAIL: noreply@onquota.com
+      FROM_NAME: OnQuota
+
+      # Rate Limiting
+      RATE_LIMIT_PER_MINUTE: 100
+      RATE_LIMIT_PER_HOUR: 1000
+
+      # Logging
+      LOG_LEVEL: INFO
+      LOG_FORMAT: json
+    volumes:
+      - ./backend:/app
+      - backend-uploads:/app/uploads
+    networks:
+      - onquota-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+      platforms:
+        - linux/arm64
+    container_name: onquota-frontend-local
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8001
+      - NEXT_PUBLIC_APP_NAME=OnQuota
+      - NEXT_PUBLIC_APP_VERSION=1.0.0
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - onquota-network
+    command: npm run dev
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+volumes:
+  backend-uploads:
+    driver: local
+
+networks:
+  onquota-network:
+    driver: bridge

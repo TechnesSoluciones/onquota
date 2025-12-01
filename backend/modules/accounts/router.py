@@ -6,12 +6,14 @@ import math
 from typing import Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.exceptions import NotFoundError, ValidationError, ForbiddenError
+from core.logging import get_logger
 from models.user import User, UserRole
-from modules.accounts.models import PlanStatus, MilestoneStatus, SWOTCategory
+from models.account_plan import PlanStatus, MilestoneStatus, SWOTCategory
 from modules.accounts.schemas import (
     AccountPlanCreate,
     AccountPlanUpdate,
@@ -26,8 +28,10 @@ from modules.accounts.schemas import (
     SWOTItemResponse
 )
 from modules.accounts.repository import AccountPlanRepository
+from modules.accounts.exporters import AccountPlanExporter
 from api.dependencies import get_current_user, require_role
 
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/accounts", tags=["Account Planner"])
 
@@ -704,3 +708,93 @@ async def delete_swot_item(
     )
 
     return None
+
+
+# ============================================================================
+# Export Endpoints
+# ============================================================================
+
+
+@router.get("/plans/{plan_id}/export/pdf")
+async def export_plan_pdf(
+    plan_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Export account plan to PDF file
+
+    Generates a professional PDF document with:
+    - **Plan Overview**: Title, client, dates, status, and key metrics
+    - **SWOT Matrix**: 2x2 visual matrix with color-coded quadrants
+    - **Milestones Timeline**: Complete list with status and dates
+    - **Summary Statistics**: Aggregated metrics and progress tracking
+
+    **Features:**
+    - Professional formatting with colors and styles
+    - Tables and grids for structured data
+    - Status indicators with color coding
+    - Progress tracking visualization
+    - Comprehensive summary statistics
+
+    **Access Control:**
+    - All authenticated users can export plans from their tenant
+    - Plans are scoped to tenant
+
+    **Response:**
+    - PDF file download
+    - Professional business document format
+    - Ready for printing or sharing
+
+    **Use Cases:**
+    - Client presentations
+    - Executive reporting
+    - Strategic planning sessions
+    - Offline review and analysis
+    - Documentation and archival
+    """
+    try:
+        repo = AccountPlanRepository(db)
+
+        # Get plan with full details (milestones and SWOT items)
+        plan = await repo.get_plan_with_details(
+            plan_id=plan_id,
+            tenant_id=current_user.tenant_id,
+        )
+
+        if not plan:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Account plan not found"
+            )
+
+        # Export to PDF
+        exporter = AccountPlanExporter()
+        filepath = await exporter.export_to_pdf(plan)
+
+        # Generate clean filename
+        clean_title = "".join(c for c in plan.title if c.isalnum() or c in (' ', '-', '_')).strip()
+        clean_title = clean_title.replace(' ', '_')
+        download_filename = f"account_plan_{clean_title}.pdf"
+
+        # Return file as download
+        return FileResponse(
+            path=filepath,
+            media_type="application/pdf",
+            filename=download_filename,
+            headers={
+                "Content-Disposition": f"attachment; filename={download_filename}"
+            }
+        )
+
+    except NotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Account plan not found"
+        )
+    except Exception as e:
+        logger.error(f"Error exporting account plan to PDF: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error exporting account plan: {str(e)}"
+        )

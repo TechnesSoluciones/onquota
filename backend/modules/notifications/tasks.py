@@ -13,8 +13,8 @@ from core.database import SessionLocal
 from models.user import User
 from models.quote import Quote, SaleStatus
 from models.transport import Vehicle
-from modules.opportunities.models import Opportunity, OpportunityStage
-from modules.notifications.models import Notification, NotificationType, NotificationCategory
+from models.opportunity import Opportunity, OpportunityStage
+from models.notification import Notification, NotificationType, NotificationCategory
 from modules.notifications.repository import NotificationRepository
 from modules.notifications.services.email import email_service
 

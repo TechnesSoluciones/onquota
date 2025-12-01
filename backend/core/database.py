@@ -16,17 +16,25 @@ from core.logging import get_logger
 
 logger = get_logger(__name__)
 
+# Convert standard PostgreSQL URL to asyncpg URL if needed
+async_database_url = settings.DATABASE_URL
+if async_database_url.startswith("postgresql://"):
+    async_database_url = async_database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+elif not async_database_url.startswith("postgresql+asyncpg://"):
+    # If it's already postgresql+something, keep it
+    pass
+
 # OPTIMIZATION: Create async engine with optimized pool settings
 # - pool_pre_ping: Ensures connections are valid before use
 # - pool_recycle: Recycle connections every hour to prevent stale connections
 # - pool_timeout: Wait up to 30s for a connection before raising error
 # - echo_pool: Log pool events in debug mode for monitoring
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    async_database_url,
     echo=settings.DB_ECHO,
     pool_size=settings.DB_POOL_SIZE,
     max_overflow=settings.DB_MAX_OVERFLOW,
-    poolclass=NullPool if settings.ENVIRONMENT == "test" else QueuePool,
+    poolclass=NullPool if settings.ENVIRONMENT == "test" else None,
     pool_pre_ping=True,  # Verify connection health before using
     pool_recycle=3600,   # Recycle connections after 1 hour
     pool_timeout=30,     # Wait max 30s for available connection

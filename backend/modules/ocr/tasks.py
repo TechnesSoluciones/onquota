@@ -12,7 +12,7 @@ from sqlalchemy.orm import sessionmaker
 
 from core.config import settings
 from core.logging import get_logger
-from modules.ocr.models import OCRJobStatus
+from models.ocr_job import OCRJobStatus
 from modules.ocr.schemas import OCRJobStatusUpdate
 from modules.ocr.repository import OCRRepository
 from modules.ocr.processor import ImageProcessor, ImageValidationError
@@ -343,7 +343,7 @@ async def _reprocess_failed_jobs_async(max_jobs: int) -> int:
     """
     async with AsyncSessionLocal() as db:
         from sqlalchemy import select, and_
-        from modules.ocr.models import OCRJob
+        from models.ocr_job import OCRJob
 
         # Query failed jobs with retry count < 3
         query = (

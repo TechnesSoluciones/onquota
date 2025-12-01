@@ -10,7 +10,7 @@ from uuid import UUID
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from modules.visits.models import Visit, Call, VisitStatus, CallType, CallStatus
+from models.visit import Visit, Call, VisitStatus, CallType, CallStatus
 from modules.visits.schemas import (
     VisitCreate,
     VisitUpdate,
@@ -198,6 +198,45 @@ class VisitRepository:
         visit.updated_at = datetime.utcnow()
         await self.db.flush()
         return True
+
+    async def validate_check_in_proximity(
+        self,
+        visit_id: UUID,
+        tenant_id: UUID,
+        latitude: Decimal,
+        longitude: Decimal
+    ) -> Tuple[bool, Optional[float]]:
+        """
+        Validate that check-in location is within acceptable range of client
+
+        Args:
+            visit_id: Visit UUID
+            tenant_id: Tenant UUID
+            latitude: Check-in latitude
+            longitude: Check-in longitude
+
+        Returns:
+            Tuple of (is_valid, distance_km)
+        """
+        from modules.visits.services.geolocation import GeolocationService
+
+        visit = await self.get_visit(visit_id, tenant_id)
+        if not visit:
+            return False, None
+
+        # Get client location from database
+        # Note: This requires client to have latitude/longitude fields
+        # If not available, proximity validation is skipped
+        client_lat = getattr(visit.client, 'latitude', None) if hasattr(visit, 'client') else None
+        client_lon = getattr(visit.client, 'longitude', None) if hasattr(visit, 'client') else None
+
+        geo_service = GeolocationService()
+        is_valid, distance = geo_service.validate_proximity(
+            latitude, longitude,
+            client_lat, client_lon
+        )
+
+        return is_valid, distance
 
 
 class CallRepository:

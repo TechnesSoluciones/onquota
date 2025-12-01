@@ -5,7 +5,7 @@ import pytest
 from datetime import datetime, timedelta
 from uuid import uuid4
 
-from modules.notifications.models import Notification, NotificationType, NotificationCategory
+from models.notification import Notification, NotificationType, NotificationCategory
 from modules.notifications.schemas import NotificationCreate
 from modules.notifications.repository import NotificationRepository
 from core.exceptions import NotFoundError

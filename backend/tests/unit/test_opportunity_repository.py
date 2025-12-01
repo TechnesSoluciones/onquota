@@ -6,7 +6,7 @@ from decimal import Decimal
 from datetime import date, timedelta
 from uuid import uuid4
 
-from modules.opportunities.models import Opportunity, OpportunityStage
+from models.opportunity import Opportunity, OpportunityStage
 from modules.opportunities.schemas import OpportunityCreate, OpportunityUpdate
 from modules.opportunities.repository import OpportunityRepository
 from models.client import Client

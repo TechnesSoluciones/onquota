@@ -35,4 +35,5 @@ export const CURRENCIES = [
   { value: 'EUR', label: 'EUR - Euro' },
   { value: 'MXN', label: 'MXN - Peso Mexicano' },
   { value: 'COP', label: 'COP - Peso Colombiano' },
+  { value: 'DOP', label: 'DOP - Peso Dominicano' },
 ]

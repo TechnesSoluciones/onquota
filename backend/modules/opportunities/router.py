@@ -7,12 +7,14 @@ from datetime import date
 from typing import Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
+from fastapi.responses import FileResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from core.exceptions import NotFoundError, ValidationError, ForbiddenError
+from core.logging import get_logger
 from models.user import User, UserRole
-from modules.opportunities.models import OpportunityStage
+from models.opportunity import OpportunityStage
 from modules.opportunities.schemas import (
     OpportunityCreate,
     OpportunityUpdate,
@@ -23,9 +25,18 @@ from modules.opportunities.schemas import (
     PipelineBoardResponse,
     PipelineBoardColumn,
     PipelineBoardCard,
+    WinRateResponse,
+    ConversionRatesResponse,
+    ConversionRateStage,
+    RevenueForecastResponse,
+    PipelineHealthResponse,
 )
 from modules.opportunities.repository import OpportunityRepository
+from modules.opportunities.services import OpportunityAnalyticsService
+from modules.opportunities.exporters import OpportunityExporter
 from api.dependencies import get_current_user, require_admin
+
+logger = get_logger(__name__)
 
 
 router = APIRouter(prefix="/opportunities", tags=["Opportunities"])
@@ -44,7 +55,7 @@ router = APIRouter(prefix="/opportunities", tags=["Opportunities"])
 async def create_opportunity(
     data: OpportunityCreate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Create new opportunity
@@ -109,7 +120,7 @@ async def list_opportunities(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     List opportunities with filters and pagination
@@ -196,7 +207,7 @@ async def list_opportunities(
 async def get_opportunity(
     opportunity_id: UUID,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Get opportunity by ID
@@ -254,7 +265,7 @@ async def update_opportunity(
     opportunity_id: UUID,
     data: OpportunityUpdate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Update opportunity
@@ -326,7 +337,7 @@ async def update_opportunity_stage(
     opportunity_id: UUID,
     data: OpportunityStageUpdate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Update opportunity stage
@@ -396,7 +407,7 @@ async def update_opportunity_stage(
 async def delete_opportunity(
     opportunity_id: UUID,
     current_user: User = Depends(require_admin),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Delete opportunity (Admin only)
@@ -427,7 +438,7 @@ async def delete_opportunity(
 async def get_pipeline_summary(
     assigned_to: Optional[UUID] = Query(None, description="Filter by assigned user"),
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Get pipeline summary statistics
@@ -471,7 +482,7 @@ async def get_pipeline_summary(
 async def get_pipeline_board(
     assigned_to: Optional[UUID] = Query(None, description="Filter by assigned user"),
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Get pipeline board data for Kanban view
@@ -562,3 +573,350 @@ async def get_pipeline_board(
         columns=columns,
         summary=summary,
     )
+
+
+# ============================================================================
+# Analytics Endpoints
+# ============================================================================
+
+
+@router.get("/analytics/win-rate", response_model=WinRateResponse)
+async def get_win_rate(
+    user_id: Optional[UUID] = Query(None, description="Filter by sales rep"),
+    date_from: Optional[date] = Query(None, description="Start date for analysis"),
+    date_to: Optional[date] = Query(None, description="End date for analysis"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get win rate analytics
+
+    Returns comprehensive win rate analysis including:
+    - Overall win rate percentage
+    - Total closed, won, and lost opportunities
+    - Total and average revenue for won deals
+    - Total lost revenue
+
+    **Filters:**
+    - `user_id`: Filter by sales rep (admins/supervisors only)
+    - `date_from`: Start date for analysis period
+    - `date_to`: End date for analysis period
+
+    **Access Control:**
+    - Sales reps see only their own win rate
+    - Supervisors and admins can filter by sales rep or see all
+
+    **Use Cases:**
+    - Performance tracking
+    - Sales rep evaluation
+    - Team metrics dashboard
+    - Historical performance analysis
+    """
+    try:
+        analytics_service = OpportunityAnalyticsService(db)
+
+        # Apply RBAC: sales reps can only see their own data
+        sales_rep_id = user_id
+        if current_user.role == UserRole.SALES_REP:
+            sales_rep_id = current_user.id
+
+        # Calculate win rate
+        win_rate_data = await analytics_service.calculate_win_rate(
+            tenant_id=current_user.tenant_id,
+            sales_rep_id=sales_rep_id,
+            start_date=date_from,
+            end_date=date_to,
+        )
+
+        return WinRateResponse(**win_rate_data)
+
+    except Exception as e:
+        logger.error(f"Error calculating win rate: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error calculating win rate: {str(e)}"
+        )
+
+
+@router.get("/analytics/conversion-rates", response_model=ConversionRatesResponse)
+async def get_conversion_rates(
+    user_id: Optional[UUID] = Query(None, description="Filter by sales rep"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get conversion rates between pipeline stages
+
+    Returns conversion analysis showing how opportunities progress through stages:
+    - Number of opportunities at each stage
+    - Number that converted to next stage
+    - Conversion percentage for each stage transition
+
+    **Stage Progression:**
+    - LEAD → QUALIFIED
+    - QUALIFIED → PROPOSAL
+    - PROPOSAL → NEGOTIATION
+    - NEGOTIATION → CLOSED_WON
+
+    **Filters:**
+    - `user_id`: Filter by sales rep (admins/supervisors only)
+
+    **Access Control:**
+    - Sales reps see only their own conversion rates
+    - Supervisors and admins can filter by sales rep or see all
+
+    **Use Cases:**
+    - Pipeline optimization
+    - Stage bottleneck identification
+    - Sales process efficiency analysis
+    - Training needs assessment
+    """
+    try:
+        analytics_service = OpportunityAnalyticsService(db)
+
+        # Apply RBAC
+        sales_rep_id = user_id
+        if current_user.role == UserRole.SALES_REP:
+            sales_rep_id = current_user.id
+
+        # Calculate conversion rates
+        conversion_data = await analytics_service.calculate_conversion_rates(
+            tenant_id=current_user.tenant_id,
+            sales_rep_id=sales_rep_id,
+        )
+
+        # Transform to response format
+        conversion_rates = {}
+        for stage_key, stage_data in conversion_data.items():
+            conversion_rates[stage_key] = ConversionRateStage(**stage_data)
+
+        return ConversionRatesResponse(conversion_rates=conversion_rates)
+
+    except Exception as e:
+        logger.error(f"Error calculating conversion rates: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error calculating conversion rates: {str(e)}"
+        )
+
+
+@router.get("/analytics/forecast", response_model=RevenueForecastResponse)
+async def get_revenue_forecast(
+    days: int = Query(90, ge=30, le=365, description="Number of days to forecast"),
+    user_id: Optional[UUID] = Query(None, description="Filter by sales rep"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get revenue forecast for next N days
+
+    Returns probability-weighted revenue forecast including:
+    - Best case scenario (sum of all estimated values)
+    - Weighted forecast (probability-adjusted)
+    - Conservative forecast (high probability deals only, ≥75%)
+    - Monthly breakdown of expected closes
+
+    **Parameters:**
+    - `days`: Forecast period in days (30-365, default: 90)
+    - `user_id`: Filter by sales rep (admins/supervisors only)
+
+    **Forecast Types:**
+    - **Best Case**: Sum of all opportunity values
+    - **Weighted**: Values multiplied by win probability
+    - **Conservative**: Only opportunities with ≥75% probability
+
+    **Access Control:**
+    - Sales reps see only their own forecast
+    - Supervisors and admins can filter by sales rep or see all
+
+    **Use Cases:**
+    - Revenue planning
+    - Quota tracking
+    - Financial forecasting
+    - Sales capacity planning
+    """
+    try:
+        analytics_service = OpportunityAnalyticsService(db)
+
+        # Apply RBAC
+        sales_rep_id = user_id
+        if current_user.role == UserRole.SALES_REP:
+            sales_rep_id = current_user.id
+
+        # Calculate forecast
+        forecast_data = await analytics_service.calculate_revenue_forecast(
+            tenant_id=current_user.tenant_id,
+            forecast_period_days=days,
+            sales_rep_id=sales_rep_id,
+        )
+
+        return RevenueForecastResponse(**forecast_data)
+
+    except Exception as e:
+        logger.error(f"Error calculating revenue forecast: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error calculating revenue forecast: {str(e)}"
+        )
+
+
+@router.get("/analytics/pipeline-health", response_model=PipelineHealthResponse)
+async def get_pipeline_health(
+    user_id: Optional[UUID] = Query(None, description="Filter by sales rep"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get overall pipeline health metrics
+
+    Returns comprehensive pipeline health indicators including:
+    - Total active opportunities and values
+    - Distribution across pipeline stages
+    - Age analysis (opportunity aging buckets)
+    - Overdue opportunities tracking
+    - Weighted vs unweighted pipeline values
+
+    **Metrics Included:**
+    - **Stage Distribution**: Count and value by stage
+    - **Aging Analysis**: 0-30, 31-60, 61-90, 90+ days
+    - **Overdue Tracking**: Opportunities past expected close date
+    - **Value Analysis**: Total and weighted pipeline values
+
+    **Filters:**
+    - `user_id`: Filter by sales rep (admins/supervisors only)
+
+    **Access Control:**
+    - Sales reps see only their own pipeline health
+    - Supervisors and admins can filter by sales rep or see all
+
+    **Use Cases:**
+    - Pipeline quality assessment
+    - Risk identification (old/overdue deals)
+    - Sales process health monitoring
+    - Coaching and management
+    """
+    try:
+        analytics_service = OpportunityAnalyticsService(db)
+
+        # Apply RBAC
+        sales_rep_id = user_id
+        if current_user.role == UserRole.SALES_REP:
+            sales_rep_id = current_user.id
+
+        # Get pipeline health metrics
+        health_data = await analytics_service.get_pipeline_health_metrics(
+            tenant_id=current_user.tenant_id,
+            sales_rep_id=sales_rep_id,
+        )
+
+        return PipelineHealthResponse(**health_data)
+
+    except Exception as e:
+        logger.error(f"Error calculating pipeline health: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error calculating pipeline health: {str(e)}"
+        )
+
+
+# ============================================================================
+# Export Endpoints
+# ============================================================================
+
+
+@router.get("/export/excel")
+async def export_opportunities_excel(
+    stage: Optional[OpportunityStage] = Query(None, description="Filter by stage"),
+    user_id: Optional[UUID] = Query(None, description="Filter by sales rep"),
+    date_from: Optional[date] = Query(None, description="Filter by creation date from"),
+    date_to: Optional[date] = Query(None, description="Filter by creation date to"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Export opportunities to Excel file
+
+    Generates a comprehensive Excel workbook with multiple sheets:
+    - **All Opportunities**: Complete list with all fields
+    - **Summary by Stage**: Aggregated statistics per pipeline stage
+    - **Summary by Sales Rep**: Performance metrics by sales representative
+    - **Win Rate Analysis**: Win/loss analysis with loss reasons
+
+    **Filters:**
+    - `stage`: Filter by pipeline stage
+    - `user_id`: Filter by sales rep (admins/supervisors only)
+    - `date_from`: Filter by creation date from
+    - `date_to`: Filter by creation date to
+
+    **Access Control:**
+    - Sales reps can only export their own opportunities
+    - Supervisors and admins can filter by sales rep or export all
+
+    **Response:**
+    - Excel file (.xlsx) download
+    - Professional formatting with headers
+    - Currency formatting for financial data
+    - Frozen header rows for easy scrolling
+
+    **Use Cases:**
+    - Offline analysis
+    - Executive reporting
+    - Data backup
+    - Integration with other tools
+    """
+    try:
+        repo = OpportunityRepository(db)
+
+        # Apply RBAC: sales reps see only their own opportunities
+        sales_rep_filter = user_id
+        if current_user.role == UserRole.SALES_REP:
+            sales_rep_filter = current_user.id
+
+        # Get opportunities with filters
+        # Note: We'll get all pages for export
+        opportunities, total = await repo.get_opportunities(
+            tenant_id=current_user.tenant_id,
+            stage=stage,
+            assigned_to=sales_rep_filter,
+            client_id=None,
+            page=1,
+            page_size=10000,  # Large page size to get all opportunities
+        )
+
+        if not opportunities:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No opportunities found matching the criteria"
+            )
+
+        # Additional date filtering if provided
+        if date_from:
+            opportunities = [opp for opp in opportunities
+                           if opp.created_at.date() >= date_from]
+
+        if date_to:
+            opportunities = [opp for opp in opportunities
+                           if opp.created_at.date() <= date_to]
+
+        # Export to Excel
+        exporter = OpportunityExporter()
+        filepath = await exporter.export_to_excel(opportunities)
+
+        # Return file as download
+        return FileResponse(
+            path=filepath,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            filename=f"opportunities_export_{current_user.tenant_id}.xlsx",
+            headers={
+                "Content-Disposition": f"attachment; filename=opportunities_export_{current_user.tenant_id}.xlsx"
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error exporting opportunities to Excel: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error exporting opportunities: {str(e)}"
+        )

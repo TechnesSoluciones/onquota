@@ -9,7 +9,7 @@ from sqlalchemy import select, func, and_, or_, case
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
 
-from modules.opportunities.models import Opportunity, OpportunityStage
+from models.opportunity import Opportunity, OpportunityStage
 from modules.opportunities.schemas import (
     OpportunityCreate,
     OpportunityUpdate,

@@ -9,7 +9,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from uuid import UUID
 from decimal import Decimal
-from modules.analytics.models import AnalysisStatus, FileType
+from models.analysis import AnalysisStatus, FileType
 
 
 class AnalysisCreate(BaseModel):

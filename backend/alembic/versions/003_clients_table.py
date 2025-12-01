@@ -18,43 +18,13 @@ depends_on = None
 
 def upgrade() -> None:
     # Create client_status enum
-    op.execute("""
-        CREATE TYPE client_status AS ENUM (
-            'lead',
-            'prospect',
-            'active',
-            'inactive',
-            'lost'
-        )
-    """)
+    
 
     # Create client_type enum
-    op.execute("""
-        CREATE TYPE client_type AS ENUM (
-            'individual',
-            'company'
-        )
-    """)
+    
 
     # Create industry enum
-    op.execute("""
-        CREATE TYPE industry AS ENUM (
-            'technology',
-            'healthcare',
-            'finance',
-            'retail',
-            'manufacturing',
-            'education',
-            'real_estate',
-            'hospitality',
-            'transportation',
-            'energy',
-            'agriculture',
-            'construction',
-            'consulting',
-            'other'
-        )
-    """)
+    
 
     # Create clients table
     op.create_table(

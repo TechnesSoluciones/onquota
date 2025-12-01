@@ -8,7 +8,7 @@ from typing import Optional, List
 from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
-from modules.accounts.models import PlanStatus, MilestoneStatus, SWOTCategory
+from models.account_plan import PlanStatus, MilestoneStatus, SWOTCategory
 
 
 # ============================================================================

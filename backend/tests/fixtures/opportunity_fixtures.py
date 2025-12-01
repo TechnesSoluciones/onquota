@@ -10,7 +10,7 @@ from datetime import date, timedelta
 from models.tenant import Tenant
 from models.user import User, UserRole
 from models.client import Client, ClientStatus
-from modules.opportunities.models import Opportunity, OpportunityStage
+from models.opportunity import Opportunity, OpportunityStage
 
 
 @pytest_asyncio.fixture

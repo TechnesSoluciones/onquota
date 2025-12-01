@@ -18,22 +18,10 @@ depends_on = None
 
 def upgrade() -> None:
     # Create analysis_status enum
-    op.execute("""
-        CREATE TYPE analysis_status AS ENUM (
-            'pending',
-            'processing',
-            'completed',
-            'failed'
-        )
-    """)
+    
 
     # Create file_type enum
-    op.execute("""
-        CREATE TYPE file_type AS ENUM (
-            'csv',
-            'excel'
-        )
-    """)
+    
 
     # Create analyses table
     op.create_table(

@@ -125,3 +125,5 @@ celerybeat.pid
 *.backup
 *.bak
 *.orig
+docs/AWS_DEPLOYMENT_MANUAL_GUIDE.md
+Context_Docs

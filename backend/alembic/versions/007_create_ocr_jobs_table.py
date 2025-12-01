@@ -18,14 +18,7 @@ depends_on = None
 
 def upgrade() -> None:
     # Create ocr_job_status enum
-    op.execute("""
-        CREATE TYPE ocr_job_status AS ENUM (
-            'pending',
-            'processing',
-            'completed',
-            'failed'
-        )
-    """)
+    
 
     # Create ocr_jobs table
     op.create_table(

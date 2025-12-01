@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 from uuid import UUID
-from modules.notifications.models import NotificationType, NotificationCategory
+from models.notification import NotificationType, NotificationCategory
 
 
 class NotificationCreate(BaseModel):

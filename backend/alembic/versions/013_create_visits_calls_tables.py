@@ -28,28 +28,48 @@ def upgrade() -> None:
     """
 
     # Create VisitStatus enum
-    visit_status_enum = postgresql.ENUM(
+    # Create visit_status enum type in database
+    postgresql.ENUM(
         'scheduled',
         'in_progress',
         'completed',
         'cancelled',
         name='visit_status',
         create_type=True
+    ).create(op.get_bind(), checkfirst=True)
+
+    # Create ENUM object for table definition (create_type=False to avoid duplicate)
+    visit_status_enum = postgresql.ENUM(
+        'scheduled',
+        'in_progress',
+        'completed',
+        'cancelled',
+        name='visit_status',
+        create_type=False
     )
-    visit_status_enum.create(op.get_bind(), checkfirst=True)
 
     # Create CallType enum
-    call_type_enum = postgresql.ENUM(
+    # Create call_type enum type in database
+    postgresql.ENUM(
         'incoming',
         'outgoing',
         'missed',
         name='call_type',
         create_type=True
+    ).create(op.get_bind(), checkfirst=True)
+
+    # Create ENUM object for table definition (create_type=False to avoid duplicate)
+    call_type_enum = postgresql.ENUM(
+        'incoming',
+        'outgoing',
+        'missed',
+        name='call_type',
+        create_type=False
     )
-    call_type_enum.create(op.get_bind(), checkfirst=True)
 
     # Create CallStatus enum
-    call_status_enum = postgresql.ENUM(
+    # Create call_status enum type in database
+    postgresql.ENUM(
         'scheduled',
         'completed',
         'no_answer',
@@ -57,8 +77,18 @@ def upgrade() -> None:
         'cancelled',
         name='call_status',
         create_type=True
+    ).create(op.get_bind(), checkfirst=True)
+
+    # Create ENUM object for table definition (create_type=False to avoid duplicate)
+    call_status_enum = postgresql.ENUM(
+        'scheduled',
+        'completed',
+        'no_answer',
+        'voicemail',
+        'cancelled',
+        name='call_status',
+        create_type=False
     )
-    call_status_enum.create(op.get_bind(), checkfirst=True)
 
     # Create visits table
     op.create_table(

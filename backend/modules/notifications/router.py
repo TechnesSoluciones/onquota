@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from models.user import User
-from modules.notifications.models import NotificationType, NotificationCategory
+from models.notification import NotificationType, NotificationCategory
 from modules.notifications.schemas import (
     NotificationResponse,
     NotificationListResponse,
@@ -285,72 +285,125 @@ async def delete_notification(
 
 
 # ============================================================================
-# SSE Endpoint (Optional - for real-time notifications)
+# SSE Endpoint - Real-time Notifications Stream
 # ============================================================================
 
-# Uncomment to enable Server-Sent Events for real-time notifications
-# Requires: pip install sse-starlette
-#
-# from sse_starlette.sse import EventSourceResponse
-# import asyncio
-#
-# @router.get("/stream")
-# async def notification_stream(
-#     current_user: User = Depends(get_current_user),
-#     db: AsyncSession = Depends(get_db),
-# ):
-#     """
-#     Server-Sent Events stream for real-time notifications
-#
-#     Establishes a persistent connection that pushes new notifications
-#     to the client in real-time.
-#
-#     **How it works:**
-#     - Client opens EventSource connection
-#     - Server polls for new notifications every 5 seconds
-#     - New notifications are pushed to client immediately
-#     - Connection stays open until client closes it
-#
-#     **Use Cases:**
-#     - Real-time notification updates
-#     - Live notification feed
-#     - Push notifications without polling
-#
-#     **Client Example:**
-#     ```javascript
-#     const eventSource = new EventSource('/api/v1/notifications/stream');
-#     eventSource.onmessage = (event) => {
-#         const notification = JSON.parse(event.data);
-#         console.log('New notification:', notification);
-#     };
-#     ```
-#     """
-#     async def event_generator():
-#         last_check = datetime.utcnow()
-#         while True:
-#             # Check for new notifications
-#             repo = NotificationRepository(db)
-#             notifications, _ = await repo.get_user_notifications(
-#                 user_id=current_user.id,
-#                 tenant_id=current_user.tenant_id,
-#                 page=1,
-#                 page_size=10,
-#             )
-#
-#             # Filter notifications created since last check
-#             new_notifications = [
-#                 n for n in notifications
-#                 if n.created_at > last_check
-#             ]
-#
-#             # Send new notifications
-#             for notif in new_notifications:
-#                 yield {
-#                     "event": "notification",
-#                     "data": NotificationResponse.model_validate(notif).model_dump_json(),
-#                 }
-#
-#             last_check = datetime.utcnow()
-#             await asyncio.sleep(5)  # Poll every 5 seconds
-#
-#     return EventSourceResponse(event_generator())
+from sse_starlette.sse import EventSourceResponse
+import asyncio
+
+
+@router.get("/stream")
+async def notification_stream(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Server-Sent Events stream for real-time notifications
+
+    Establishes a persistent connection that pushes new notifications
+    to the client in real-time.
+
+    **How it works:**
+    - Client opens EventSource connection
+    - Server polls for new notifications every 5 seconds
+    - New notifications are pushed to client immediately
+    - Connection stays open until client closes it
+    - Sends heartbeat every 30 seconds to keep connection alive
+
+    **Use Cases:**
+    - Real-time notification updates
+    - Live notification feed
+    - Push notifications without polling
+
+    **Client Example:**
+    ```javascript
+    const eventSource = new EventSource('/api/v1/notifications/stream');
+
+    eventSource.onmessage = (event) => {
+        const notification = JSON.parse(event.data);
+        console.log('New notification:', notification);
+    };
+
+    eventSource.addEventListener('heartbeat', (event) => {
+        console.log('Connection alive:', event.data);
+    });
+
+    eventSource.onerror = (error) => {
+        console.error('SSE connection error:', error);
+        eventSource.close();
+    };
+    ```
+
+    **Response Format:**
+    - Event type: "notification" for new notifications, "heartbeat" for keep-alive
+    - Data: JSON string with notification details
+    """
+    async def event_generator():
+        """Generate SSE events for notifications"""
+        last_check = datetime.utcnow()
+        heartbeat_counter = 0
+
+        logger.info(f"SSE stream started for user {current_user.id}")
+
+        try:
+            while True:
+                # Check for new notifications
+                repo = NotificationRepository(db)
+
+                try:
+                    notifications, _ = await repo.get_user_notifications(
+                        user_id=current_user.id,
+                        tenant_id=current_user.tenant_id,
+                        page=1,
+                        page_size=20,  # Check last 20 notifications
+                    )
+
+                    # Filter notifications created since last check
+                    new_notifications = [
+                        n for n in notifications
+                        if n.created_at > last_check
+                    ]
+
+                    # Send new notifications
+                    if new_notifications:
+                        logger.info(
+                            f"Sending {len(new_notifications)} new notification(s) "
+                            f"to user {current_user.id}"
+                        )
+
+                        for notif in new_notifications:
+                            notification_data = NotificationResponse.model_validate(notif)
+                            yield {
+                                "event": "notification",
+                                "id": str(notif.id),
+                                "data": notification_data.model_dump_json(),
+                            }
+
+                    last_check = datetime.utcnow()
+
+                except Exception as e:
+                    logger.error(f"Error fetching notifications for SSE: {e}")
+                    # Continue the loop even on error
+
+                # Send heartbeat every 30 seconds (6 iterations of 5 second sleep)
+                heartbeat_counter += 1
+                if heartbeat_counter >= 6:
+                    yield {
+                        "event": "heartbeat",
+                        "data": f'{{"timestamp": "{datetime.utcnow().isoformat()}"}}',
+                    }
+                    heartbeat_counter = 0
+
+                # Wait before next check
+                await asyncio.sleep(5)
+
+        except asyncio.CancelledError:
+            logger.info(f"SSE stream cancelled for user {current_user.id}")
+            raise
+        except Exception as e:
+            logger.error(f"SSE stream error for user {current_user.id}: {e}")
+            raise
+        finally:
+            logger.info(f"SSE stream ended for user {current_user.id}")
+
+    return EventSourceResponse(event_generator())

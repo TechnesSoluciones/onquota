@@ -29,16 +29,7 @@ def upgrade() -> None:
     """
 
     # Create OpportunityStage enum
-    op.execute("""
-        CREATE TYPE opportunity_stage AS ENUM (
-            'LEAD',
-            'QUALIFIED',
-            'PROPOSAL',
-            'NEGOTIATION',
-            'CLOSED_WON',
-            'CLOSED_LOST'
-        )
-    """)
+    
 
     # Create opportunities table
     op.create_table(

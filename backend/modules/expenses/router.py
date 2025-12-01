@@ -5,12 +5,14 @@ from datetime import date
 from typing import Optional
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 import math
 
 from core.database import get_db
 from core.exceptions import NotFoundError, ForbiddenError
+from core.export_utils import create_excel_comparison, create_pdf_comparison
 from models.user import User, UserRole
 from models.expense import ExpenseStatus
 from schemas.expense import (
@@ -464,4 +466,451 @@ async def get_expense_summary(
         approved_count=summary["approved_count"],
         rejected_count=summary["rejected_count"],
         by_category=by_category,
+    )
+
+
+@router.get("/comparison/monthly")
+async def get_monthly_comparison(
+    year: int = Query(..., ge=2000, le=2100, description="Year to compare"),
+    comparison_type: str = Query("monthly", description="Type: monthly, yearly, quarter"),
+    category_id: Optional[UUID] = Query(None, description="Filter by category"),
+    start_date: Optional[date] = Query(None, description="Custom start date"),
+    end_date: Optional[date] = Query(None, description="Custom end date"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get expense comparison with multiple options
+
+    Supports monthly, quarterly, and yearly comparisons with optional filters.
+
+    **Access Control:**
+    - Sales reps see only their own expenses
+    - Supervisors and admins see all tenant expenses
+    """
+    from sqlalchemy import func, extract, and_
+    from models.expense import Expense
+    from datetime import datetime, timedelta
+
+    repo = ExpenseRepository(db)
+
+    # Determine user filter
+    user_filter = current_user.id if current_user.role == UserRole.SALES_REP else None
+
+    # Build base filters
+    base_filters = [
+        Expense.tenant_id == current_user.tenant_id,
+        Expense.is_deleted == False
+    ]
+
+    if user_filter:
+        base_filters.append(Expense.user_id == user_filter)
+
+    if category_id:
+        base_filters.append(Expense.category_id == category_id)
+
+    # Handle custom date range
+    if start_date and end_date:
+        query_current = db.query(
+            extract('month', Expense.date).label('month'),
+            func.coalesce(func.sum(Expense.amount), 0).label('total'),
+            func.count(Expense.id).label('count')
+        ).filter(
+            and_(*base_filters),
+            Expense.date >= start_date,
+            Expense.date <= end_date
+        ).group_by(extract('month', Expense.date))
+
+        # Previous period (same duration)
+        duration = (end_date - start_date).days
+        prev_start = start_date - timedelta(days=duration + 1)
+        prev_end = start_date - timedelta(days=1)
+
+        query_previous = db.query(
+            extract('month', Expense.date).label('month'),
+            func.coalesce(func.sum(Expense.amount), 0).label('total'),
+            func.count(Expense.id).label('count')
+        ).filter(
+            and_(*base_filters),
+            Expense.date >= prev_start,
+            Expense.date <= prev_end
+        ).group_by(extract('month', Expense.date))
+
+    elif comparison_type == "quarter":
+        # Quarterly comparison
+        current_quarter = (datetime.now().month - 1) // 3 + 1
+        query_current = db.query(
+            extract('quarter', Expense.date).label('quarter'),
+            func.coalesce(func.sum(Expense.amount), 0).label('total'),
+            func.count(Expense.id).label('count')
+        ).filter(
+            and_(*base_filters),
+            extract('year', Expense.date) == year
+        ).group_by(extract('quarter', Expense.date))
+
+        query_previous = db.query(
+            extract('quarter', Expense.date).label('quarter'),
+            func.coalesce(func.sum(Expense.amount), 0).label('total'),
+            func.count(Expense.id).label('count')
+        ).filter(
+            and_(*base_filters),
+            extract('year', Expense.date) == year - 1
+        ).group_by(extract('quarter', Expense.date))
+
+    elif comparison_type == "yearly":
+        # Yearly comparison (last 5 years)
+        query_current = db.query(
+            extract('year', Expense.date).label('year_num'),
+            func.coalesce(func.sum(Expense.amount), 0).label('total'),
+            func.count(Expense.id).label('count')
+        ).filter(
+            and_(*base_filters),
+            extract('year', Expense.date) >= year - 4,
+            extract('year', Expense.date) <= year
+        ).group_by(extract('year', Expense.date))
+
+        # No previous for yearly
+        query_previous = None
+
+    else:  # monthly (default)
+        query_current = db.query(
+            extract('month', Expense.date).label('month'),
+            func.coalesce(func.sum(Expense.amount), 0).label('total'),
+            func.count(Expense.id).label('count')
+        ).filter(
+            and_(*base_filters),
+            extract('year', Expense.date) == year
+        ).group_by(extract('month', Expense.date))
+
+        query_previous = db.query(
+            extract('month', Expense.date).label('month'),
+            func.coalesce(func.sum(Expense.amount), 0).label('total'),
+            func.count(Expense.id).label('count')
+        ).filter(
+            and_(*base_filters),
+            extract('year', Expense.date) == year - 1
+        ).group_by(extract('month', Expense.date))
+
+    # Execute queries
+    current_results = await db.execute(query_current)
+    current_data = {}
+
+    if comparison_type == "quarter":
+        current_data = {int(row.quarter): {"total": float(row.total), "count": row.count} for row in current_results}
+    elif comparison_type == "yearly":
+        current_data = {int(row.year_num): {"total": float(row.total), "count": row.count} for row in current_results}
+    else:
+        current_data = {int(row.month): {"total": float(row.total), "count": row.count} for row in current_results}
+
+    previous_data = {}
+    if query_previous:
+        previous_results = await db.execute(query_previous)
+        if comparison_type == "quarter":
+            previous_data = {int(row.quarter): {"total": float(row.total), "count": row.count} for row in previous_results}
+        else:
+            previous_data = {int(row.month): {"total": float(row.total), "count": row.count} for row in previous_results}
+
+    # Build response based on comparison type
+    if comparison_type == "quarter":
+        labels = ['Q1', 'Q2', 'Q3', 'Q4']
+        data_points = []
+        for q in range(1, 5):
+            current = current_data.get(q, {"total": 0, "count": 0})
+            previous = previous_data.get(q, {"total": 0, "count": 0})
+            data_points.append({
+                "month": labels[q - 1],
+                "month_num": q,
+                "actual": current["total"],
+                "previous": previous["total"],
+                "actual_count": current["count"],
+                "previous_count": previous["count"],
+            })
+
+    elif comparison_type == "yearly":
+        data_points = []
+        for y in range(year - 4, year + 1):
+            current = current_data.get(y, {"total": 0, "count": 0})
+            data_points.append({
+                "month": str(y),
+                "month_num": y,
+                "actual": current["total"],
+                "previous": 0,
+                "actual_count": current["count"],
+                "previous_count": 0,
+            })
+
+    else:  # monthly
+        months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+        data_points = []
+        for month_num in range(1, 13):
+            current = current_data.get(month_num, {"total": 0, "count": 0})
+            previous = previous_data.get(month_num, {"total": 0, "count": 0})
+            data_points.append({
+                "month": months[month_num - 1],
+                "month_num": month_num,
+                "actual": current["total"],
+                "previous": previous["total"],
+                "actual_count": current["count"],
+                "previous_count": previous["count"],
+            })
+
+    # Calculate summary statistics
+    total_actual = sum(item["actual"] for item in data_points)
+    total_previous = sum(item["previous"] for item in data_points)
+    avg_actual = total_actual / len(data_points) if total_actual > 0 and len(data_points) > 0 else 0
+
+    # Find min and max
+    points_with_data = [item for item in data_points if item["actual"] > 0]
+    min_point = min(points_with_data, key=lambda x: x["actual"]) if points_with_data else None
+    max_point = max(points_with_data, key=lambda x: x["actual"]) if points_with_data else None
+
+    # Calculate percentage change
+    pct_change = ((total_actual - total_previous) / total_previous * 100) if total_previous > 0 else 0
+
+    return {
+        "year": year,
+        "comparison_type": comparison_type,
+        "monthly_data": data_points,
+        "summary": {
+            "total_actual": total_actual,
+            "total_previous": total_previous,
+            "average_monthly": avg_actual,
+            "percent_change": round(pct_change, 2),
+            "min_month": {
+                "name": min_point["month"],
+                "amount": min_point["actual"]
+            } if min_point else None,
+            "max_month": {
+                "name": max_point["month"],
+                "amount": max_point["actual"]
+            } if max_point else None,
+        }
+    }
+
+
+@router.get("/comparison/export/excel")
+async def export_comparison_excel(
+    year: int = Query(..., ge=2000, le=2100, description="Year to export"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Export monthly expense comparison to Excel
+
+    Downloads an Excel file with monthly comparison data and summary statistics.
+    """
+    from sqlalchemy import select, func, extract, case
+    from models.expense import Expense
+
+    # Build query for current year
+    query_current = select(
+        extract('month', Expense.date).label('month'),
+        func.coalesce(func.sum(Expense.amount), 0).label('total'),
+        func.count(Expense.id).label('count')
+    ).where(
+        Expense.tenant_id == current_user.tenant_id,
+        Expense.is_deleted == False,
+        extract('year', Expense.date) == year
+    ).group_by(extract('month', Expense.date))
+
+    # Build query for previous year
+    query_previous = select(
+        extract('month', Expense.date).label('month'),
+        func.coalesce(func.sum(Expense.amount), 0).label('total'),
+        func.count(Expense.id).label('count')
+    ).where(
+        Expense.tenant_id == current_user.tenant_id,
+        Expense.is_deleted == False,
+        extract('year', Expense.date) == year - 1
+    ).group_by(extract('month', Expense.date))
+
+    # Execute queries
+    result_current = await db.execute(query_current)
+    result_previous = await db.execute(query_previous)
+
+    current_data = {row.month: {"total": float(row.total), "count": row.count}
+                    for row in result_current.all()}
+    previous_data = {row.month: {"total": float(row.total), "count": row.count}
+                     for row in result_previous.all()}
+
+    # Build monthly data
+    month_names = ["Ene", "Feb", "Mar", "Abr", "May", "Jun",
+                   "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+
+    monthly_data = []
+    total_actual = 0
+    total_previous = 0
+
+    for month_num in range(1, 13):
+        current = current_data.get(month_num, {"total": 0, "count": 0})
+        previous = previous_data.get(month_num, {"total": 0, "count": 0})
+
+        monthly_data.append({
+            "month": month_names[month_num - 1],
+            "month_num": month_num,
+            "actual": current["total"],
+            "previous": previous["total"],
+            "actual_count": current["count"],
+            "previous_count": previous["count"]
+        })
+
+        total_actual += current["total"]
+        total_previous += previous["total"]
+
+    # Calculate statistics
+    avg_actual = total_actual / 12 if total_actual > 0 else 0
+    pct_change = ((total_actual - total_previous) / total_previous * 100) if total_previous > 0 else 0
+
+    # Find min and max months
+    months_with_data = [m for m in monthly_data if m["actual"] > 0]
+    min_month = min(months_with_data, key=lambda x: x["actual"]) if months_with_data else None
+    max_month = max(months_with_data, key=lambda x: x["actual"]) if months_with_data else None
+
+    data = {
+        "year": year,
+        "monthly_data": monthly_data,
+        "summary": {
+            "total_actual": total_actual,
+            "total_previous": total_previous,
+            "average_monthly": avg_actual,
+            "percent_change": round(pct_change, 2),
+            "min_month": {
+                "name": min_month["month"],
+                "amount": min_month["actual"]
+            } if min_month else None,
+            "max_month": {
+                "name": max_month["month"],
+                "amount": max_month["actual"]
+            } if max_month else None,
+        }
+    }
+
+    # Generate Excel file
+    excel_file = create_excel_comparison(
+        data=data,
+        title="Comparación de Gastos",
+        year=year,
+        company_name="OnQuota"
+    )
+
+    # Return as download
+    filename = f"gastos_comparacion_{year}.xlsx"
+    return StreamingResponse(
+        excel_file,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@router.get("/comparison/export/pdf")
+async def export_comparison_pdf(
+    year: int = Query(..., ge=2000, le=2100, description="Year to export"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Export monthly expense comparison to PDF
+
+    Downloads a PDF file with monthly comparison data and summary statistics.
+    """
+    from sqlalchemy import select, func, extract, case
+    from models.expense import Expense
+
+    # Build query for current year
+    query_current = select(
+        extract('month', Expense.date).label('month'),
+        func.coalesce(func.sum(Expense.amount), 0).label('total'),
+        func.count(Expense.id).label('count')
+    ).where(
+        Expense.tenant_id == current_user.tenant_id,
+        Expense.is_deleted == False,
+        extract('year', Expense.date) == year
+    ).group_by(extract('month', Expense.date))
+
+    # Build query for previous year
+    query_previous = select(
+        extract('month', Expense.date).label('month'),
+        func.coalesce(func.sum(Expense.amount), 0).label('total'),
+        func.count(Expense.id).label('count')
+    ).where(
+        Expense.tenant_id == current_user.tenant_id,
+        Expense.is_deleted == False,
+        extract('year', Expense.date) == year - 1
+    ).group_by(extract('month', Expense.date))
+
+    # Execute queries
+    result_current = await db.execute(query_current)
+    result_previous = await db.execute(query_previous)
+
+    current_data = {row.month: {"total": float(row.total), "count": row.count}
+                    for row in result_current.all()}
+    previous_data = {row.month: {"total": float(row.total), "count": row.count}
+                     for row in result_previous.all()}
+
+    # Build monthly data
+    month_names = ["Ene", "Feb", "Mar", "Abr", "May", "Jun",
+                   "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+
+    monthly_data = []
+    total_actual = 0
+    total_previous = 0
+
+    for month_num in range(1, 13):
+        current = current_data.get(month_num, {"total": 0, "count": 0})
+        previous = previous_data.get(month_num, {"total": 0, "count": 0})
+
+        monthly_data.append({
+            "month": month_names[month_num - 1],
+            "month_num": month_num,
+            "actual": current["total"],
+            "previous": previous["total"],
+            "actual_count": current["count"],
+            "previous_count": previous["count"]
+        })
+
+        total_actual += current["total"]
+        total_previous += previous["total"]
+
+    # Calculate statistics
+    avg_actual = total_actual / 12 if total_actual > 0 else 0
+    pct_change = ((total_actual - total_previous) / total_previous * 100) if total_previous > 0 else 0
+
+    # Find min and max months
+    months_with_data = [m for m in monthly_data if m["actual"] > 0]
+    min_month = min(months_with_data, key=lambda x: x["actual"]) if months_with_data else None
+    max_month = max(months_with_data, key=lambda x: x["actual"]) if months_with_data else None
+
+    data = {
+        "year": year,
+        "monthly_data": monthly_data,
+        "summary": {
+            "total_actual": total_actual,
+            "total_previous": total_previous,
+            "average_monthly": avg_actual,
+            "percent_change": round(pct_change, 2),
+            "min_month": {
+                "name": min_month["month"],
+                "amount": min_month["actual"]
+            } if min_month else None,
+            "max_month": {
+                "name": max_month["month"],
+                "amount": max_month["actual"]
+            } if max_month else None,
+        }
+    }
+
+    # Generate PDF file
+    pdf_file = create_pdf_comparison(
+        data=data,
+        title="Comparación de Gastos",
+        year=year,
+        company_name="OnQuota"
+    )
+
+    # Return as download
+    filename = f"gastos_comparacion_{year}.pdf"
+    return StreamingResponse(
+        pdf_file,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
     )

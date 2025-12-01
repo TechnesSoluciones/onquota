@@ -10,7 +10,8 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, Field, field_validator, ConfigDict
-from modules.ocr.models import OCRJobStatus
+from models.ocr_job import OCRJobStatus
+from core.constants import CURRENCY_CODES
 
 
 class ExtractedItem(BaseModel):
@@ -42,12 +43,22 @@ class ExtractedDataUpdate(BaseModel):
     """User-confirmed/edited extracted data"""
     provider: str = Field(..., min_length=1, max_length=255)
     amount: Decimal = Field(..., ge=0, description="Total amount")
-    currency: str = Field(default="USD", pattern="^[A-Z]{3}$")
+    currency: str = Field(default="USD", description="Currency code (ISO 4217)")
     expense_date: DateType = Field(..., description="Receipt/invoice date")  # Renamed from 'date' to avoid conflict
     category: str = Field(..., min_length=1, max_length=100)
     items: list[ExtractedItem] | None = Field(default=None)
     receipt_number: Optional[str] = Field(None, max_length=100)
     notes: Optional[str] = Field(None, max_length=1000)
+
+    @field_validator("currency")
+    @classmethod
+    def validate_currency(cls, v):
+        """Validate currency code"""
+        if v:
+            v = v.upper()
+            if v not in CURRENCY_CODES:
+                raise ValueError(f"Currency must be one of: {', '.join(CURRENCY_CODES)}")
+        return v
 
     model_config = ConfigDict(from_attributes=True)
 

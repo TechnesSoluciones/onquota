@@ -84,4 +84,5 @@ export const PREFERRED_CURRENCIES = [
   { value: 'EUR', label: 'EUR - Euro' },
   { value: 'MXN', label: 'MXN - Peso Mexicano' },
   { value: 'BRL', label: 'BRL - Real Brasileño' },
+  { value: 'DOP', label: 'DOP - Peso Dominicano' },
 ] as const

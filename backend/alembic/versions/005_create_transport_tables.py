@@ -18,16 +18,12 @@ depends_on = None
 
 def upgrade() -> None:
     # Create vehicle_type enum
-    op.execute("CREATE TYPE vehicle_type AS ENUM ('car', 'van', 'truck', 'motorcycle', 'other')")
 
     # Create vehicle_status enum
-    op.execute("CREATE TYPE vehicle_status AS ENUM ('active', 'maintenance', 'inactive')")
 
     # Create shipment_status enum
-    op.execute("CREATE TYPE shipment_status AS ENUM ('pending', 'in_transit', 'delivered', 'cancelled')")
 
     # Create expense_type enum (for shipment expenses)
-    op.execute("CREATE TYPE expense_type AS ENUM ('fuel', 'toll', 'parking', 'maintenance', 'other')")
 
     # Create vehicles table
     op.create_table(

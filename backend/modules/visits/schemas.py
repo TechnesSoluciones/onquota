@@ -8,7 +8,7 @@ from datetime import datetime
 from uuid import UUID
 from decimal import Decimal
 
-from modules.visits.models import VisitStatus, CallType, CallStatus
+from models.visit import VisitStatus, CallType, CallStatus
 
 
 # ============================================================================

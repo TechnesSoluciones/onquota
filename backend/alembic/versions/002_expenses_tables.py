@@ -18,7 +18,6 @@ depends_on = None
 
 def upgrade() -> None:
     # Create expense_status enum
-    op.execute("CREATE TYPE expense_status AS ENUM ('pending', 'approved', 'rejected')")
 
     # Create expense_categories table
     op.create_table(

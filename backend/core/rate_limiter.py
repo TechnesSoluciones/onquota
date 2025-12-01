@@ -94,6 +94,11 @@ def configure_rate_limiting(app: FastAPI) -> Limiter:
     - Returns 429 status with Retry-After header when limit exceeded
     - Supports both IP-based and user-based rate limiting
     """
+    # Skip rate limiting if Redis URL is not configured
+    if not settings.REDIS_URL or settings.REDIS_URL == "":
+        logger.warning("rate_limiting_disabled", reason="redis_url_not_configured")
+        return None
+
     # Attach limiter to app state
     app.state.limiter = limiter
 

@@ -6,7 +6,7 @@ from decimal import Decimal
 from datetime import date, timedelta
 from uuid import uuid4
 
-from modules.accounts.models import AccountPlan, Milestone, SWOTItem, PlanStatus, MilestoneStatus, SWOTCategory
+from models.account_plan import AccountPlan, Milestone, SWOTItem, PlanStatus, MilestoneStatus, SWOTCategory
 from modules.accounts.schemas import (
     AccountPlanCreate,
     AccountPlanUpdate,

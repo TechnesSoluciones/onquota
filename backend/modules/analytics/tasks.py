@@ -34,7 +34,7 @@ def process_analysis(self, analysis_id: str, file_path: str):
     """
     from modules.analytics.parser import ExcelParser
     from modules.analytics.analyzer import SalesAnalyzer
-    from modules.analytics.models import AnalysisStatus
+    from models.analysis import AnalysisStatus
     from modules.analytics.repository import AnalyticsRepository
     from core.database import AsyncSessionLocal
 
@@ -162,7 +162,7 @@ def cleanup_old_analysis_files(days_old: int = 30):
         dict: Cleanup statistics
     """
     from datetime import datetime, timedelta
-    from modules.analytics.models import Analysis
+    from models.analysis import Analysis
     from core.database import AsyncSessionLocal
     import os
 
@@ -230,7 +230,7 @@ def reprocess_failed_analysis(analysis_id: str):
     Returns:
         dict: Reprocessing result
     """
-    from modules.analytics.models import AnalysisStatus
+    from models.analysis import AnalysisStatus
     from modules.analytics.repository import AnalyticsRepository
     from core.database import AsyncSessionLocal
 
@@ -292,7 +292,7 @@ def generate_analysis_summary_report(tenant_id: str, start_date: str, end_date: 
     """
     from datetime import datetime
     from sqlalchemy import select, and_, between
-    from modules.analytics.models import Analysis, AnalysisStatus
+    from models.analysis import Analysis, AnalysisStatus
     from core.database import AsyncSessionLocal
 
     logger.info(f"Generating summary report for tenant {tenant_id}")

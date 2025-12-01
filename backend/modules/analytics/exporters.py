@@ -26,7 +26,7 @@ from typing import Dict, List, Optional
 from pathlib import Path
 import logging
 
-from modules.analytics.models import Analysis
+from models.analysis import Analysis
 
 logger = logging.getLogger(__name__)
 

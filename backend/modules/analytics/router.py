@@ -28,7 +28,7 @@ from core.exceptions import NotFoundError, ValidationError
 from core.rate_limiter import limiter
 from api.dependencies import get_current_user
 from models.user import User
-from modules.analytics.models import AnalysisStatus, FileType
+from models.analysis import AnalysisStatus, FileType
 from modules.analytics.schemas import (
     AnalysisCreate,
     AnalysisResponse,

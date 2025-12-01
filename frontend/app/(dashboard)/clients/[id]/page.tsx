@@ -34,6 +34,8 @@ import {
   Twitter
 } from 'lucide-react'
 import Link from 'next/link'
+import { ClientSPAManager } from '@/components/clients/ClientSPAManager'
+import { ClientLTAManager } from '@/components/clients/ClientLTAManager'
 
 export default function ClientDetailPage() {
   const params = useParams()
@@ -434,6 +436,15 @@ export default function ClientDetailPage() {
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      {/* SPA and LTA Management Section */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* SPA Manager */}
+        <ClientSPAManager clientId={client.id} bpid={client.bpid} />
+
+        {/* LTA Manager */}
+        <ClientLTAManager clientId={client.id} bpid={client.bpid} />
       </div>
     </div>
   )

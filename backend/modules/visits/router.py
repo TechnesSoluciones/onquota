@@ -27,7 +27,7 @@ from modules.visits.schemas import (
     CallStart,
     CallEnd,
 )
-from modules.visits.models import VisitStatus, CallType, CallStatus
+from models.visit import VisitStatus, CallType, CallStatus
 
 router = APIRouter(prefix="/visits", tags=["Visits & Calls"])
 

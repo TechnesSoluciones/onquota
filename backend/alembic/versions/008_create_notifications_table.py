@@ -36,7 +36,7 @@ def upgrade() -> None:
         'SUCCESS',
         'ERROR',
         name='notification_type',
-        create_type=True
+        create_type=False  # Set to False since we create it manually below
     )
     notification_type_enum.create(op.get_bind(), checkfirst=True)
 
@@ -50,7 +50,7 @@ def upgrade() -> None:
         'CLIENT',
         'GENERAL',
         name='notification_category',
-        create_type=True
+        create_type=False  # Set to False since we create it manually below
     )
     notification_category_enum.create(op.get_bind(), checkfirst=True)
 

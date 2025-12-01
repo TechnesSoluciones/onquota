@@ -14,7 +14,7 @@ import os
 
 from modules.analytics.parser import ExcelParser
 from modules.analytics.analyzer import SalesAnalyzer
-from modules.analytics.models import Analysis, AnalysisStatus, FileType
+from models.analysis import Analysis, AnalysisStatus, FileType
 from modules.analytics.repository import AnalyticsRepository
 from modules.analytics.exporters import ExcelExporter, PDFExporter
 
