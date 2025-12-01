@@ -47,7 +47,7 @@ class Quote(BaseModel):
     total_amount = Column(Numeric(12, 2), nullable=False)
     currency = Column(String(3), nullable=False, default="USD")
     status = Column(
-        SQLEnum(SaleStatus, name="sale_status"),
+        SQLEnum(SaleStatus, name="sale_status", values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=SaleStatus.DRAFT,
         index=True,

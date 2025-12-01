@@ -51,7 +51,7 @@ class Expense(BaseModel):
 
     # Approval workflow
     status = Column(
-        SQLEnum(ExpenseStatus, name="expense_status"),
+        SQLEnum(ExpenseStatus, name="expense_status", values_callable=lambda x: [e.value for e in x]),
         default=ExpenseStatus.PENDING,
         nullable=False,
         index=True,
