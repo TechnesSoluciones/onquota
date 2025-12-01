@@ -13,7 +13,6 @@ export const api = client
 export { authApi } from './auth'
 export { expensesApi, expenseCategoriesApi } from './expenses'
 export { clientsApi } from './clients'
-export { transportApi } from './transport'
 export { accountPlansApi } from './accounts'
 export {
   visitsApi,

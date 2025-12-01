@@ -1,40 +1,54 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CreateQuoteModal } from '@/components/sales/CreateQuoteModal'
+import { QuotationForm } from '@/components/sales/quotations/QuotationForm'
+import { quotationsApi } from '@/lib/api/quotations'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { ArrowLeft } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import type { QuotationCreate } from '@/types/sales'
 
 export default function NewSalePage() {
   const router = useRouter()
-  const [modalOpen, setModalOpen] = useState(true)
+  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    // Open modal on mount
-    setModalOpen(true)
-  }, [])
+  const handleSubmit = async (data: QuotationCreate) => {
+    try {
+      setIsLoading(true)
+      await quotationsApi.createQuotation(data)
 
-  const handleClose = () => {
-    setModalOpen(false)
-    // Redirect to sales list after closing
-    setTimeout(() => router.push('/sales'), 200)
+      toast({
+        title: 'Cotización creada',
+        description: 'La cotización se ha creado exitosamente',
+      })
+
+      router.push('/sales/quotations')
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error?.detail || 'Error al crear la cotización',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleSuccess = () => {
-    setModalOpen(false)
-    // Redirect to sales list after success
-    setTimeout(() => router.push('/sales'), 200)
+  const handleCancel = () => {
+    router.push('/sales/quotations')
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => router.push('/sales')}
+          onClick={() => router.push('/sales/quotations')}
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -46,20 +60,14 @@ export default function NewSalePage() {
         </div>
       </div>
 
-      {/* Info Card */}
-      <div className="rounded-lg border bg-card p-6">
-        <p className="text-sm text-muted-foreground">
-          Complete el formulario para generar una nueva cotización. Podrá agregar
-          múltiples productos o servicios y enviarla directamente al cliente.
-        </p>
-      </div>
-
-      {/* Modal */}
-      <CreateQuoteModal
-        open={modalOpen}
-        onOpenChange={handleClose}
-        onSuccess={handleSuccess}
-      />
+      {/* Form Card */}
+      <Card className="p-6">
+        <QuotationForm
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+          isLoading={isLoading}
+        />
+      </Card>
     </div>
   )
 }
