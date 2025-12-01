@@ -103,6 +103,9 @@ app.add_middleware(
         f"{settings.API_PREFIX}/csrf-token",  # CSRF token endpoint itself
         f"{settings.API_PREFIX}/auth/login",  # Login doesn't need CSRF (uses credentials)
         f"{settings.API_PREFIX}/auth/register",  # Registration doesn't need CSRF
+        f"{settings.API_PREFIX}/spa/upload",  # SPA upload uses multipart/form-data
+        f"{settings.API_PREFIX}/analytics/upload",  # Analytics upload uses multipart/form-data
+        f"{settings.API_PREFIX}/ocr/upload",  # OCR upload uses multipart/form-data
     ],
     cookie_secure=not settings.DEBUG,  # Only secure cookies in production
 )
