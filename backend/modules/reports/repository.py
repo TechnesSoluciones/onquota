@@ -136,7 +136,7 @@ class ReportsRepository:
         ).where(
             and_(
                 SalesControl.tenant_id == tenant_id,
-                SalesControl.status == SalesControlStatus.PAID,
+                SalesControl.status == SalesControlStatus.PAID.value,
                 SalesControl.payment_date.between(filters.start_date, filters.end_date),
                 SalesControl.deleted_at.is_(None)
             )
@@ -151,7 +151,7 @@ class ReportsRepository:
         ).where(
             and_(
                 Quotation.tenant_id == tenant_id,
-                Quotation.status == QuoteStatus.COTIZADO,
+                Quotation.status == QuoteStatus.COTIZADO.value,
                 Quotation.deleted_at.is_(None)
             )
         )
@@ -162,8 +162,8 @@ class ReportsRepository:
 
         # Win rate calculation
         winloss_query = select(
-            func.count(case((Quotation.status == QuoteStatus.GANADO, 1))),
-            func.count(case((Quotation.status == QuoteStatus.PERDIDO, 1)))
+            func.count(case((Quotation.status == QuoteStatus.GANADO.value, 1))),
+            func.count(case((Quotation.status == QuoteStatus.PERDIDO.value, 1)))
         ).where(
             and_(
                 Quotation.tenant_id == tenant_id,
@@ -184,8 +184,8 @@ class ReportsRepository:
             and_(
                 SalesControl.tenant_id == tenant_id,
                 SalesControl.status.in_([
-                    SalesControlStatus.PENDING,
-                    SalesControlStatus.IN_PRODUCTION
+                    SalesControlStatus.PENDING.value,
+                    SalesControlStatus.IN_PRODUCTION.value
                 ]),
                 SalesControl.deleted_at.is_(None)
             )
@@ -251,7 +251,7 @@ class ReportsRepository:
             ).where(
                 and_(
                     SalesControl.tenant_id == tenant_id,
-                    SalesControl.status == SalesControlStatus.PAID,
+                    SalesControl.status == SalesControlStatus.PAID.value,
                     SalesControl.payment_date.between(comp_start, comp_end),
                     SalesControl.deleted_at.is_(None)
                 )
@@ -345,7 +345,7 @@ class ReportsRepository:
             SalesControl,
             and_(
                 SalesControl.client_id == Client.id,
-                SalesControl.status == SalesControlStatus.PAID,
+                SalesControl.status == SalesControlStatus.PAID.value,
                 SalesControl.payment_date.between(filters.start_date, filters.end_date),
                 SalesControl.deleted_at.is_(None)
             )

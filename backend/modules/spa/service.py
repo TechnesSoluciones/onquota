@@ -620,6 +620,6 @@ async def get_spa_service(
     db: AsyncSession = Depends(get_db)
 ) -> SPAService:
     """Dependency injection para SPAService."""
-    spa_repo = SPARepository()
-    client_repo = ClientRepository()
+    spa_repo = SPARepository(db)
+    client_repo = ClientRepository(db)
     return SPAService(spa_repo, client_repo)
