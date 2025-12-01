@@ -6,6 +6,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   visitsApi,
+  callsApi,
   visitTopicDetailsApi,
   visitOpportunitiesApi,
   visitAnalyticsApi,
@@ -17,6 +18,9 @@ import type {
   VisitFilters,
   VisitTopicDetailCreate,
   VisitOpportunityCreate,
+  CallFilters,
+  CallCreate,
+  CallUpdate,
 } from '@/types/visit';
 import { toast } from 'sonner';
 
@@ -34,6 +38,13 @@ export const visitKeys = {
     byTopic: () => [...visitKeys.analytics.all, 'by-topic'] as const,
     conversion: () => [...visitKeys.analytics.all, 'conversion'] as const,
   },
+};
+
+export const callKeys = {
+  all: ['calls'] as const,
+  lists: () => [...callKeys.all, 'list'] as const,
+  list: (filters: CallFilters) => [...callKeys.lists(), filters] as const,
+  detail: (id: string) => [...callKeys.all, 'detail', id] as const,
 };
 
 /**
@@ -117,6 +128,95 @@ export const useDeleteVisit = () => {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.detail || 'Error al eliminar visita');
+    },
+  });
+};
+
+// =============================================================================
+// Calls Hooks
+// =============================================================================
+
+/**
+ * Get paginated list of calls with filters
+ */
+export const useCalls = (filters?: CallFilters) => {
+  return useQuery({
+    queryKey: callKeys.list(filters || {}),
+    queryFn: () => callsApi.getCalls(filters),
+    staleTime: 1 * 60 * 1000, // 1 minute
+  });
+};
+
+/**
+ * Get a single call by ID
+ */
+export const useCall = (callId: string | null) => {
+  return useQuery({
+    queryKey: callKeys.detail(callId || ''),
+    queryFn: () => callsApi.getCall(callId!),
+    enabled: !!callId,
+  });
+};
+
+/**
+ * Create a new call
+ */
+export const useCreateCall = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CallCreate) => callsApi.createCall(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: callKeys.lists() });
+      toast.success('Llamada creada exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || 'Error al crear llamada');
+    },
+  });
+};
+
+/**
+ * Update a call
+ */
+export const useUpdateCall = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      callId,
+      data,
+    }: {
+      callId: string;
+      data: CallUpdate;
+    }) => callsApi.updateCall(callId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: callKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: callKeys.detail(variables.callId),
+      });
+      toast.success('Llamada actualizada exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || 'Error al actualizar llamada');
+    },
+  });
+};
+
+/**
+ * Delete a call
+ */
+export const useDeleteCall = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (callId: string) => callsApi.deleteCall(callId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: callKeys.lists() });
+      toast.success('Llamada eliminada exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || 'Error al eliminar llamada');
     },
   });
 };
