@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCreateVisit } from '@/hooks/useVisitsEnhanced';
+import { useClientContacts } from '@/hooks/useClientContacts';
 import VisitTopicSelector from './VisitTopicSelector';
 import { VisitType, type VisitCreate, type VisitTopicDetailCreate } from '@/types/visit';
-import { Loader2 } from 'lucide-react';
+import { Loader2, User } from 'lucide-react';
 
 interface VisitFormProps {
   clients: Array<{ id: string; name: string }>;
@@ -31,6 +32,38 @@ export default function VisitForm({ clients }: VisitFormProps) {
   });
 
   const [selectedTopics, setSelectedTopics] = useState<VisitTopicDetailCreate[]>([]);
+  const [selectedContactId, setSelectedContactId] = useState('');
+
+  // Fetch contacts when client is selected
+  const { contacts, isLoading: loadingContacts } = useClientContacts(
+    formData.client_id || null
+  );
+
+  // Update contact fields when a contact is selected from dropdown
+  useEffect(() => {
+    if (selectedContactId && contacts) {
+      const contact = contacts.find((c) => c.id === selectedContactId);
+      if (contact) {
+        setFormData((prev) => ({
+          ...prev,
+          contact_person_name: contact.name,
+          contact_person_role: contact.position || '',
+        }));
+      }
+    }
+  }, [selectedContactId, contacts]);
+
+  // Reset contact selection when client changes
+  useEffect(() => {
+    setSelectedContactId('');
+    if (!formData.client_id) {
+      setFormData((prev) => ({
+        ...prev,
+        contact_person_name: '',
+        contact_person_role: '',
+      }));
+    }
+  }, [formData.client_id]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -170,33 +203,79 @@ export default function VisitForm({ clients }: VisitFormProps) {
         </div>
       </div>
 
-      {/* Contact Person */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Persona que atendió
-          </label>
-          <input
-            type="text"
-            name="contact_person_name"
-            value={formData.contact_person_name}
-            onChange={handleChange}
-            placeholder="Nombre completo"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Cargo
-          </label>
-          <input
-            type="text"
-            name="contact_person_role"
-            value={formData.contact_person_role}
-            onChange={handleChange}
-            placeholder="Ej: Gerente de Compras"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+      {/* Contact Person - Enhanced with client contacts dropdown */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Persona que atendió
+        </label>
+
+        {/* Contact Selector from Client Contacts */}
+        {formData.client_id && (
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-2">
+              <User className="h-4 w-4 text-gray-500" />
+              <label className="text-sm text-gray-600">
+                Seleccionar del personal del cliente
+              </label>
+            </div>
+            {loadingContacts ? (
+              <div className="flex items-center gap-2 text-sm text-gray-500 p-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Cargando contactos...
+              </div>
+            ) : contacts && contacts.length > 0 ? (
+              <select
+                value={selectedContactId}
+                onChange={(e) => setSelectedContactId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-blue-50"
+              >
+                <option value="">Seleccionar contacto del cliente...</option>
+                {contacts
+                  .filter((c) => c.is_active)
+                  .map((contact) => (
+                    <option key={contact.id} value={contact.id}>
+                      {contact.name}
+                      {contact.position ? ` - ${contact.position}` : ''}
+                      {contact.is_primary ? ' ⭐ (Principal)' : ''}
+                    </option>
+                  ))}
+              </select>
+            ) : (
+              <div className="text-sm text-gray-500 p-2 bg-gray-50 rounded border border-gray-200">
+                Este cliente no tiene contactos registrados. Puedes ingresar los datos manualmente abajo.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Manual Entry Fields */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">
+              Nombre completo
+            </label>
+            <input
+              type="text"
+              name="contact_person_name"
+              value={formData.contact_person_name}
+              onChange={handleChange}
+              placeholder="Nombre completo"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">
+              Cargo
+            </label>
+            <input
+              type="text"
+              name="contact_person_role"
+              value={formData.contact_person_role}
+              onChange={handleChange}
+              placeholder="Ej: Gerente de Compras"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
         </div>
       </div>
 
