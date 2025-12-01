@@ -3,7 +3,7 @@ Client model
 Represents customers in the CRM system
 """
 from enum import Enum
-from sqlalchemy import String, Text, Boolean, Date
+from sqlalchemy import String, Text, Boolean, Date, Column, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
 from datetime import date
@@ -54,7 +54,11 @@ class Client(BaseModel):
 
     # Basic Information
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    client_type: Mapped[ClientType] = mapped_column(String(20), nullable=False, default=ClientType.COMPANY)
+    client_type = Column(
+        SQLEnum(ClientType, name="client_type", values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=ClientType.COMPANY
+    )
 
     # Contact Information
     email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
@@ -71,12 +75,21 @@ class Client(BaseModel):
     country: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
     # Business Information
-    industry: Mapped[Optional[Industry]] = mapped_column(String(50), nullable=True, index=True)
+    industry = Column(
+        SQLEnum(Industry, name="industry", values_callable=lambda x: [e.value for e in x]),
+        nullable=True,
+        index=True
+    )
     tax_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     bpid: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, index=True, unique=True, comment="Business Partner ID for SPA linking")
 
     # CRM Status
-    status: Mapped[ClientStatus] = mapped_column(String(20), nullable=False, default=ClientStatus.LEAD, index=True)
+    status = Column(
+        SQLEnum(ClientStatus, name="client_status", values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=ClientStatus.LEAD,
+        index=True
+    )
 
     # Contact Person (for companies)
     contact_person_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
