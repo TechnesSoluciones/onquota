@@ -272,6 +272,18 @@ export function EditClientModal({
                     placeholder="Ej: 131-12345-6"
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="bpid">BPID (Business Partner ID)</Label>
+                  <Input
+                    id="bpid"
+                    {...register('bpid')}
+                    placeholder="Ej: BP-12345"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    ID para relacionar con marca/SPA. Debe ser único.
+                  </p>
+                </div>
               </div>
             </TabsContent>
 
