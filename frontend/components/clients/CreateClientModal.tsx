@@ -146,11 +146,11 @@ export function CreateClientModal({
             <TabsContent value="basic" className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-2">
-                  <Label htmlFor="name">Nombre del Cliente *</Label>
+                  <Label htmlFor="name">Razón Social *</Label>
                   <Input
                     id="name"
                     {...register('name')}
-                    placeholder="Ej: Acme Corporation"
+                    placeholder="Ej: Acme Corporation S.A."
                   />
                   {errors.name && (
                     <p className="text-sm text-red-600">{errors.name.message}</p>
@@ -230,11 +230,11 @@ export function CreateClientModal({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="tax_id">NIT / Tax ID</Label>
+                  <Label htmlFor="tax_id">RNC</Label>
                   <Input
                     id="tax_id"
                     {...register('tax_id')}
-                    placeholder="Ej: 900123456-7"
+                    placeholder="Ej: 131-12345-6"
                   />
                 </div>
               </div>
