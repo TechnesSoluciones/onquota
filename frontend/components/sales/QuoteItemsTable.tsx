@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useCallback, memo } from 'react'
 import {
   Table,
   TableBody,
@@ -39,39 +39,60 @@ interface QuoteItemsTableProps {
  * Columns: Product, Description, Quantity, Unit Price, Discount %, Subtotal
  * Features: Add row, Edit, Delete row, Auto-calculation
  */
-export function QuoteItemsTable({
+const QuoteItemsTableComponent = ({
   items,
   onChange,
   currency = 'USD',
   readOnly = false,
   className,
-}: QuoteItemsTableProps) {
+}: QuoteItemsTableProps) => {
   const [editingRow, setEditingRow] = useState<string | null>(null)
 
   /**
    * Calculate subtotal for an item
    * Formula: (quantity × unit_price) × (1 - discount_percent/100)
    */
-  const calculateSubtotal = (
-    quantity: number,
-    unitPrice: number,
-    discountPercent: number
-  ): number => {
-    const subtotal = quantity * unitPrice * (1 - discountPercent / 100)
-    return Math.round(subtotal * 100) / 100 // Round to 2 decimals
-  }
+  const calculateSubtotal = useCallback(
+    (quantity: number, unitPrice: number, discountPercent: number): number => {
+      const subtotal = quantity * unitPrice * (1 - discountPercent / 100)
+      return Math.round(subtotal * 100) / 100 // Round to 2 decimals
+    },
+    []
+  )
 
   /**
-   * Calculate total amount for all items
+   * Get currency symbol (memoized)
    */
-  const calculateTotal = (): number => {
+  const currencySymbol = useMemo(() => {
+    const symbols: Record<string, string> = {
+      USD: '$',
+      COP: '$',
+      EUR: '€',
+    }
+    return symbols[currency] || currency
+  }, [currency])
+
+  /**
+   * Calculate total amount for all items (memoized)
+   */
+  const total = useMemo(() => {
     return items.reduce((total, item) => total + item.subtotal, 0)
-  }
+  }, [items])
 
   /**
-   * Add a new empty row
+   * Format currency value (memoized callback)
    */
-  const handleAddRow = () => {
+  const formatCurrency = useCallback((value: number): string => {
+    return new Intl.NumberFormat('es-CO', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value)
+  }, [])
+
+  /**
+   * Add a new empty row (memoized callback)
+   */
+  const handleAddRow = useCallback(() => {
     const newItem: QuoteItemRow = {
       id: `temp-${Date.now()}`,
       product_name: '',
@@ -83,68 +104,48 @@ export function QuoteItemsTable({
     }
     onChange([...items, newItem])
     setEditingRow(newItem.id)
-  }
+  }, [items, onChange])
 
   /**
-   * Delete a row
+   * Delete a row (memoized callback)
    */
-  const handleDeleteRow = (id: string) => {
-    onChange(items.filter((item) => item.id !== id))
-  }
+  const handleDeleteRow = useCallback(
+    (id: string) => {
+      onChange(items.filter((item) => item.id !== id))
+    },
+    [items, onChange]
+  )
 
   /**
-   * Update a field in a row
+   * Update a field in a row (memoized callback)
    */
-  const handleUpdateField = (
-    id: string,
-    field: keyof QuoteItemRow,
-    value: string | number
-  ) => {
-    const updatedItems = items.map((item) => {
-      if (item.id !== id) return item
+  const handleUpdateField = useCallback(
+    (id: string, field: keyof QuoteItemRow, value: string | number) => {
+      const updatedItems = items.map((item) => {
+        if (item.id !== id) return item
 
-      const updated = { ...item, [field]: value }
+        const updated = { ...item, [field]: value }
 
-      // Recalculate subtotal when quantity, price, or discount changes
-      if (
-        field === 'quantity' ||
-        field === 'unit_price' ||
-        field === 'discount_percent'
-      ) {
-        updated.subtotal = calculateSubtotal(
-          updated.quantity,
-          updated.unit_price,
-          updated.discount_percent
-        )
-      }
+        // Recalculate subtotal when quantity, price, or discount changes
+        if (
+          field === 'quantity' ||
+          field === 'unit_price' ||
+          field === 'discount_percent'
+        ) {
+          updated.subtotal = calculateSubtotal(
+            updated.quantity,
+            updated.unit_price,
+            updated.discount_percent
+          )
+        }
 
-      return updated
-    })
+        return updated
+      })
 
-    onChange(updatedItems)
-  }
-
-  /**
-   * Format currency value
-   */
-  const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('es-CO', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value)
-  }
-
-  /**
-   * Get currency symbol
-   */
-  const getCurrencySymbol = (): string => {
-    const symbols: Record<string, string> = {
-      USD: '$',
-      COP: '$',
-      EUR: '€',
-    }
-    return symbols[currency] || currency
-  }
+      onChange(updatedItems)
+    },
+    [items, onChange, calculateSubtotal]
+  )
 
   return (
     <div className={cn('space-y-4', className)}>
@@ -258,7 +259,7 @@ export function QuoteItemsTable({
                     <TableCell className="text-right">
                       {readOnly ? (
                         <span>
-                          {getCurrencySymbol()} {formatCurrency(item.unit_price)}
+                          {currencySymbol} {formatCurrency(item.unit_price)}
                         </span>
                       ) : (
                         <Input
@@ -305,7 +306,7 @@ export function QuoteItemsTable({
 
                     {/* Subtotal (calculated) */}
                     <TableCell className="text-right font-medium">
-                      {getCurrencySymbol()} {formatCurrency(item.subtotal)}
+                      {currencySymbol} {formatCurrency(item.subtotal)}
                     </TableCell>
 
                     {/* Actions */}
@@ -336,7 +337,7 @@ export function QuoteItemsTable({
                   Total:
                 </TableCell>
                 <TableCell className="text-right font-bold text-lg">
-                  {getCurrencySymbol()} {formatCurrency(calculateTotal())}
+                  {currencySymbol} {formatCurrency(total)}
                 </TableCell>
                 {!readOnly && <TableCell />}
               </TableRow>
@@ -368,3 +369,7 @@ export function QuoteItemsTable({
     </div>
   )
 }
+
+// Memoize component to prevent unnecessary re-renders
+export const QuoteItemsTable = memo(QuoteItemsTableComponent)
+QuoteItemsTable.displayName = 'QuoteItemsTable'

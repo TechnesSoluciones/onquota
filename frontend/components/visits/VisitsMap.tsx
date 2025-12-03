@@ -6,14 +6,15 @@
 
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, memo } from 'react'
 import { GoogleMap, useLoadScript, Marker, InfoWindow } from '@react-google-maps/api'
 import { MapPin, Calendar, Clock, FileText, Navigation, CheckCircle2, XCircle, Circle, Loader2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import type { Visit, VisitStatus } from '@/types/visits'
+import type { Visit } from '@/types/visits'
+import { VisitStatus } from '@/types/visits'
 
 interface VisitsMapProps {
   visits: Visit[]
@@ -47,33 +48,91 @@ const mapOptions: google.maps.MapOptions = {
  * Color scheme for visit status markers
  */
 const STATUS_COLORS: Record<VisitStatus, string> = {
-  SCHEDULED: '#3b82f6', // blue
-  IN_PROGRESS: '#eab308', // yellow
-  COMPLETED: '#22c55e', // green
-  CANCELLED: '#ef4444', // red
+  [VisitStatus.SCHEDULED]: '#3b82f6', // blue
+  [VisitStatus.IN_PROGRESS]: '#eab308', // yellow
+  [VisitStatus.COMPLETED]: '#22c55e', // green
+  [VisitStatus.CANCELLED]: '#ef4444', // red
 }
 
 /**
  * Status icons mapping
  */
-const STATUS_ICONS = {
-  SCHEDULED: Circle,
-  IN_PROGRESS: Loader2,
-  COMPLETED: CheckCircle2,
-  CANCELLED: XCircle,
+const STATUS_ICONS: Record<VisitStatus, React.ComponentType<{ className?: string }>> = {
+  [VisitStatus.SCHEDULED]: Circle,
+  [VisitStatus.IN_PROGRESS]: Loader2,
+  [VisitStatus.COMPLETED]: CheckCircle2,
+  [VisitStatus.CANCELLED]: XCircle,
 }
 
 /**
  * Status labels
  */
 const STATUS_LABELS: Record<VisitStatus, string> = {
-  SCHEDULED: 'Scheduled',
-  IN_PROGRESS: 'In Progress',
-  COMPLETED: 'Completed',
-  CANCELLED: 'Cancelled',
+  [VisitStatus.SCHEDULED]: 'Scheduled',
+  [VisitStatus.IN_PROGRESS]: 'In Progress',
+  [VisitStatus.COMPLETED]: 'Completed',
+  [VisitStatus.CANCELLED]: 'Cancelled',
 }
 
-export function VisitsMap({
+/**
+ * Helper to get marker icon configuration
+ */
+const getMarkerIconHelper = (status: VisitStatus): google.maps.Symbol => {
+  return {
+    path: google.maps.SymbolPath.CIRCLE,
+    fillColor: STATUS_COLORS[status],
+    fillOpacity: 1,
+    strokeColor: '#ffffff',
+    strokeWeight: 2,
+    scale: 10,
+  }
+}
+
+/**
+ * Helper to format visit date
+ */
+const formatVisitDateHelper = (dateString: string) => {
+  try {
+    return format(new Date(dateString), 'MMM dd, yyyy • HH:mm')
+  } catch {
+    return dateString
+  }
+}
+
+/**
+ * Memoized marker component for individual visits
+ */
+const VisitMarker = memo(function VisitMarker({
+  visit,
+  onMarkerClick,
+}: {
+  visit: Visit
+  onMarkerClick: (visit: Visit) => void
+}) {
+  // Memoize marker icon
+  const markerIcon = useMemo(() => getMarkerIconHelper(visit.status), [visit.status])
+
+  // Memoize click handler for this marker
+  const handleClick = useCallback(() => {
+    onMarkerClick(visit)
+  }, [visit, onMarkerClick])
+
+  return (
+    <Marker
+      position={{
+        lat: visit.check_in_latitude!,
+        lng: visit.check_in_longitude!,
+      }}
+      icon={markerIcon}
+      onClick={handleClick}
+      title={visit.title}
+    />
+  )
+})
+
+VisitMarker.displayName = 'VisitMarker'
+
+export const VisitsMap = memo(function VisitsMap({
   visits,
   center: providedCenter,
   zoom = 12,
@@ -128,7 +187,7 @@ export function VisitsMap({
   }, [visits])
 
   /**
-   * Handle marker click
+   * Handle marker click - memoized
    */
   const handleMarkerClick = useCallback(
     (visit: Visit) => {
@@ -139,14 +198,14 @@ export function VisitsMap({
   )
 
   /**
-   * Handle info window close
+   * Handle info window close - memoized
    */
   const handleInfoWindowClose = useCallback(() => {
     setSelectedVisit(null)
   }, [])
 
   /**
-   * Navigate to visit location in external map app
+   * Navigate to visit location in external map app - memoized
    */
   const handleNavigate = useCallback((visit: Visit) => {
     if (visit.check_in_latitude && visit.check_in_longitude) {
@@ -156,29 +215,12 @@ export function VisitsMap({
   }, [])
 
   /**
-   * Format date for display
+   * Memoized formatted date for selected visit
    */
-  const formatVisitDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'MMM dd, yyyy • HH:mm')
-    } catch {
-      return dateString
-    }
-  }
-
-  /**
-   * Get marker icon configuration
-   */
-  const getMarkerIcon = (status: VisitStatus): google.maps.Icon => {
-    return {
-      path: google.maps.SymbolPath.CIRCLE,
-      fillColor: STATUS_COLORS[status],
-      fillOpacity: 1,
-      strokeColor: '#ffffff',
-      strokeWeight: 2,
-      scale: 10,
-    }
-  }
+  const formattedScheduledDate = useMemo(
+    () => (selectedVisit ? formatVisitDateHelper(selectedVisit.scheduled_date) : ''),
+    [selectedVisit]
+  )
 
   /**
    * Render loading state
@@ -240,15 +282,10 @@ export function VisitsMap({
       >
         {/* Render markers for each visit */}
         {visitMarkers.map((visit) => (
-          <Marker
+          <VisitMarker
             key={visit.id}
-            position={{
-              lat: visit.check_in_latitude!,
-              lng: visit.check_in_longitude!,
-            }}
-            icon={getMarkerIcon(visit.status)}
-            onClick={() => handleMarkerClick(visit)}
-            title={visit.title}
+            visit={visit}
+            onMarkerClick={handleMarkerClick}
           />
         ))}
 
@@ -288,7 +325,7 @@ export function VisitsMap({
               {/* Scheduled Date */}
               <div className="mb-2 flex items-center text-sm text-gray-600">
                 <Calendar className="mr-2 h-4 w-4 text-gray-500" />
-                <span>{formatVisitDate(selectedVisit.scheduled_date)}</span>
+                <span>{formattedScheduledDate}</span>
               </div>
 
               {/* Duration */}
@@ -348,4 +385,6 @@ export function VisitsMap({
       </div>
     </div>
   )
-}
+})
+
+VisitsMap.displayName = 'VisitsMap'

@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { SaleStatus } from '@/types/quote'
 import { SALE_STATUS_LABELS, SALE_STATUS_COLORS } from '@/constants/sales'
 import { cn } from '@/lib/utils'
@@ -13,7 +14,7 @@ interface StatusBadgeProps {
  * Badge component for displaying quote status
  * Shows localized label with appropriate color
  */
-export function StatusBadge({ status, className }: StatusBadgeProps) {
+const StatusBadgeComponent = ({ status, className }: StatusBadgeProps) => {
   return (
     <span
       className={cn(
@@ -26,3 +27,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     </span>
   )
 }
+
+// Memoize component to prevent unnecessary re-renders
+export const StatusBadge = memo(StatusBadgeComponent)
+StatusBadge.displayName = 'StatusBadge'

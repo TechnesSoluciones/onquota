@@ -3,6 +3,7 @@
  * Card component for displaying opportunity information in the Kanban board
  */
 
+import { useMemo, useCallback, memo } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { MoreVertical, Calendar, DollarSign, TrendingUp, User } from 'lucide-react'
@@ -26,12 +27,12 @@ interface OpportunityCardProps {
   onClick?: () => void
 }
 
-export function OpportunityCard({
+const OpportunityCardComponent = ({
   opportunity,
   onEdit,
   onDelete,
   onClick,
-}: OpportunityCardProps) {
+}: OpportunityCardProps) => {
   const {
     attributes,
     listeners,
@@ -41,13 +42,19 @@ export function OpportunityCard({
     isDragging,
   } = useSortable({ id: opportunity.id })
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
+  // Memoize style object
+  const style = useMemo(
+    () => ({
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+    }),
+    [transform, transition, isDragging]
+  )
 
-  const getInitials = (name: string | null) => {
+  // Memoize initials calculation
+  const initials = useMemo(() => {
+    const name = opportunity.sales_rep_name
     if (!name) return '?'
     return name
       .split(' ')
@@ -55,24 +62,36 @@ export function OpportunityCard({
       .join('')
       .toUpperCase()
       .slice(0, 2)
-  }
+  }, [opportunity.sales_rep_name])
 
-  const formatDate = (date: string | null) => {
+  // Memoize formatted date
+  const formattedDate = useMemo(() => {
+    const date = opportunity.expected_close_date
     if (!date) return 'No date set'
     try {
       return formatDistanceToNow(new Date(date), { addSuffix: true })
     } catch {
       return date
     }
-  }
+  }, [opportunity.expected_close_date])
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Don't trigger if clicking on dropdown or buttons
-    if ((e.target as HTMLElement).closest('[data-dropdown]')) {
-      return
-    }
-    onClick?.()
-  }
+  // Memoize formatted value
+  const formattedValue = useMemo(
+    () => formatCurrency(opportunity.estimated_value, opportunity.currency),
+    [opportunity.estimated_value, opportunity.currency]
+  )
+
+  // Memoize click handler
+  const handleCardClick = useCallback(
+    (e: React.MouseEvent) => {
+      // Don't trigger if clicking on dropdown or buttons
+      if ((e.target as HTMLElement).closest('[data-dropdown]')) {
+        return
+      }
+      onClick?.()
+    },
+    [onClick]
+  )
 
   return (
     <div
@@ -123,9 +142,7 @@ export function OpportunityCard({
       {/* Value */}
       <div className="mb-3 flex items-center text-sm font-medium text-gray-900">
         <DollarSign className="mr-2 h-4 w-4 text-green-600" />
-        <span>
-          {formatCurrency(opportunity.estimated_value, opportunity.currency)}
-        </span>
+        <span>{formattedValue}</span>
       </div>
 
       {/* Probability */}
@@ -145,18 +162,20 @@ export function OpportunityCard({
         {/* Expected Close Date */}
         <div className="flex items-center text-xs text-gray-500">
           <Calendar className="mr-1.5 h-3.5 w-3.5" />
-          <span>{formatDate(opportunity.expected_close_date)}</span>
+          <span>{formattedDate}</span>
         </div>
 
         {/* Sales Rep Avatar */}
         {opportunity.sales_rep_name && (
           <Avatar className="h-6 w-6">
-            <AvatarFallback className="text-xs">
-              {getInitials(opportunity.sales_rep_name)}
-            </AvatarFallback>
+            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
           </Avatar>
         )}
       </div>
     </div>
   )
 }
+
+// Memoize component to prevent unnecessary re-renders
+export const OpportunityCard = memo(OpportunityCardComponent)
+OpportunityCard.displayName = 'OpportunityCard'

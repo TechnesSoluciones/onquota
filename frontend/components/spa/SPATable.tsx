@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo, useMemo, useCallback } from 'react'
 import {
   Table,
   TableBody,
@@ -32,11 +32,122 @@ interface SPATableProps {
   onDelete?: (id: string) => Promise<void>
 }
 
-export function SPATable({ spas, loading, onDelete }: SPATableProps) {
+/**
+ * Memoized row component for individual SPA entries
+ */
+const SPATableRow = memo(function SPATableRow({
+  spa,
+  onDeleteClick,
+}: {
+  spa: SPAAgreement
+  onDeleteClick?: (id: string) => void
+}) {
+  // Memoize status badge computation
+  const statusBadge = useMemo(() => {
+    if (spa.status === 'active') {
+      return <Badge className="bg-green-500">Activo</Badge>
+    } else if (spa.status === 'pending') {
+      return <Badge className="bg-blue-500">Pendiente</Badge>
+    } else {
+      return <Badge variant="secondary">Expirado</Badge>
+    }
+  }, [spa.status])
+
+  // Memoize formatted list price
+  const formattedListPrice = useMemo(
+    () => formatCurrency(Number(spa.list_price)),
+    [spa.list_price]
+  )
+
+  // Memoize formatted net price
+  const formattedNetPrice = useMemo(
+    () => formatCurrency(Number(spa.app_net_price)),
+    [spa.app_net_price]
+  )
+
+  // Memoize formatted discount
+  const formattedDiscount = useMemo(
+    () => `${Number(spa.discount_percent).toFixed(2)}%`,
+    [spa.discount_percent]
+  )
+
+  // Memoize formatted start date
+  const formattedStartDate = useMemo(
+    () => formatDate(spa.start_date),
+    [spa.start_date]
+  )
+
+  // Memoize formatted end date
+  const formattedEndDate = useMemo(
+    () => formatDate(spa.end_date),
+    [spa.end_date]
+  )
+
+  return (
+    <TableRow>
+      <TableCell className="font-medium">{spa.bpid}</TableCell>
+      <TableCell>{spa.ship_to_name}</TableCell>
+      <TableCell className="font-mono text-sm">
+        {spa.article_number}
+      </TableCell>
+      <TableCell className="max-w-xs truncate">
+        {spa.article_description || '-'}
+      </TableCell>
+      <TableCell className="text-right">
+        {formattedListPrice}
+      </TableCell>
+      <TableCell className="text-right">
+        {formattedNetPrice}
+      </TableCell>
+      <TableCell className="text-right font-semibold text-green-600">
+        {formattedDiscount}
+      </TableCell>
+      <TableCell className="text-sm">
+        <div>{formattedStartDate}</div>
+        <div className="text-muted-foreground">
+          {formattedEndDate}
+        </div>
+      </TableCell>
+      <TableCell>{statusBadge}</TableCell>
+      <TableCell>
+        <div className="flex gap-2 justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+          >
+            <Link href={`/spa/${spa.id}`}>
+              <Eye className="h-4 w-4" />
+            </Link>
+          </Button>
+          {onDeleteClick && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDeleteClick(spa.id)}
+            >
+              <Trash2 className="h-4 w-4 text-red-500" />
+            </Button>
+          )}
+        </div>
+      </TableCell>
+    </TableRow>
+  )
+})
+
+SPATableRow.displayName = 'SPATableRow'
+
+export const SPATable = memo(function SPATable({ spas, loading, onDelete }: SPATableProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  const handleDeleteConfirm = async () => {
+  // Memoize delete click handler
+  const handleDeleteClick = useCallback((id: string) => {
+    setDeleteId(id)
+  }, [])
+
+  // Memoize delete confirm handler
+  const handleDeleteConfirm = useCallback(async () => {
     if (!deleteId || !onDelete) return
 
     setDeleting(true)
@@ -48,17 +159,7 @@ export function SPATable({ spas, loading, onDelete }: SPATableProps) {
     } finally {
       setDeleting(false)
     }
-  }
-
-  const getStatusBadge = (spa: SPAAgreement) => {
-    if (spa.status === 'active') {
-      return <Badge className="bg-green-500">Activo</Badge>
-    } else if (spa.status === 'pending') {
-      return <Badge className="bg-blue-500">Pendiente</Badge>
-    } else {
-      return <Badge variant="secondary">Expirado</Badge>
-    }
-  }
+  }, [deleteId, onDelete])
 
   if (loading) {
     return (
@@ -101,54 +202,11 @@ export function SPATable({ spas, loading, onDelete }: SPATableProps) {
             </TableHeader>
             <TableBody>
               {spas.map((spa) => (
-                <TableRow key={spa.id}>
-                  <TableCell className="font-medium">{spa.bpid}</TableCell>
-                  <TableCell>{spa.ship_to_name}</TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {spa.article_number}
-                  </TableCell>
-                  <TableCell className="max-w-xs truncate">
-                    {spa.article_description || '-'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(Number(spa.list_price))}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(Number(spa.app_net_price))}
-                  </TableCell>
-                  <TableCell className="text-right font-semibold text-green-600">
-                    {Number(spa.discount_percent).toFixed(2)}%
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    <div>{formatDate(spa.start_date)}</div>
-                    <div className="text-muted-foreground">
-                      {formatDate(spa.end_date)}
-                    </div>
-                  </TableCell>
-                  <TableCell>{getStatusBadge(spa)}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2 justify-end">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        asChild
-                      >
-                        <Link href={`/spa/${spa.id}`}>
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      {onDelete && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setDeleteId(spa.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
+                <SPATableRow
+                  key={spa.id}
+                  spa={spa}
+                  onDeleteClick={onDelete ? handleDeleteClick : undefined}
+                />
               ))}
             </TableBody>
           </Table>
@@ -178,4 +236,6 @@ export function SPATable({ spas, loading, onDelete }: SPATableProps) {
       </AlertDialog>
     </>
   )
-}
+})
+
+SPATable.displayName = 'SPATable'
