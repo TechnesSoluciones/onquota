@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    TOTP_ENCRYPTION_KEY: str = ""  # Fernet key for encrypting 2FA secrets (generate with: Fernet.generate_key())
 
     # Celery
     CELERY_BROKER_URL: str = ""

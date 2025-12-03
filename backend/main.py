@@ -19,6 +19,7 @@ from core.csrf_router import router as csrf_router
 
 # Import routers
 from modules.auth.router import router as auth_router
+from modules.auth.two_factor_router import router as two_factor_router
 from modules.expenses.router import router as expenses_router
 from modules.clients.router import router as clients_router
 from modules.clients.contacts_router import router as client_contacts_router
@@ -40,6 +41,7 @@ from modules.visits.commitment_router import router as commitments_router
 from modules.spa.router import router as spa_router
 from modules.lta.router import router as lta_router
 from modules.reports.router import router as reports_router
+from modules.admin.router import router as admin_router
 
 logger = get_logger(__name__)
 
@@ -138,6 +140,7 @@ configure_rate_limiting(app)
 # Register routers
 app.include_router(csrf_router, prefix=settings.API_PREFIX, tags=["Security"])
 app.include_router(auth_router, prefix=settings.API_PREFIX)
+app.include_router(two_factor_router, prefix=settings.API_PREFIX)
 app.include_router(expenses_router, prefix=settings.API_PREFIX)
 app.include_router(clients_router, prefix=settings.API_PREFIX)
 app.include_router(client_contacts_router, prefix=settings.API_PREFIX)
@@ -159,6 +162,7 @@ app.include_router(commitments_router, prefix=settings.API_PREFIX)
 app.include_router(spa_router, prefix=settings.API_PREFIX)
 app.include_router(lta_router, prefix=settings.API_PREFIX)
 app.include_router(reports_router, prefix=settings.API_PREFIX)
+app.include_router(admin_router, prefix=settings.API_PREFIX)
 
 
 @app.get("/")

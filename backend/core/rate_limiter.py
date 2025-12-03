@@ -131,6 +131,9 @@ WRITE_OPERATION_LIMIT = "100/minute"  # POST/PUT/DELETE operations
 # Read operations - higher limits
 READ_OPERATION_LIMIT = "300/minute"  # GET operations
 
+# Admin operations - higher limits for administrative tasks
+ADMIN_RATE_LIMIT = "200/minute"  # Admin endpoints (user management, settings)
+
 # Health check endpoints - very high limits
 HEALTH_CHECK_LIMIT = "1000/minute"  # Health checks shouldn't be limited much
 

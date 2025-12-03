@@ -138,7 +138,7 @@ class SPASearchParams(BaseModel):
     end_date_from: Optional[date] = None
     end_date_to: Optional[date] = None
     page: int = Field(1, ge=1)
-    limit: int = Field(20, ge=1, le=100)
+    page_size: int = Field(20, ge=1, le=500)
     sort_by: str = Field("created_at", description="Field to sort by")
     sort_order: str = Field("desc", description="asc or desc")
 
@@ -148,7 +148,7 @@ class SPAListResponse(BaseModel):
     items: List[SPAAgreementResponse]
     total: int
     page: int
-    limit: int
+    page_size: int
     pages: int
 
     class Config:

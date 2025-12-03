@@ -47,6 +47,7 @@ from models.sales_control import (
     SalesControlLine,
 )
 from models.quota import Quota, QuotaLine
+from models.audit_log import AuditLog
 
 # All models must be imported here for Alembic autogenerate to work
 __all__ = [
@@ -113,4 +114,5 @@ __all__ = [
     "SalesControlLine",
     "Quota",
     "QuotaLine",
+    "AuditLog",
 ]

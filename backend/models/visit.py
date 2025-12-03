@@ -118,8 +118,8 @@ class Visit(Base):
     contact_person_name = Column(String(200), nullable=True)
     contact_person_role = Column(String(200), nullable=True)  # cargo: gerente, compras, etc.
 
-    # Schedule - renamed from scheduled_date to visit_date for clarity
-    visit_date = Column(DateTime(timezone=True), nullable=False, index=True)
+    # Schedule
+    scheduled_date = Column(DateTime(timezone=True), nullable=False, index=True)
     duration_minutes = Column(Numeric(10, 2), nullable=True)
 
     # Check-in/Check-out (GPS) - OPTIONAL for presencial visits

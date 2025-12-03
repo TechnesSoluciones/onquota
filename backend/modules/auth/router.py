@@ -3,11 +3,13 @@ Authentication endpoints
 """
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from core.security import create_access_token, create_refresh_token, decode_token
 from core.config import settings
+from core.auth_helpers import set_auth_cookies
 from core.rate_limiter import (
     limiter,
     AUTH_LOGIN_LIMIT,
@@ -130,28 +132,8 @@ async def register(
             media_type="application/json",
         )
 
-        # Set httpOnly cookies (tokens NOT in response body for XSS protection)
-        # Access token: short-lived, sent with every request
-        response.set_cookie(
-            key="access_token",
-            value=access_token,
-            httponly=True,  # Prevents JavaScript from accessing the cookie
-            secure=not settings.DEBUG,  # HTTPS only in production
-            samesite="lax",  # CSRF protection
-            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            path="/",
-        )
-
-        # Refresh token: long-lived, used to get new access tokens
-        response.set_cookie(
-            key="refresh_token",
-            value=refresh_token_str,
-            httponly=True,  # Prevents JavaScript from accessing the cookie
-            secure=not settings.DEBUG,  # HTTPS only in production
-            samesite="lax",  # CSRF protection
-            max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
-            path="/",
-        )
+        # Set authentication cookies (httpOnly for XSS protection)
+        set_auth_cookies(response, access_token, refresh_token_str)
 
         # Return user data in response body (no tokens)
         return user
@@ -164,7 +146,7 @@ async def register(
         )
 
 
-@router.post("/login", response_model=UserResponse)
+@router.post("/login")
 @limiter.limit(AUTH_LOGIN_LIMIT)
 async def login(
     request: Request,
@@ -176,6 +158,10 @@ async def login(
 
     Sets httpOnly cookies for access and refresh tokens
 
+    **Returns:**
+    - UserResponse: If login is successful and 2FA is not enabled
+    - TwoFactorRequiredResponse: If login is successful but 2FA is required
+
     **Rate Limit:** 5 requests per minute per IP address to prevent brute force attacks
 
     **Security:** Tokens are set as httpOnly cookies and NOT included in response body
@@ -186,6 +172,19 @@ async def login(
     user = await repo.authenticate_user(data.email, data.password)
     if not user:
         raise UnauthorizedError("Invalid email or password")
+
+    # Check if 2FA is enabled
+    if user.two_factor_enabled:
+        # Return special response indicating 2FA is required
+        # Frontend should redirect to 2FA verification page
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={
+                "requires_2fa": True,
+                "email": user.email,
+                "message": "Two-factor authentication required"
+            }
+        )
 
     # Generate tokens
     token_data = {
@@ -217,28 +216,8 @@ async def login(
     user_response = UserResponse.model_validate(user)
     response = Response(content=user_response.model_dump_json(), media_type="application/json")
 
-    # Set httpOnly cookies (tokens NOT in response body for XSS protection)
-    # Access token: short-lived, sent with every request
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,  # Prevents JavaScript from accessing the cookie
-        secure=not settings.DEBUG,  # HTTPS only in production
-        samesite="lax",  # CSRF protection
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        path="/",
-    )
-
-    # Refresh token: long-lived, used to get new access tokens
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token_str,
-        httponly=True,  # Prevents JavaScript from accessing the cookie
-        secure=not settings.DEBUG,  # HTTPS only in production
-        samesite="lax",  # CSRF protection
-        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
-        path="/",
-    )
+    # Set authentication cookies (httpOnly for XSS protection)
+    set_auth_cookies(response, access_token, refresh_token_str)
 
     return response
 
@@ -312,28 +291,8 @@ async def refresh_token(
     user_response = UserResponse.model_validate(user)
     response = Response(content=user_response.model_dump_json(), media_type="application/json")
 
-    # Set httpOnly cookies (tokens NOT in response body for XSS protection)
-    # Access token: short-lived, sent with every request
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,  # Prevents JavaScript from accessing the cookie
-        secure=not settings.DEBUG,  # HTTPS only in production
-        samesite="lax",  # CSRF protection
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        path="/",
-    )
-
-    # Refresh token: long-lived, used to get new access tokens
-    response.set_cookie(
-        key="refresh_token",
-        value=new_refresh_token,
-        httponly=True,  # Prevents JavaScript from accessing the cookie
-        secure=not settings.DEBUG,  # HTTPS only in production
-        samesite="lax",  # CSRF protection
-        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
-        path="/",
-    )
+    # Set authentication cookies (httpOnly for XSS protection)
+    set_auth_cookies(response, access_token, new_refresh_token)
 
     return response
 

@@ -196,6 +196,38 @@ async def list_quotes(
     )
 
 
+@router.get("/quotes/summary", response_model=QuoteSummary)
+async def get_quote_summary(
+    date_from: Optional[date] = Query(None, description="Filter by creation date from"),
+    date_to: Optional[date] = Query(None, description="Filter by creation date to"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get quote summary statistics
+
+    Returns summary statistics including:
+    - Total quotes and amounts by status
+    - Conversion rate (ACCEPTED / SENT)
+    - Top 5 clients by quote value
+
+    **Access Control:**
+    - Sales reps see only their own quote statistics
+    - Supervisors and admins see tenant-wide statistics
+    """
+    repo = SalesRepository(db)
+
+    summary = await repo.get_quote_summary(
+        tenant_id=current_user.tenant_id,
+        user_id=current_user.id,
+        user_role=current_user.role,
+        date_from=date_from,
+        date_to=date_to,
+    )
+
+    return QuoteSummary(**summary)
+
+
 @router.get("/quotes/{quote_id}", response_model=QuoteWithItems)
 async def get_quote(
     quote_id: UUID,
@@ -421,38 +453,6 @@ async def update_quote_status(
     )
 
     return updated_quote
-
-
-@router.get("/quotes/summary", response_model=QuoteSummary)
-async def get_quote_summary(
-    date_from: Optional[date] = Query(None, description="Filter by creation date from"),
-    date_to: Optional[date] = Query(None, description="Filter by creation date to"),
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Get quote summary statistics
-
-    Returns summary statistics including:
-    - Total quotes and amounts by status
-    - Conversion rate (ACCEPTED / SENT)
-    - Top 5 clients by quote value
-
-    **Access Control:**
-    - Sales reps see only their own quote statistics
-    - Supervisors and admins see tenant-wide statistics
-    """
-    repo = SalesRepository(db)
-
-    summary = await repo.get_quote_summary(
-        tenant_id=current_user.tenant_id,
-        user_id=current_user.id,
-        user_role=current_user.role,
-        date_from=date_from,
-        date_to=date_to,
-    )
-
-    return QuoteSummary(**summary)
 
 
 # ============================================================================
@@ -866,7 +866,7 @@ async def export_comparison_excel(
 
     # Sales reps only see their own quotes
     if current_user.role == UserRole.SALES_REP:
-        base_filter.append(Quote.assigned_to_id == current_user.id)
+        base_filter.append(Quote.sales_rep_id == current_user.id)
 
     # Build query for current year
     query_current = select(
@@ -1000,7 +1000,7 @@ async def export_comparison_pdf(
 
     # Sales reps only see their own quotes
     if current_user.role == UserRole.SALES_REP:
-        base_filter.append(Quote.assigned_to_id == current_user.id)
+        base_filter.append(Quote.sales_rep_id == current_user.id)
 
     # Build query for current year
     query_current = select(

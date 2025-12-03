@@ -132,6 +132,164 @@ async def upload_spa_file(
         )
 
 
+@router.get("/stats", response_model=SPAStatsResponse)
+async def get_stats(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    spa_service: SPAService = Depends(get_spa_service)
+):
+    """
+    Obtiene estadísticas de SPAs del tenant.
+
+    Métricas incluidas:
+    - Total de SPAs
+    - SPAs activos
+    - SPAs expirados
+    - SPAs por expirar (próximos 30 días)
+    - Total de clientes con SPAs
+    - Promedio de descuento
+
+    Args:
+        tenant_id: ID del tenant
+        db: Sesión de base de datos
+        spa_service: Servicio de SPA
+
+    Returns:
+        SPAStatsResponse con métricas
+    """
+    try:
+        stats = await spa_service.get_stats(current_user.tenant_id, db)
+        return stats
+
+    except Exception as e:
+        logger.error(f"Error getting stats: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get stats"
+        )
+
+
+@router.get("/export")
+async def export_spas(
+    client_id: Optional[UUID] = Query(None),
+    active_only: bool = Query(False),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    spa_service: SPAService = Depends(get_spa_service)
+):
+    """
+    Exporta SPAs a archivo Excel.
+
+    Genera archivo .xlsx con:
+    - Todas las columnas de SPA
+    - Nombre del cliente
+    - Filtros aplicados según parámetros
+
+    Args:
+        client_id: Filtrar por cliente (opcional)
+        active_only: Solo SPAs activos
+        tenant_id: ID del tenant
+        db: Sesión de base de datos
+        spa_service: Servicio de SPA
+
+    Returns:
+        StreamingResponse con archivo Excel
+    """
+    try:
+        import pandas as pd
+        from datetime import datetime
+
+        # Obtener datos
+        params = SPASearchParams(
+            page=1,
+            page_size=10000,  # Export all
+            client_id=client_id,
+            is_active=active_only
+        )
+
+        result = await spa_service.list_spas(params, current_user.tenant_id, db)
+
+        # Convertir a DataFrame
+        data = []
+        for spa in result.items:
+            data.append({
+                'BPID': spa.bpid,
+                'Ship To Name': spa.ship_to_name,
+                'Article Number': spa.article_number,
+                'Article Description': spa.article_description or '',
+                'List Price': float(spa.list_price),
+                'App Net Price': float(spa.app_net_price),
+                'Discount %': float(spa.discount_percent),
+                'UOM': spa.uom,
+                'Start Date': spa.start_date.isoformat(),
+                'End Date': spa.end_date.isoformat(),
+                'Is Active': spa.is_active,
+                'Created At': spa.created_at.isoformat()
+            })
+
+        df = pd.DataFrame(data)
+
+        # Generar Excel en memoria
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, sheet_name='SPAs', index=False)
+
+        output.seek(0)
+
+        # Generar nombre de archivo
+        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        filename = f"spas_export_{timestamp}.xlsx"
+
+        return StreamingResponse(
+            output,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+
+    except Exception as e:
+        logger.error(f"Error exporting SPAs: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to export SPAs"
+        )
+
+
+@router.get("/uploads/history", response_model=List[SPAUploadLogResponse])
+async def get_upload_history(
+    limit: int = Query(20, ge=1, le=100, description="Número de uploads a retornar"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    spa_service: SPAService = Depends(get_spa_service)
+):
+    """
+    Obtiene historial de uploads de archivos SPA.
+
+    Útil para:
+    - Auditoría de imports
+    - Ver errores de uploads pasados
+    - Rastrear quién subió qué archivo
+
+    Args:
+        limit: Cantidad máxima de registros (default: 20, max: 100)
+        tenant_id: ID del tenant
+        db: Sesión de base de datos
+        spa_service: Servicio de SPA
+
+    Returns:
+        Lista de SPAUploadLogResponse ordenada por fecha (más reciente primero)
+    """
+    try:
+        logs = await spa_service.get_upload_history(current_user.tenant_id, limit, db)
+        return [SPAUploadLogResponse.from_orm(log) for log in logs]
+
+    except Exception as e:
+        logger.error(f"Error getting upload history: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get upload history"
+        )
+
+
 @router.get("", response_model=SPAListResponse)
 async def list_spas(
     page: int = Query(1, ge=1, description="Número de página"),
@@ -139,7 +297,7 @@ async def list_spas(
     client_id: Optional[UUID] = Query(None, description="Filtrar por cliente"),
     article_number: Optional[str] = Query(None, description="Filtrar por artículo"),
     bpid: Optional[str] = Query(None, description="Filtrar por BPID"),
-    active_only: bool = Query(False, description="Solo SPAs activos"),
+    active_only: Optional[bool] = Query(None, description="Solo SPAs activos"),
     search: Optional[str] = Query(None, description="Búsqueda general"),
     sort_by: str = Query("created_at", description="Campo para ordenar"),
     sort_desc: bool = Query(True, description="Orden descendente"),
@@ -181,10 +339,10 @@ async def list_spas(
             client_id=client_id,
             article_number=article_number,
             bpid=bpid,
-            active_only=active_only,
+            is_active=active_only,
             search=search,
             sort_by=sort_by,
-            sort_desc=sort_desc
+            sort_order="desc" if sort_desc else "asc"
         )
 
         result = await spa_service.list_spas(params, current_user.tenant_id, db)
@@ -328,128 +486,6 @@ async def search_discount(
         )
 
 
-@router.get("/stats", response_model=SPAStatsResponse)
-async def get_stats(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-    spa_service: SPAService = Depends(get_spa_service)
-):
-    """
-    Obtiene estadísticas de SPAs del tenant.
-
-    Métricas incluidas:
-    - Total de SPAs
-    - SPAs activos
-    - SPAs expirados
-    - SPAs por expirar (próximos 30 días)
-    - Total de clientes con SPAs
-    - Promedio de descuento
-
-    Args:
-        tenant_id: ID del tenant
-        db: Sesión de base de datos
-        spa_service: Servicio de SPA
-
-    Returns:
-        SPAStatsResponse con métricas
-    """
-    try:
-        stats = await spa_service.get_stats(tenant_id, db)
-        return stats
-
-    except Exception as e:
-        logger.error(f"Error getting stats: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get stats"
-        )
-
-
-@router.get("/export")
-async def export_spas(
-    client_id: Optional[UUID] = Query(None),
-    active_only: bool = Query(False),
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-    spa_service: SPAService = Depends(get_spa_service)
-):
-    """
-    Exporta SPAs a archivo Excel.
-
-    Genera archivo .xlsx con:
-    - Todas las columnas de SPA
-    - Nombre del cliente
-    - Filtros aplicados según parámetros
-
-    Args:
-        client_id: Filtrar por cliente (opcional)
-        active_only: Solo SPAs activos
-        tenant_id: ID del tenant
-        db: Sesión de base de datos
-        spa_service: Servicio de SPA
-
-    Returns:
-        StreamingResponse con archivo Excel
-    """
-    try:
-        import pandas as pd
-        from datetime import datetime
-
-        # Obtener datos
-        params = SPASearchParams(
-            page=1,
-            page_size=10000,  # Export all
-            client_id=client_id,
-            active_only=active_only
-        )
-
-        result = await spa_service.list_spas(params, current_user.tenant_id, db)
-
-        # Convertir a DataFrame
-        data = []
-        for spa in result.items:
-            data.append({
-                'BPID': spa.bpid,
-                'Ship To Name': spa.ship_to_name,
-                'Article Number': spa.article_number,
-                'Article Description': spa.article_description or '',
-                'List Price': float(spa.list_price),
-                'App Net Price': float(spa.app_net_price),
-                'Discount %': float(spa.discount_percent),
-                'UOM': spa.uom,
-                'Start Date': spa.start_date.isoformat(),
-                'End Date': spa.end_date.isoformat(),
-                'Is Active': spa.is_active,
-                'Created At': spa.created_at.isoformat()
-            })
-
-        df = pd.DataFrame(data)
-
-        # Generar Excel en memoria
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            df.to_excel(writer, sheet_name='SPAs', index=False)
-
-        output.seek(0)
-
-        # Generar nombre de archivo
-        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-        filename = f"spas_export_{timestamp}.xlsx"
-
-        return StreamingResponse(
-            output,
-            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
-        )
-
-    except Exception as e:
-        logger.error(f"Error exporting SPAs: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to export SPAs"
-        )
-
-
 @router.delete("/{spa_id}")
 async def delete_spa(
     spa_id: UUID,
@@ -496,40 +532,4 @@ async def delete_spa(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete SPA"
-        )
-
-
-@router.get("/uploads/history", response_model=List[SPAUploadLogResponse])
-async def get_upload_history(
-    limit: int = Query(20, ge=1, le=100, description="Número de uploads a retornar"),
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-    spa_service: SPAService = Depends(get_spa_service)
-):
-    """
-    Obtiene historial de uploads de archivos SPA.
-
-    Útil para:
-    - Auditoría de imports
-    - Ver errores de uploads pasados
-    - Rastrear quién subió qué archivo
-
-    Args:
-        limit: Cantidad máxima de registros (default: 20, max: 100)
-        tenant_id: ID del tenant
-        db: Sesión de base de datos
-        spa_service: Servicio de SPA
-
-    Returns:
-        Lista de SPAUploadLogResponse ordenada por fecha (más reciente primero)
-    """
-    try:
-        logs = await spa_service.get_upload_history(tenant_id, limit, db)
-        return [SPAUploadLogResponse.from_orm(log) for log in logs]
-
-    except Exception as e:
-        logger.error(f"Error getting upload history: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get upload history"
         )

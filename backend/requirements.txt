@@ -20,6 +20,9 @@ flower==2.0.1
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.1.1
+pyotp==2.9.0  # TOTP for 2FA
+qrcode==7.4.2  # QR code generation for 2FA
+cryptography==41.0.7  # For encrypting 2FA secrets
 
 # OCR and Image Processing
 pytesseract==0.3.10
@@ -35,6 +38,8 @@ numpy==1.26.2
 plotly==5.18.0
 openpyxl==3.1.2
 xlrd==2.0.1  # For reading old Excel files (.xls)
+lxml==5.1.0  # For parsing HTML tables in Excel files
+html5lib==1.1  # Alternative HTML parser for pandas
 matplotlib==3.8.2
 seaborn==0.13.0
 scipy==1.11.4

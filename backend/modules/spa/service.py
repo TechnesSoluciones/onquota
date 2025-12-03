@@ -105,7 +105,7 @@ class SPAService:
             # 4. Insertar SPAs en batch
             created_count = 0
             if spa_agreements:
-                created_spas = await self.spa_repo.bulk_create(spa_agreements, db)
+                created_spas = await self.spa_repo.bulk_create_agreements(spa_agreements)
                 created_count = len(created_spas)
                 logger.info(f"Created {created_count} SPA records in batch")
 
@@ -130,12 +130,11 @@ class SPAService:
             # 7. Preparar resultado
             result = SPAUploadResult(
                 batch_id=batch_id,
+                filename=file.filename,
                 total_rows=total_rows,
                 success_count=created_count,
                 error_count=error_count,
                 errors=all_errors[:100],  # Limitar errores en respuesta
-                duration_seconds=duration,
-                upload_log_id=upload_log.id
             )
 
             logger.info(
@@ -150,13 +149,14 @@ class SPAService:
             logger.error(f"Upload failed for batch {batch_id}: {str(e)}", exc_info=True)
 
             # Crear log de fallo
+            # Note: total_rows must equal success_count + error_count (database constraint)
             duration = (datetime.utcnow() - start_time).total_seconds()
             await self._create_upload_log(
                 batch_id=batch_id,
                 filename=file.filename,
                 user_id=user_id,
                 tenant_id=tenant_id,
-                total_rows=0,
+                total_rows=1,  # Must be 1 to satisfy constraint: total_rows = success_count + error_count
                 success_count=0,
                 error_count=1,
                 duration=duration,
@@ -278,7 +278,7 @@ class SPAService:
             UUID del cliente o None si no se encuentra y auto_create=False
         """
         # Buscar cliente existente por BPID
-        client = await self.client_repo.find_by_bpid(bpid, tenant_id, db)
+        client = await self.client_repo.get_by_bpid(bpid, tenant_id)
 
         if client:
             return client.id
@@ -293,15 +293,7 @@ class SPAService:
             tenant_id=tenant_id,
             bpid=bpid,
             name=ship_to_name,
-            is_active=True,
-            # Campos adicionales con defaults
-            email=None,
-            phone=None,
-            address=None,
-            city=None,
-            state=None,
-            country=None,
-            postal_code=None
+            is_active=True
         )
 
         db.add(new_client)
@@ -384,27 +376,26 @@ class SPAService:
         if not spa:
             return SPADiscountResponse(
                 found=False,
+                discount_percent=None,
+                list_price=None,
+                app_net_price=None,
+                agreement_id=None,
+                start_date=None,
+                end_date=None,
                 client_id=request.client_id,
-                article_number=request.article_number,
-                discount=None
+                bpid=None
             )
-
-        discount_match = SPADiscountMatch(
-            spa_id=spa.id,
-            discount_percent=spa.discount_percent,
-            app_net_price=spa.app_net_price,
-            list_price=spa.list_price,
-            uom=spa.uom,
-            start_date=spa.start_date,
-            end_date=spa.end_date,
-            article_description=spa.article_description
-        )
 
         return SPADiscountResponse(
             found=True,
+            discount_percent=spa.discount_percent,
+            list_price=spa.list_price,
+            app_net_price=spa.app_net_price,
+            agreement_id=spa.id,
+            start_date=spa.start_date,
+            end_date=spa.end_date,
             client_id=request.client_id,
-            article_number=request.article_number,
-            discount=discount_match
+            bpid=spa.bpid
         )
 
     async def list_spas(
@@ -424,10 +415,9 @@ class SPAService:
         Returns:
             SPAListResponse con items y metadata de paginación
         """
-        spas, total = await self.spa_repo.list_with_filters(
+        spas, total = await self.spa_repo.search(
             tenant_id=tenant_id,
-            params=params,
-            db=db
+            params=params
         )
 
         return SPAListResponse(
@@ -435,7 +425,7 @@ class SPAService:
             total=total,
             page=params.page,
             page_size=params.page_size,
-            total_pages=(total + params.page_size - 1) // params.page_size
+            pages=(total + params.page_size - 1) // params.page_size
         )
 
     async def get_spa_detail(

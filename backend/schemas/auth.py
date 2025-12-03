@@ -144,6 +144,14 @@ class UserLogin(BaseModel):
     password: str
 
 
+class TwoFactorRequiredResponse(BaseModel):
+    """Schema for 2FA required response during login"""
+
+    requires_2fa: bool = True
+    email: str
+    message: str = "Two-factor authentication required"
+
+
 class TokenResponse(BaseModel):
     """Schema for token response"""
 

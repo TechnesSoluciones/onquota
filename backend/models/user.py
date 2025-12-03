@@ -3,7 +3,7 @@ User model for authentication
 """
 from enum import Enum
 from sqlalchemy import Column, String, Boolean, DateTime, Enum as SQLEnum, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from uuid import uuid4
@@ -12,6 +12,7 @@ from models.base import Base
 
 class UserRole(str, Enum):
     """User roles in the system"""
+    SUPER_ADMIN = "super_admin"
     ADMIN = "admin"
     SALES_REP = "sales_rep"
     SUPERVISOR = "supervisor"
@@ -70,6 +71,12 @@ class User(Base):
     # Password reset
     reset_token = Column(String(500), nullable=True)
     reset_token_expires_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Two-Factor Authentication
+    two_factor_enabled = Column(Boolean, default=False, nullable=False, index=True)
+    two_factor_secret = Column(String(255), nullable=True)  # Increased for encrypted secrets
+    backup_codes = Column(JSONB, nullable=True)
+    two_factor_verified_at = Column(DateTime(timezone=True), nullable=True)
 
     # Timestamps
     created_at = Column(

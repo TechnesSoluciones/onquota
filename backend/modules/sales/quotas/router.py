@@ -161,6 +161,164 @@ async def list_quotas(
     )
 
 
+# Analytics Endpoints
+# ============================================
+
+@router.get("/dashboard", response_model=QuotaDashboardStats)
+async def get_quota_dashboard(
+    year: Optional[int] = Query(None, ge=2000, le=2100, description="Year (defaults to current)"),
+    month: Optional[int] = Query(None, ge=1, le=12, description="Month (defaults to current)"),
+    user_id: Optional[UUID] = Query(None, description="User ID (defaults to current user)"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get quota dashboard statistics
+
+    Returns comprehensive dashboard data including:
+    - Current period quota and achievement
+    - Product line breakdown
+    - Year-to-date (YTD) accumulation
+    - Remaining quota and gap percentage
+
+    Filters:
+    - year: Defaults to current year
+    - month: Defaults to current month
+    - user_id: Defaults to current user (admins can query other users)
+
+    Access Control:
+    - Sales reps can only view their own dashboard
+    - Supervisors and admins can view any user's dashboard
+    """
+    from datetime import datetime
+
+    # Default to current period
+    if year is None:
+        year = datetime.now().year
+    if month is None:
+        month = datetime.now().month
+
+    # Default to current user
+    if user_id is None:
+        user_id = current_user.id
+
+    repo = QuotaRepository(db)
+    stats = await repo.get_dashboard_stats(user_id, year, month, current_user.tenant_id)
+
+    if not stats:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No quota found for period {year}-{month:02d}"
+        )
+
+    return stats
+
+
+@router.get("/trends", response_model=List[QuotaMonthlyTrend])
+async def get_quota_trends(
+    year: int = Query(..., ge=2000, le=2100, description="Year"),
+    user_id: Optional[UUID] = Query(None, description="User ID (defaults to current user)"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get monthly quota trends
+
+    Returns monthly trends for the entire year (12 months).
+    Useful for charts and visualizations.
+
+    Filters:
+    - year: Required - year to analyze
+    - user_id: Optional - defaults to current user (admins can query other users)
+
+    Returns:
+    - Array of 12 monthly trend objects (one per month)
+    - Months without quotas show zero values
+
+    Access Control:
+    - Sales reps can only view their own trends
+    - Supervisors and admins can view any user's trends
+    """
+    # Default to current user
+    if user_id is None:
+        user_id = current_user.id
+
+    repo = QuotaRepository(db)
+    trends = await repo.get_monthly_trends(user_id, year, current_user.tenant_id)
+
+    return trends
+
+
+@router.get("/annual", response_model=QuotaStats)
+async def get_annual_quota_stats(
+    year: int = Query(..., ge=2000, le=2100, description="Year"),
+    user_id: Optional[UUID] = Query(None, description="User ID (defaults to current user)"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get annual quota statistics
+
+    Returns year-to-date statistics including:
+    - Current month quota and achievement
+    - Annual quota and achievement totals
+    - Months achieved count
+    - Achievement rate (% of months quota was met)
+
+    Filters:
+    - year: Required - year to analyze
+    - user_id: Optional - defaults to current user (admins can query other users)
+
+    Access Control:
+    - Sales reps can only view their own stats
+    - Supervisors and admins can view any user's stats
+    """
+    # Default to current user
+    if user_id is None:
+        user_id = current_user.id
+
+    repo = QuotaRepository(db)
+    stats = await repo.get_annual_stats(user_id, year, current_user.tenant_id)
+
+    return stats
+
+
+@router.get("/comparison", response_model=QuotaComparisonStats)
+async def get_quota_comparison(
+    year: int = Query(..., ge=2000, le=2100, description="Year"),
+    month: int = Query(..., ge=1, le=12, description="Month"),
+    user_id: Optional[UUID] = Query(None, description="User ID (defaults to current user)"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get month-to-month quota comparison
+
+    Compares current month with previous month including:
+    - Current and previous month dashboard stats
+    - Quota change (difference in quota amounts)
+    - Achievement change (difference in achieved amounts)
+    - Percentage change (difference in achievement %)
+
+    Filters:
+    - year: Required
+    - month: Required
+    - user_id: Optional - defaults to current user (admins can query other users)
+
+    Access Control:
+    - Sales reps can only view their own comparison
+    - Supervisors and admins can view any user's comparison
+    """
+    # Default to current user
+    if user_id is None:
+        user_id = current_user.id
+
+    repo = QuotaRepository(db)
+    comparison = await repo.get_comparison_stats(user_id, year, month, current_user.tenant_id)
+
+    return comparison
+
+
 @router.get("/{quota_id}", response_model=QuotaDetailResponse)
 async def get_quota(
     quota_id: UUID,
@@ -367,159 +525,3 @@ async def delete_quota_line(
 
 
 # ============================================
-# Analytics Endpoints
-# ============================================
-
-@router.get("/stats/dashboard", response_model=QuotaDashboardStats)
-async def get_quota_dashboard(
-    year: Optional[int] = Query(None, ge=2000, le=2100, description="Year (defaults to current)"),
-    month: Optional[int] = Query(None, ge=1, le=12, description="Month (defaults to current)"),
-    user_id: Optional[UUID] = Query(None, description="User ID (defaults to current user)"),
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Get quota dashboard statistics
-
-    Returns comprehensive dashboard data including:
-    - Current period quota and achievement
-    - Product line breakdown
-    - Year-to-date (YTD) accumulation
-    - Remaining quota and gap percentage
-
-    Filters:
-    - year: Defaults to current year
-    - month: Defaults to current month
-    - user_id: Defaults to current user (admins can query other users)
-
-    Access Control:
-    - Sales reps can only view their own dashboard
-    - Supervisors and admins can view any user's dashboard
-    """
-    from datetime import datetime
-
-    # Default to current period
-    if year is None:
-        year = datetime.now().year
-    if month is None:
-        month = datetime.now().month
-
-    # Default to current user
-    if user_id is None:
-        user_id = current_user.id
-
-    repo = QuotaRepository(db)
-    stats = await repo.get_dashboard_stats(user_id, year, month, current_user.tenant_id)
-
-    if not stats:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No quota found for period {year}-{month:02d}"
-        )
-
-    return stats
-
-
-@router.get("/stats/trends", response_model=List[QuotaMonthlyTrend])
-async def get_quota_trends(
-    year: int = Query(..., ge=2000, le=2100, description="Year"),
-    user_id: Optional[UUID] = Query(None, description="User ID (defaults to current user)"),
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Get monthly quota trends
-
-    Returns monthly trends for the entire year (12 months).
-    Useful for charts and visualizations.
-
-    Filters:
-    - year: Required - year to analyze
-    - user_id: Optional - defaults to current user (admins can query other users)
-
-    Returns:
-    - Array of 12 monthly trend objects (one per month)
-    - Months without quotas show zero values
-
-    Access Control:
-    - Sales reps can only view their own trends
-    - Supervisors and admins can view any user's trends
-    """
-    # Default to current user
-    if user_id is None:
-        user_id = current_user.id
-
-    repo = QuotaRepository(db)
-    trends = await repo.get_monthly_trends(user_id, year, current_user.tenant_id)
-
-    return trends
-
-
-@router.get("/stats/annual", response_model=QuotaStats)
-async def get_annual_quota_stats(
-    year: int = Query(..., ge=2000, le=2100, description="Year"),
-    user_id: Optional[UUID] = Query(None, description="User ID (defaults to current user)"),
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Get annual quota statistics
-
-    Returns year-to-date statistics including:
-    - Current month quota and achievement
-    - Annual quota and achievement totals
-    - Months achieved count
-    - Achievement rate (% of months quota was met)
-
-    Filters:
-    - year: Required - year to analyze
-    - user_id: Optional - defaults to current user (admins can query other users)
-
-    Access Control:
-    - Sales reps can only view their own stats
-    - Supervisors and admins can view any user's stats
-    """
-    # Default to current user
-    if user_id is None:
-        user_id = current_user.id
-
-    repo = QuotaRepository(db)
-    stats = await repo.get_annual_stats(user_id, year, current_user.tenant_id)
-
-    return stats
-
-
-@router.get("/stats/comparison", response_model=QuotaComparisonStats)
-async def get_quota_comparison(
-    year: int = Query(..., ge=2000, le=2100, description="Year"),
-    month: int = Query(..., ge=1, le=12, description="Month"),
-    user_id: Optional[UUID] = Query(None, description="User ID (defaults to current user)"),
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Get month-to-month quota comparison
-
-    Compares current month with previous month including:
-    - Current and previous month dashboard stats
-    - Quota change (difference in quota amounts)
-    - Achievement change (difference in achieved amounts)
-    - Percentage change (difference in achievement %)
-
-    Filters:
-    - year: Required
-    - month: Required
-    - user_id: Optional - defaults to current user (admins can query other users)
-
-    Access Control:
-    - Sales reps can only view their own comparison
-    - Supervisors and admins can view any user's comparison
-    """
-    # Default to current user
-    if user_id is None:
-        user_id = current_user.id
-
-    repo = QuotaRepository(db)
-    comparison = await repo.get_comparison_stats(user_id, year, month, current_user.tenant_id)
-
-    return comparison

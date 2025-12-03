@@ -181,8 +181,8 @@ class SPARepository:
             stmt = stmt.order_by(asc(sort_column))
 
         # Apply pagination
-        offset = (params.page - 1) * params.limit
-        stmt = stmt.offset(offset).limit(params.limit)
+        offset = (params.page - 1) * params.page_size
+        stmt = stmt.offset(offset).limit(params.page_size)
 
         # Load relationships
         stmt = stmt.options(selectinload(SPAAgreement.client))
@@ -261,6 +261,19 @@ class SPARepository:
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
+
+    async def get_upload_history(
+        self, tenant_id: UUID, limit: int, db: AsyncSession = None
+    ) -> List[SPAUploadLog]:
+        """Get upload history for tenant"""
+        stmt = (
+            select(SPAUploadLog)
+            .where(SPAUploadLog.tenant_id == tenant_id)
+            .order_by(desc(SPAUploadLog.created_at))
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
 
     # ============================================================================
     # Update Operations
@@ -351,6 +364,10 @@ class SPARepository:
     # ============================================================================
     # Statistics
     # ============================================================================
+
+    async def get_stats(self, tenant_id: UUID, db: AsyncSession = None) -> dict:
+        """Alias for get_statistics for compatibility"""
+        return await self.get_statistics(tenant_id)
 
     async def get_statistics(self, tenant_id: UUID) -> dict:
         """Get SPA statistics"""

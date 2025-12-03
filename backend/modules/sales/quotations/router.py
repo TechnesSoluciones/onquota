@@ -124,6 +124,99 @@ async def list_quotations(
     )
 
 
+# ============================================================================
+
+@router.get("/stats/summary", response_model=QuotationStats)
+async def get_quotation_stats(
+    client_id: Optional[UUID] = Query(None, description="Filter by client"),
+    assigned_to: Optional[UUID] = Query(None, description="Filter by sales rep"),
+    year: Optional[int] = Query(None, ge=2000, le=2100, description="Filter by year"),
+    month: Optional[int] = Query(None, ge=1, le=12, description="Filter by month"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get quotation summary statistics
+
+    **Returns:**
+    - Total quotations and amounts
+    - Breakdown by status (cotizado, ganado, perdido, ganado parcialmente)
+    - Win rate percentage
+    - Average quote and won amounts
+
+    **Filters:**
+    - client_id: Filter by specific client
+    - assigned_to: Filter by sales rep
+    - year/month: Filter by time period
+    """
+    repo = QuotationRepository(db)
+
+    stats = await repo.get_stats(
+        tenant_id=current_user.tenant_id,
+        client_id=client_id,
+        assigned_to=assigned_to,
+        year=year,
+        month=month,
+    )
+
+    return stats
+
+
+@router.get("/stats/monthly/{year}", response_model=List[QuotationMonthlyStats])
+async def get_monthly_stats(
+    year: int,
+    assigned_to: Optional[UUID] = Query(None, description="Filter by sales rep"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get monthly quotation statistics for a year
+
+    Returns month-by-month breakdown of:
+    - Total quotes and amounts
+    - Won/lost counts and amounts
+    - Win rates
+
+    **Use Case:** Charts showing monthly trends
+    """
+    repo = QuotationRepository(db)
+
+    stats = await repo.get_monthly_stats(
+        tenant_id=current_user.tenant_id,
+        year=year,
+        assigned_to=assigned_to,
+    )
+
+    return stats
+
+
+@router.get("/stats/by-client", response_model=List[QuotationsByClientStats])
+async def get_stats_by_client(
+    assigned_to: Optional[UUID] = Query(None, description="Filter by sales rep"),
+    year: Optional[int] = Query(None, ge=2000, le=2100, description="Filter by year"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get quotation statistics grouped by client
+
+    Returns per-client breakdown of:
+    - Total quotations and amounts
+    - Won counts and amounts
+    - Lost and pending counts
+
+    **Use Case:** Identify top clients by quotation volume/value
+    """
+    repo = QuotationRepository(db)
+
+    stats = await repo.get_stats_by_client(
+        tenant_id=current_user.tenant_id,
+        assigned_to=assigned_to,
+        year=year,
+    )
+
+    return stats
+
 @router.get("/{quotation_id}", response_model=QuotationDetailResponse)
 async def get_quotation(
     quotation_id: UUID,
@@ -273,95 +366,3 @@ async def mark_quotation_lost(
 
 # ============================================================================
 # Analytics Endpoints
-# ============================================================================
-
-@router.get("/stats/summary", response_model=QuotationStats)
-async def get_quotation_stats(
-    client_id: Optional[UUID] = Query(None, description="Filter by client"),
-    assigned_to: Optional[UUID] = Query(None, description="Filter by sales rep"),
-    year: Optional[int] = Query(None, ge=2000, le=2100, description="Filter by year"),
-    month: Optional[int] = Query(None, ge=1, le=12, description="Filter by month"),
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Get quotation summary statistics
-
-    **Returns:**
-    - Total quotations and amounts
-    - Breakdown by status (cotizado, ganado, perdido, ganado parcialmente)
-    - Win rate percentage
-    - Average quote and won amounts
-
-    **Filters:**
-    - client_id: Filter by specific client
-    - assigned_to: Filter by sales rep
-    - year/month: Filter by time period
-    """
-    repo = QuotationRepository(db)
-
-    stats = await repo.get_stats(
-        tenant_id=current_user.tenant_id,
-        client_id=client_id,
-        assigned_to=assigned_to,
-        year=year,
-        month=month,
-    )
-
-    return stats
-
-
-@router.get("/stats/monthly/{year}", response_model=List[QuotationMonthlyStats])
-async def get_monthly_stats(
-    year: int,
-    assigned_to: Optional[UUID] = Query(None, description="Filter by sales rep"),
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Get monthly quotation statistics for a year
-
-    Returns month-by-month breakdown of:
-    - Total quotes and amounts
-    - Won/lost counts and amounts
-    - Win rates
-
-    **Use Case:** Charts showing monthly trends
-    """
-    repo = QuotationRepository(db)
-
-    stats = await repo.get_monthly_stats(
-        tenant_id=current_user.tenant_id,
-        year=year,
-        assigned_to=assigned_to,
-    )
-
-    return stats
-
-
-@router.get("/stats/by-client", response_model=List[QuotationsByClientStats])
-async def get_stats_by_client(
-    assigned_to: Optional[UUID] = Query(None, description="Filter by sales rep"),
-    year: Optional[int] = Query(None, ge=2000, le=2100, description="Filter by year"),
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Get quotation statistics grouped by client
-
-    Returns per-client breakdown of:
-    - Total quotations and amounts
-    - Won counts and amounts
-    - Lost and pending counts
-
-    **Use Case:** Identify top clients by quotation volume/value
-    """
-    repo = QuotationRepository(db)
-
-    stats = await repo.get_stats_by_client(
-        tenant_id=current_user.tenant_id,
-        assigned_to=assigned_to,
-        year=year,
-    )
-
-    return stats

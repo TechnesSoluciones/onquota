@@ -9,7 +9,7 @@ from typing import Optional, List, Tuple
 from uuid import UUID
 import calendar
 
-from sqlalchemy import select, func, and_, or_, case, extract, text
+from sqlalchemy import select, func, and_, or_, case, extract, text, cast, String
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 
@@ -136,7 +136,7 @@ class ReportsRepository:
         ).where(
             and_(
                 SalesControl.tenant_id == tenant_id,
-                SalesControl.status == SalesControlStatus.PAID.value,
+                cast(SalesControl.status, String) == SalesControlStatus.PAID.value,
                 SalesControl.payment_date.between(filters.start_date, filters.end_date),
                 SalesControl.deleted_at.is_(None)
             )
@@ -151,7 +151,7 @@ class ReportsRepository:
         ).where(
             and_(
                 Quotation.tenant_id == tenant_id,
-                Quotation.status == QuoteStatus.COTIZADO.value,
+                cast(Quotation.status, String) == QuoteStatus.COTIZADO.value,
                 Quotation.deleted_at.is_(None)
             )
         )
@@ -162,8 +162,8 @@ class ReportsRepository:
 
         # Win rate calculation
         winloss_query = select(
-            func.count(case((Quotation.status == QuoteStatus.GANADO.value, 1))),
-            func.count(case((Quotation.status == QuoteStatus.PERDIDO.value, 1)))
+            func.count(case((cast(Quotation.status, String) == QuoteStatus.GANADO.value, 1))),
+            func.count(case((cast(Quotation.status, String) == QuoteStatus.PERDIDO.value, 1)))
         ).where(
             and_(
                 Quotation.tenant_id == tenant_id,
@@ -183,7 +183,7 @@ class ReportsRepository:
         ).where(
             and_(
                 SalesControl.tenant_id == tenant_id,
-                SalesControl.status.in_([
+                cast(SalesControl.status, String).in_([
                     SalesControlStatus.PENDING.value,
                     SalesControlStatus.IN_PRODUCTION.value
                 ]),
@@ -197,8 +197,8 @@ class ReportsRepository:
         visits_query = select(func.count(Visit.id)).where(
             and_(
                 Visit.tenant_id == tenant_id,
-                Visit.visit_date.between(filters.start_date, filters.end_date),
-                Visit.deleted_at.is_(None)
+                Visit.scheduled_date.between(filters.start_date, filters.end_date),
+                Visit.is_deleted == False
             )
         )
         result = await self.db.execute(visits_query)
@@ -251,7 +251,7 @@ class ReportsRepository:
             ).where(
                 and_(
                     SalesControl.tenant_id == tenant_id,
-                    SalesControl.status == SalesControlStatus.PAID.value,
+                    cast(SalesControl.status, String) == SalesControlStatus.PAID.value,
                     SalesControl.payment_date.between(comp_start, comp_end),
                     SalesControl.deleted_at.is_(None)
                 )
@@ -345,7 +345,7 @@ class ReportsRepository:
             SalesControl,
             and_(
                 SalesControl.client_id == Client.id,
-                SalesControl.status == SalesControlStatus.PAID.value,
+                cast(SalesControl.status, String) == SalesControlStatus.PAID.value,
                 SalesControl.payment_date.between(filters.start_date, filters.end_date),
                 SalesControl.deleted_at.is_(None)
             )

@@ -189,3 +189,35 @@ def require_supervisor_or_admin(
     if current_user.role not in [UserRole.SUPERVISOR, UserRole.ADMIN]:
         raise ForbiddenError("This endpoint requires supervisor or admin privileges")
     return current_user
+
+
+def require_super_admin(
+    current_user: User = Depends(get_current_active_user),
+) -> User:
+    """
+    Dependency for super admin only endpoints
+
+    Super admins have full system access across all tenants.
+    Used for critical administrative functions like user management.
+
+    Shortcut for require_role([UserRole.SUPER_ADMIN])
+    """
+    if current_user.role != UserRole.SUPER_ADMIN:
+        raise ForbiddenError("This endpoint requires super admin privileges")
+    return current_user
+
+
+def require_admin_or_super_admin(
+    current_user: User = Depends(get_current_active_user),
+) -> User:
+    """
+    Dependency for admin or super admin endpoints
+
+    Allows both regular admins and super admins.
+    Use this for administrative endpoints that should be accessible to tenant admins.
+
+    Shortcut for require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN])
+    """
+    if current_user.role not in [UserRole.ADMIN, UserRole.SUPER_ADMIN]:
+        raise ForbiddenError("This endpoint requires admin or super admin privileges")
+    return current_user
