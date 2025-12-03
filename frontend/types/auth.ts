@@ -9,6 +9,7 @@
  * Synced with: backend/models/user.py - UserRole enum
  */
 export enum UserRole {
+  SUPER_ADMIN = 'super_admin',
   ADMIN = 'admin',
   SALES_REP = 'sales_rep',
   SUPERVISOR = 'supervisor',
