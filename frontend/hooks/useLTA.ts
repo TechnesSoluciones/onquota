@@ -283,7 +283,7 @@ export function useLTAs(
   // Initial fetch
   useEffect(() => {
     fetchLTAs(initialActiveOnly, initialPage, initialLimit)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchLTAs, initialActiveOnly, initialPage, initialLimit])
 
   return {
     ltas,

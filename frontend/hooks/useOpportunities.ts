@@ -3,7 +3,7 @@
  * Custom hook for managing opportunities state and operations
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import {
   getOpportunities,
@@ -44,13 +44,20 @@ export function useOpportunities(
   initialFilters?: OpportunityFilters
 ): UseOpportunitiesReturn {
   const { toast } = useToast()
+
+  // Memoize initialFilters to prevent unnecessary re-renders
+  const memoizedInitialFilters = useMemo(
+    () => initialFilters,
+    [JSON.stringify(initialFilters)]
+  )
+
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [stats, setStats] = useState<PipelineStats | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentFilters, setCurrentFilters] = useState<
     OpportunityFilters | undefined
-  >(initialFilters)
+  >(memoizedInitialFilters)
 
   /**
    * Fetch opportunities with filters
@@ -243,9 +250,9 @@ export function useOpportunities(
 
   // Initial fetch
   useEffect(() => {
-    fetchOpportunities(initialFilters)
+    fetchOpportunities(memoizedInitialFilters)
     fetchStats()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchOpportunities, fetchStats, memoizedInitialFilters])
 
   return {
     opportunities,

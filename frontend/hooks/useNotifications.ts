@@ -4,7 +4,7 @@
  * Includes support for real-time updates via Server-Sent Events (SSE)
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import {
   getNotifications,
@@ -41,6 +41,13 @@ export function useNotifications(
   enableSSE: boolean = false
 ): UseNotificationsReturn {
   const { toast } = useToast()
+
+  // Memoize initialFilters to prevent unnecessary re-renders
+  const memoizedInitialFilters = useMemo(
+    () => initialFilters,
+    [JSON.stringify(initialFilters)]
+  )
+
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -48,7 +55,7 @@ export function useNotifications(
   const [isConnected, setIsConnected] = useState(false)
   const [currentFilters, setCurrentFilters] = useState<
     NotificationFilters | undefined
-  >(initialFilters)
+  >(memoizedInitialFilters)
   const eventSourceRef = useRef<EventSource | null>(null)
 
   /**
@@ -241,8 +248,8 @@ export function useNotifications(
 
   // Initial fetch
   useEffect(() => {
-    fetchNotifications(initialFilters)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    fetchNotifications(memoizedInitialFilters)
+  }, [fetchNotifications, memoizedInitialFilters])
 
   // Periodic unread count refresh (every 30 seconds)
   useEffect(() => {

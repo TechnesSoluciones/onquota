@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { salesApi } from '@/lib/api/sales'
 import type { QuoteWithItems } from '@/types/quote'
@@ -39,7 +39,7 @@ export default function QuoteDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
 
-  const loadQuote = async () => {
+  const loadQuote = useCallback(async () => {
     try {
       setIsLoading(true)
       setError(null)
@@ -50,12 +50,11 @@ export default function QuoteDetailPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [params.id])
 
   useEffect(() => {
     loadQuote()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id])
+  }, [loadQuote])
 
   const handleDelete = async () => {
     if (

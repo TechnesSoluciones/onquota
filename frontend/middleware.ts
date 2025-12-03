@@ -19,10 +19,6 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-
-  console.log('[Middleware] Processing request for:', pathname)
-
   // In development, we can't reliably check httpOnly cookies from a different domain
   // So we let all requests through and rely on client-side auth checks
   // The AuthContext will handle redirects appropriately

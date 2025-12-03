@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { clientsApi } from '@/lib/api/clients'
 import type { ClientResponse } from '@/types/client'
@@ -46,7 +46,7 @@ export default function ClientDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const loadClient = async () => {
+  const loadClient = useCallback(async () => {
     try {
       setIsLoading(true)
       setError(null)
@@ -57,12 +57,11 @@ export default function ClientDetailPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [params.id])
 
   useEffect(() => {
     loadClient()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id])
+  }, [loadClient])
 
   const handleDelete = async () => {
     if (!confirm('¿Estás seguro de eliminar este cliente? Esta acción no se puede deshacer.')) {

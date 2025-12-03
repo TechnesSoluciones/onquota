@@ -9,6 +9,7 @@ import { useState, useCallback } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { authApi } from '@/lib/api/auth'
 import type { LoginRequest, RegisterRequest } from '@/types/auth'
+import { logger } from '@/lib/logger'
 
 export const useAuth = () => {
   const router = useRouter()
@@ -31,13 +32,21 @@ export const useAuth = () => {
       setLoading(true)
       clearError()
 
-      console.log('[useAuth] Starting login process...')
+      logger.log('[useAuth] Starting login process...')
 
       // Call login API - backend sets httpOnly cookies automatically
       // Response contains user data, not tokens
       const userData = await authApi.login(data)
 
-      console.log('[useAuth] Login successful, user data received:', {
+      // Check if 2FA is required
+      if ('requires_2fa' in userData && userData.requires_2fa) {
+        logger.log('[useAuth] 2FA required, redirecting to verification page')
+        // Redirect to 2FA verification page with email
+        router.push(`/verify-2fa?email=${encodeURIComponent(userData.email || data.email)}`)
+        return { success: true, requires2FA: true }
+      }
+
+      logger.log('[useAuth] Login successful, user data received:', {
         userId: userData.id,
         email: userData.email,
         tenantId: userData.tenant_id
@@ -47,7 +56,7 @@ export const useAuth = () => {
       // The setAuth function still accepts them for backwards compatibility
       setAuth(userData, '', '', userData.tenant_id)
 
-      console.log('[useAuth] Redirecting to dashboard...')
+      logger.log('[useAuth] Redirecting to dashboard...')
 
       // Redirect to dashboard
       router.push('/dashboard')
@@ -56,7 +65,7 @@ export const useAuth = () => {
     } catch (err: any) {
       const message = err?.detail || err?.message || 'Error al iniciar sesión'
       setError(message)
-      console.error('[useAuth] Login error:', err)
+      logger.error('[useAuth] Login error:', err)
 
       return {
         success: false,
@@ -77,13 +86,13 @@ export const useAuth = () => {
       setLoading(true)
       clearError()
 
-      console.log('[useAuth] Starting registration process...')
+      logger.log('[useAuth] Starting registration process...')
 
       // Call register API - backend sets httpOnly cookies automatically
       // Response contains user data, not tokens
       const userData = await authApi.register(data)
 
-      console.log('[useAuth] Registration successful, user data received:', {
+      logger.log('[useAuth] Registration successful, user data received:', {
         userId: userData.id,
         email: userData.email,
         tenantId: userData.tenant_id
@@ -92,7 +101,7 @@ export const useAuth = () => {
       // Update store - pass empty strings for tokens since they're in httpOnly cookies
       setAuth(userData, '', '', userData.tenant_id)
 
-      console.log('[useAuth] Redirecting to dashboard...')
+      logger.log('[useAuth] Redirecting to dashboard...')
 
       // Redirect to dashboard
       router.push('/dashboard')
@@ -101,7 +110,7 @@ export const useAuth = () => {
     } catch (err: any) {
       const message = err?.detail || err?.message || 'Error al registrarse'
       setError(message)
-      console.error('[useAuth] Register error:', err)
+      logger.error('[useAuth] Register error:', err)
 
       return {
         success: false,
@@ -125,7 +134,7 @@ export const useAuth = () => {
       await authApi.logout()
     } catch (err: any) {
       // Log error but continue with logout process
-      console.error('Logout API error:', err)
+      logger.error('Logout API error:', err)
     } finally {
       // Clear auth state in store (which also clears API client tokens)
       clearAuth()
@@ -146,13 +155,13 @@ export const useAuth = () => {
       setLoading(true)
       clearError()
 
-      console.log('[useAuth] Checking authentication...')
+      logger.log('[useAuth] Checking authentication...')
 
       // Verify token by fetching user data
       // httpOnly cookies are automatically sent by the browser
       const userData = await authApi.me()
 
-      console.log('[useAuth] Authentication check successful:', {
+      logger.log('[useAuth] Authentication check successful:', {
         userId: userData.id,
         email: userData.email,
         tenantId: userData.tenant_id
@@ -162,7 +171,7 @@ export const useAuth = () => {
 
       return true
     } catch (err: any) {
-      console.log('[useAuth] Authentication check failed:', err?.detail || err?.message)
+      logger.log('[useAuth] Authentication check failed:', err?.detail || err?.message)
       clearAuth()
       return false
     } finally {
@@ -181,7 +190,7 @@ export const useAuth = () => {
       return { success: true, user: userData }
     } catch (err: any) {
       const message = err?.detail || err?.message || 'Error al actualizar usuario'
-      console.error('Refresh user error:', err)
+      logger.error('Refresh user error:', err)
 
       return {
         success: false,

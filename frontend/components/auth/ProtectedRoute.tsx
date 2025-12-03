@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { useRole } from '@/hooks/useRole'
 import type { UserRole } from '@/types/auth'
+import { logger } from '@/lib/logger'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -41,15 +42,15 @@ export default function ProtectedRoute({
   // Initial auth check - only runs once on mount
   useEffect(() => {
     const verifyAuth = async () => {
-      console.log('[ProtectedRoute] Starting auth verification...')
+      logger.log('[ProtectedRoute] Starting auth verification...')
 
       try {
         await checkAuth()
       } catch (error) {
-        console.error('[ProtectedRoute] Auth check failed:', error)
+        logger.error('[ProtectedRoute] Auth check failed:', error)
       } finally {
         setAuthChecked(true)
-        console.log('[ProtectedRoute] Auth check completed')
+        logger.log('[ProtectedRoute] Auth check completed')
       }
     }
 
@@ -58,7 +59,7 @@ export default function ProtectedRoute({
     // Fallback: force auth check to complete after 5 seconds
     const timeout = setTimeout(() => {
       if (!authChecked) {
-        console.warn('[ProtectedRoute] Auth check timeout - forcing completion')
+        logger.warn('[ProtectedRoute] Auth check timeout - forcing completion')
         setAuthChecked(true)
       }
     }, 5000)
@@ -69,11 +70,11 @@ export default function ProtectedRoute({
   // Handle redirects and authorization after auth is checked
   useEffect(() => {
     if (!authChecked || isLoading) {
-      console.log('[ProtectedRoute] Waiting for auth check...', { authChecked, isLoading })
+      logger.log('[ProtectedRoute] Waiting for auth check...', { authChecked, isLoading })
       return
     }
 
-    console.log('[ProtectedRoute] Checking route access:', {
+    logger.log('[ProtectedRoute] Checking route access:', {
       requireAuth,
       isAuthenticated,
       pathname: window.location.pathname
@@ -81,14 +82,14 @@ export default function ProtectedRoute({
 
     // If route requires auth and user is not authenticated, redirect
     if (requireAuth && !isAuthenticated) {
-      console.log('[ProtectedRoute] Redirecting to login - auth required but not authenticated')
+      logger.log('[ProtectedRoute] Redirecting to login - auth required but not authenticated')
       router.push(redirectTo)
       return
     }
 
     // If route requires NO auth (like login page) and user IS authenticated
     if (!requireAuth && isAuthenticated) {
-      console.log('[ProtectedRoute] Redirecting to dashboard - user already authenticated')
+      logger.log('[ProtectedRoute] Redirecting to dashboard - user already authenticated')
       router.push('/dashboard')
       return
     }

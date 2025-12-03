@@ -3,7 +3,7 @@
  * Custom hooks for managing Special Price Agreements
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import {
   listSPAs,
@@ -51,6 +51,13 @@ interface UseSPAsReturn {
 
 export function useSPAs(initialParams?: SPASearchParams): UseSPAsReturn {
   const { toast } = useToast()
+
+  // Memoize initialParams to prevent unnecessary re-renders
+  const memoizedInitialParams = useMemo(
+    () => initialParams,
+    [JSON.stringify(initialParams)]
+  )
+
   const [spas, setSPAs] = useState<SPAAgreement[]>([])
   const [pagination, setPagination] = useState({
     total: 0,
@@ -62,7 +69,7 @@ export function useSPAs(initialParams?: SPASearchParams): UseSPAsReturn {
   const [error, setError] = useState<string | null>(null)
   const [currentParams, setCurrentParams] = useState<
     SPASearchParams | undefined
-  >(initialParams)
+  >(memoizedInitialParams)
 
   /**
    * Fetch SPAs with filters and pagination
@@ -165,8 +172,8 @@ export function useSPAs(initialParams?: SPASearchParams): UseSPAsReturn {
 
   // Initial fetch
   useEffect(() => {
-    fetchSPAs(initialParams)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    fetchSPAs(memoizedInitialParams)
+  }, [fetchSPAs, memoizedInitialParams])
 
   return {
     spas,
@@ -329,7 +336,7 @@ export function useClientSPAs(
   // Initial fetch
   useEffect(() => {
     fetch(initialActiveOnly)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetch, initialActiveOnly])
 
   return {
     spas,
@@ -611,7 +618,7 @@ export function useSPAUploadHistory(
   // Initial fetch
   useEffect(() => {
     fetch(initialLimit)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetch, initialLimit])
 
   return {
     logs,

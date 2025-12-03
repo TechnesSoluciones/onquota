@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { expensesApi } from '@/lib/api/expenses'
 import type { ExpenseWithCategory } from '@/types/expense'
@@ -25,7 +25,7 @@ export default function ExpenseDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const loadExpense = async () => {
+  const loadExpense = useCallback(async () => {
     try {
       setIsLoading(true)
       setError(null)
@@ -36,12 +36,11 @@ export default function ExpenseDetailPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [params.id])
 
   useEffect(() => {
     loadExpense()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id])
+  }, [loadExpense])
 
   const handleDelete = async () => {
     if (!confirm('¿Estás seguro de eliminar este gasto? Esta acción no se puede deshacer.')) {
