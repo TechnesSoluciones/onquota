@@ -69,7 +69,7 @@ def upgrade() -> None:
     op.create_table(
         'visit_topics',
         sa.Column('id', UUID(as_uuid=True), primary_key=True),
-        sa.Column('tenant_id', UUID(as_uuid=True), nullable=False, index=True),
+        sa.Column('tenant_id', UUID(as_uuid=True), nullable=False),
         sa.Column('name', sa.String(200), nullable=False),
         sa.Column('description', sa.Text, nullable=True),
         sa.Column('icon', sa.String(50), nullable=True),
@@ -90,8 +90,8 @@ def upgrade() -> None:
     op.create_table(
         'visit_topic_details',
         sa.Column('id', UUID(as_uuid=True), primary_key=True),
-        sa.Column('visit_id', UUID(as_uuid=True), nullable=False, index=True),
-        sa.Column('topic_id', UUID(as_uuid=True), nullable=False, index=True),
+        sa.Column('visit_id', UUID(as_uuid=True), nullable=False),
+        sa.Column('topic_id', UUID(as_uuid=True), nullable=False),
         sa.Column('details', sa.Text, nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, default=datetime.utcnow),
 
@@ -110,8 +110,8 @@ def upgrade() -> None:
     op.create_table(
         'visit_opportunities',
         sa.Column('id', UUID(as_uuid=True), primary_key=True),
-        sa.Column('visit_id', UUID(as_uuid=True), nullable=False, index=True),
-        sa.Column('opportunity_id', UUID(as_uuid=True), nullable=False, index=True),
+        sa.Column('visit_id', UUID(as_uuid=True), nullable=False),
+        sa.Column('opportunity_id', UUID(as_uuid=True), nullable=False),
         sa.Column('notes', sa.Text, nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, default=datetime.utcnow),
 
@@ -137,21 +137,21 @@ def upgrade() -> None:
     op.create_table(
         'commitments',
         sa.Column('id', UUID(as_uuid=True), primary_key=True),
-        sa.Column('tenant_id', UUID(as_uuid=True), nullable=False, index=True),
+        sa.Column('tenant_id', UUID(as_uuid=True), nullable=False),
 
         # Relationships
-        sa.Column('visit_id', UUID(as_uuid=True), nullable=True, index=True),  # Optional
-        sa.Column('client_id', UUID(as_uuid=True), nullable=False, index=True),
-        sa.Column('assigned_to_user_id', UUID(as_uuid=True), nullable=False, index=True),
-        sa.Column('created_by_user_id', UUID(as_uuid=True), nullable=False, index=True),
+        sa.Column('visit_id', UUID(as_uuid=True), nullable=True),  # Optional
+        sa.Column('client_id', UUID(as_uuid=True), nullable=False),
+        sa.Column('assigned_to_user_id', UUID(as_uuid=True), nullable=False),
+        sa.Column('created_by_user_id', UUID(as_uuid=True), nullable=False),
 
         # Commitment details
-        sa.Column('type', commitment_type_enum, nullable=False, index=True),
+        sa.Column('type', commitment_type_enum, nullable=False),
         sa.Column('title', sa.String(300), nullable=False),
         sa.Column('description', sa.Text, nullable=True),
-        sa.Column('due_date', sa.DateTime(timezone=True), nullable=False, index=True),
-        sa.Column('priority', commitment_priority_enum, nullable=False, default='medium', index=True),
-        sa.Column('status', commitment_status_enum, nullable=False, default='pending', index=True),
+        sa.Column('due_date', sa.DateTime(timezone=True), nullable=False),
+        sa.Column('priority', commitment_priority_enum, nullable=False, default='medium'),
+        sa.Column('status', commitment_status_enum, nullable=False, default='pending'),
 
         # Completion tracking
         sa.Column('completed_at', sa.DateTime(timezone=True), nullable=True),
@@ -164,7 +164,7 @@ def upgrade() -> None:
         # Metadata
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, default=datetime.utcnow),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow),
-        sa.Column('is_deleted', sa.Boolean, default=False, nullable=False, index=True),
+        sa.Column('is_deleted', sa.Boolean, default=False, nullable=False),
 
         # Foreign keys
         sa.ForeignKeyConstraint(['visit_id'], ['visits.id'], ondelete='SET NULL'),

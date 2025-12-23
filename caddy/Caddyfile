@@ -1,0 +1,188 @@
+# =============================================================================
+# Caddy Reverse Proxy Configuration - OnQuota Production
+# =============================================================================
+# Automatic HTTPS with Let's Encrypt
+# Routes all traffic through single domain
+# FastAPI backend + Next.js frontend
+# =============================================================================
+
+{
+    # Global options
+    email {$CADDY_EMAIL:admin@onquota.com}
+    # Automatic HTTPS enabled by default
+    admin off  # Disable admin API in production for security
+
+    # Optional: Enable access logs
+    # log {
+    #     output file /data/access.log {
+    #         roll_size 100mb
+    #         roll_keep 5
+    #     }
+    # }
+}
+
+# =============================================================================
+# Main Domain Configuration
+# =============================================================================
+{$DOMAIN:localhost} {
+    # Logging configuration
+    log {
+        output file /data/access.log {
+            roll_size 100mb
+            roll_keep 5
+            roll_keep_for 720h
+        }
+        format json
+        level INFO
+    }
+
+    # Security headers
+    header {
+        # Enable HTTP Strict Transport Security (HSTS)
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+        # Prevent clickjacking attacks
+        X-Frame-Options "SAMEORIGIN"
+
+        # Prevent MIME type sniffing
+        X-Content-Type-Options "nosniff"
+
+        # XSS Protection
+        X-XSS-Protection "1; mode=block"
+
+        # Referrer Policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+
+        # Remove server header for security
+        -Server
+
+        # Permissions Policy - Restrict browser features
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+        # Content Security Policy - Allow Next.js resources
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; connect-src 'self';"
+    }
+
+    # ==========================================================================
+    # Health Check Endpoint (for monitoring and load balancers)
+    # ==========================================================================
+    handle /health {
+        respond "OK" 200
+    }
+
+    # ==========================================================================
+    # API Routes → Backend (FastAPI)
+    # ==========================================================================
+    handle /api/v1/* {
+        reverse_proxy backend:8000 {
+            # Health check for upstream
+            health_uri /health
+            health_interval 30s
+            health_timeout 10s
+
+            # Proxy headers
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Host {host}
+
+            # Timeouts
+            transport http {
+                dial_timeout 10s
+                response_header_timeout 30s
+                read_timeout 60s
+                write_timeout 60s
+            }
+        }
+    }
+
+    # ==========================================================================
+    # Flower Monitoring (Optional - Celery UI)
+    # Only accessible if flower service is running
+    # ==========================================================================
+    handle /flower* {
+        reverse_proxy flower:5555 {
+            # Strip /flower prefix
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Host {host}
+
+            transport http {
+                dial_timeout 10s
+                response_header_timeout 30s
+            }
+        }
+    }
+
+    # ==========================================================================
+    # Grafana Dashboard (Optional - Monitoring)
+    # Only accessible if grafana service is running
+    # ==========================================================================
+    handle /grafana* {
+        reverse_proxy grafana:3000 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Host {host}
+
+            transport http {
+                dial_timeout 10s
+                response_header_timeout 30s
+            }
+        }
+    }
+
+    # ==========================================================================
+    # Next.js Frontend (All other routes)
+    # ==========================================================================
+    handle {
+        reverse_proxy frontend:3000 {
+            # Health check
+            health_uri /api/health
+            health_interval 30s
+            health_timeout 10s
+
+            # Proxy headers
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Host {host}
+
+            # Support WebSocket connections (for development hot reload if needed)
+            header_up Connection {>Connection}
+            header_up Upgrade {>Upgrade}
+
+            # Timeouts
+            transport http {
+                dial_timeout 10s
+                response_header_timeout 60s
+                read_timeout 120s
+                write_timeout 120s
+            }
+        }
+    }
+
+    # Enable compression for better performance
+    encode gzip zstd
+
+    # Error handling
+    handle_errors {
+        @5xx expression `{err.status_code} >= 500 && {err.status_code} < 600`
+        respond @5xx "Service temporarily unavailable" 503
+
+        @4xx expression `{err.status_code} >= 400 && {err.status_code} < 500`
+        respond @4xx "Page not found" 404
+    }
+}
+
+# =============================================================================
+# Optional: WWW Redirect
+# =============================================================================
+www.{$DOMAIN:localhost} {
+    redir https://{$DOMAIN:localhost}{uri} permanent
+}

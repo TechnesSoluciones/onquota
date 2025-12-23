@@ -616,14 +616,14 @@ export interface QuotaComparisonItem {
 
 /**
  * Quota Comparison Response
- * Synced with: QuotaComparisonResponse
+ * Synced with: QuotaComparisonStats (backend)
  */
 export interface QuotaComparisonResponse {
-  user_id: string
-  user_name: string
-  current_month: QuotaComparisonItem
-  previous_month: QuotaComparisonItem
-  change_percentage: number
+  current_month: QuotaDashboardStats | null
+  previous_month: QuotaDashboardStats | null
+  quota_change: number
+  achieved_change: number
+  percentage_change: number
 }
 
 // ============================================================================

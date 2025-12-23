@@ -234,7 +234,7 @@ class QuotaProductLineTrend(BaseModel):
 
 class QuotaComparisonStats(BaseModel):
     """Month-to-month comparison statistics"""
-    current_month: QuotaDashboardStats
+    current_month: Optional[QuotaDashboardStats] = None
     previous_month: Optional[QuotaDashboardStats] = None
 
     # Changes

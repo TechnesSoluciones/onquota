@@ -152,12 +152,12 @@ export default function ExpensesComparisonPage() {
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Categoría (Opcional)</label>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <Select value={categoryFilter || 'all'} onValueChange={(value) => setCategoryFilter(value === 'all' ? '' : value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todas las categorías" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas las categorías</SelectItem>
+                  <SelectItem value="all">Todas las categorías</SelectItem>
                   <SelectItem value="office">Oficina</SelectItem>
                   <SelectItem value="marketing">Marketing</SelectItem>
                   <SelectItem value="travel">Viajes</SelectItem>

@@ -77,6 +77,7 @@ playwright/.cache/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production  # Production environment file with secrets
 
 # IDE
 .vscode/
@@ -125,5 +126,22 @@ celerybeat.pid
 *.backup
 *.bak
 *.orig
+*.dump
+backups/
 docs/AWS_DEPLOYMENT_MANUAL_GUIDE.md
 Context_Docs
+
+# Production files
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt
+nginx/.htpasswd
+
+# Monitoring data
+monitoring/prometheus/data/
+monitoring/grafana/data/
+
+# Logs
+backend/logs/*.log
+nginx_logs/
+.env.production

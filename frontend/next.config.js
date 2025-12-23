@@ -2,6 +2,10 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+
+  // Enable standalone output for Docker production builds
+  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
+
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -16,11 +20,17 @@ const nextConfig = {
         hostname: '**.amazonaws.com',
       },
     ],
+    unoptimized: process.env.NODE_ENV === 'production', // Better for Docker
   },
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1',
     NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'OnQuota',
   },
+  // Reduce build size
+  compress: true,
+  // Enable production optimizations
+  poweredByHeader: false,
+  generateEtags: true,
 }
 
 module.exports = nextConfig

@@ -57,12 +57,12 @@ export function QuotaDashboard({
 }: QuotaDashboardProps) {
   // Format trends data for charts
   const trendsChartData =
-    trends?.trends.map((trend) => ({
-      month: MONTH_NAMES[trend.month - 1],
-      quota: trend.quota_amount,
-      achieved: trend.achieved_amount,
-      percentage: trend.achievement_percentage,
-    })) || []
+    trends?.trends?.map((trend) => ({
+      month: MONTH_NAMES[trend.month - 1] ?? 'Unknown',
+      quota: trend.quota_amount ?? 0,
+      achieved: trend.achieved_amount ?? 0,
+      percentage: trend.achievement_percentage ?? 0,
+    })) ?? []
 
   return (
     <div className="space-y-6">
@@ -77,7 +77,7 @@ export function QuotaDashboard({
       )}
 
       {/* Comparison Stats */}
-      {comparison && (
+      {comparison && comparison.current_month && comparison.previous_month && (
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -94,11 +94,11 @@ export function QuotaDashboard({
                 </p>
                 <div className="space-y-1">
                   <p className="text-2xl font-bold text-slate-900">
-                    {comparison.current_month.achievement_percentage.toFixed(1)}%
+                    {comparison.current_month.achievement_percentage?.toFixed(1) ?? '0.0'}%
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {formatCurrency(comparison.current_month.achieved_amount, currency)}{' '}
-                    / {formatCurrency(comparison.current_month.quota_amount, currency)}
+                    {formatCurrency(comparison.current_month.achieved_amount ?? 0, currency)}{' '}
+                    / {formatCurrency(comparison.current_month.quota_amount ?? 0, currency)}
                   </p>
                 </div>
               </div>
@@ -110,14 +110,14 @@ export function QuotaDashboard({
                 </p>
                 <div className="space-y-1">
                   <p className="text-2xl font-bold text-slate-900">
-                    {comparison.previous_month.achievement_percentage.toFixed(1)}%
+                    {comparison.previous_month.achievement_percentage?.toFixed(1) ?? '0.0'}%
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {formatCurrency(
-                      comparison.previous_month.achieved_amount,
+                      comparison.previous_month.achieved_amount ?? 0,
                       currency
                     )}{' '}
-                    / {formatCurrency(comparison.previous_month.quota_amount, currency)}
+                    / {formatCurrency(comparison.previous_month.quota_amount ?? 0, currency)}
                   </p>
                 </div>
               </div>
@@ -128,24 +128,24 @@ export function QuotaDashboard({
                 <div className="flex items-center gap-2">
                   <TrendingUp
                     className={`h-5 w-5 ${
-                      comparison.change_percentage >= 0
+                      (comparison.change_percentage ?? 0) >= 0
                         ? 'text-green-600'
                         : 'text-red-600'
                     }`}
                   />
                   <p
                     className={`text-2xl font-bold ${
-                      comparison.change_percentage >= 0
+                      (comparison.change_percentage ?? 0) >= 0
                         ? 'text-green-600'
                         : 'text-red-600'
                     }`}
                   >
-                    {comparison.change_percentage >= 0 ? '+' : ''}
-                    {comparison.change_percentage.toFixed(1)}%
+                    {(comparison.change_percentage ?? 0) >= 0 ? '+' : ''}
+                    {comparison.change_percentage?.toFixed(1) ?? '0.0'}%
                   </p>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {comparison.change_percentage >= 0
+                  {(comparison.change_percentage ?? 0) >= 0
                     ? 'Improvement from last month'
                     : 'Decrease from last month'}
                 </p>
@@ -229,7 +229,7 @@ export function QuotaDashboard({
       )}
 
       {/* Product Line Breakdown by Achievement */}
-      {dashboard && dashboard.lines && dashboard.lines.length > 0 && (
+      {dashboard && dashboard.lines && Array.isArray(dashboard.lines) && dashboard.lines.length > 0 && (
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -241,12 +241,13 @@ export function QuotaDashboard({
             <div className="space-y-4">
               {/* Sort by achievement percentage */}
               {[...dashboard.lines]
-                .sort((a, b) => b.achievement_percentage - a.achievement_percentage)
+                .sort((a, b) => (b.achievement_percentage ?? 0) - (a.achievement_percentage ?? 0))
                 .map((line) => {
+                  const achievementPercentage = line.achievement_percentage ?? 0
                   const achievementColor =
-                    line.achievement_percentage >= 90
+                    achievementPercentage >= 90
                       ? 'bg-green-500'
-                      : line.achievement_percentage >= 70
+                      : achievementPercentage >= 70
                       ? 'bg-yellow-500'
                       : 'bg-red-500'
 
@@ -258,25 +259,25 @@ export function QuotaDashboard({
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
                           <p className="font-medium text-slate-900">
-                            {line.product_line_name}
+                            {line.product_line_name ?? 'Unknown'}
                           </p>
                           <p className="text-sm font-semibold text-slate-900">
-                            {line.achievement_percentage.toFixed(1)}%
+                            {achievementPercentage.toFixed(1)}%
                           </p>
                         </div>
                         <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           <span>
-                            {formatCurrency(line.achieved_amount, currency)}
+                            {formatCurrency(line.achieved_amount ?? 0, currency)}
                           </span>
                           <span>/</span>
-                          <span>{formatCurrency(line.quota_amount, currency)}</span>
+                          <span>{formatCurrency(line.quota_amount ?? 0, currency)}</span>
                         </div>
                       </div>
                       <div className="flex items-center justify-center w-16 h-16 rounded-full bg-white">
                         <div
                           className={`w-12 h-12 rounded-full flex items-center justify-center ${achievementColor} text-white font-bold`}
                         >
-                          {Math.round(line.achievement_percentage)}
+                          {Math.round(achievementPercentage)}
                         </div>
                       </div>
                     </div>

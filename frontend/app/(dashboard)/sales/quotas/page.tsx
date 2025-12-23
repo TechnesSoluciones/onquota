@@ -36,10 +36,10 @@ import { useProductLines } from '@/hooks/useProductLines'
 import { useToast } from '@/hooks/use-toast'
 
 // Mock users - in real app, fetch from API
+// Using real UUIDs for testing to avoid 422 validation errors
 const MOCK_USERS = [
-  { id: 'user-1', name: 'John Doe' },
-  { id: 'user-2', name: 'Jane Smith' },
-  { id: 'user-3', name: 'Bob Johnson' },
+  { id: 'f0a8d086-1ab3-43b6-9f41-51b0feab9bc2', name: 'Jose Gomez' },  // Real user from DB
+  { id: '2d75f36e-b8e5-490a-9a48-ad612d45af81', name: 'Test User' },    // Real user from DB
 ]
 
 const MONTHS = [
@@ -74,7 +74,7 @@ export default function QuotasPage() {
   )
   const { trends } = useQuotaTrends(selectedUserId, selectedYear)
   const { comparison } = useQuotaComparison(selectedUserId, selectedYear, selectedMonth)
-  const { productLines } = useProductLines()
+  const { productLines = [] } = useProductLines()
   const { createQuota } = useCreateQuota()
 
   const handleCreateQuota = async (data: any) => {
