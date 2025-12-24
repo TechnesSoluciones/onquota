@@ -25,14 +25,11 @@ version: '3.8'
 
 networks:
   onquota-network:
-    driver: bridge
+    external: true
+    name: copilot-app_copilot-network
 
 volumes:
   redis-data:
-    driver: local
-  caddy-data:
-    driver: local
-  caddy-config:
     driver: local
   backend-uploads:
     driver: local
@@ -45,41 +42,9 @@ volumes:
 
 services:
   # ===========================================================================
-  # Caddy - Reverse Proxy & SSL Termination
+  # NOTE: Caddy is managed externally at /opt/caddy-proxy/
+  # This deployment uses the shared Caddy instance that serves multiple apps
   # ===========================================================================
-  caddy:
-    image: caddy:2-alpine
-    container_name: onquota-caddy
-    restart: unless-stopped
-    ports:
-      - "80:80"       # HTTP (auto-redirects to HTTPS)
-      - "443:443"     # HTTPS
-      - "443:443/udp" # HTTP/3 support
-    volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
-    environment:
-      - DOMAIN=${DOMAIN:-onquota.com}
-      - CADDY_EMAIL=${CADDY_EMAIL:-admin@onquota.com}
-    networks:
-      - onquota-network
-    depends_on:
-      frontend:
-        condition: service_healthy
-      backend:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   # ===========================================================================
   # Redis - Cache & Message Broker
@@ -273,7 +238,7 @@ services:
     container_name: onquota-frontend
     restart: unless-stopped
     expose:
-      - "3000"  # Internal network only, accessed via Caddy
+      - "3000"  # Internal network only, accessed via shared Caddy proxy
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
@@ -285,7 +250,7 @@ services:
     networks:
       - onquota-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
