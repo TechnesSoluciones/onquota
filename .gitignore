@@ -10,7 +10,9 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/ - Commented out because it conflicts with frontend/lib source directory
+# Use backend-specific ignore instead
+backend/lib/
 lib64/
 parts/
 sdist/
