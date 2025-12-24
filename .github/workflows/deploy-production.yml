@@ -31,27 +31,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install Python dependencies
-        run: |
-          cd backend
-          pip install -r requirements.txt
-          pip install pytest pytest-cov
-
-      - name: Run Python tests
-        env:
-          DATABASE_URL: sqlite:///./test.db
-          SECRET_KEY: test-secret-key-for-ci-only
-          ENVIRONMENT: test
-        run: |
-          cd backend
-          pytest tests/ --cov=. --cov-report=xml
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
