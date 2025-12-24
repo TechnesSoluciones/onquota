@@ -44,6 +44,10 @@ jobs:
           pip install pytest pytest-cov
 
       - name: Run Python tests
+        env:
+          DATABASE_URL: sqlite:///./test.db
+          SECRET_KEY: test-secret-key-for-ci-only
+          ENVIRONMENT: test
         run: |
           cd backend
           pytest tests/ --cov=. --cov-report=xml
