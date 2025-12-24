@@ -69,6 +69,18 @@ jobs:
         id: lowercase
         run: echo "repo_owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
+      - name: Debug - Check tsconfig.json
+        run: |
+          echo "Checking tsconfig.json for ${{ matrix.service }}"
+          if [ -f "./${{ matrix.service }}/tsconfig.json" ]; then
+            echo "tsconfig.json exists"
+            cat "./${{ matrix.service }}/tsconfig.json" | grep -A 3 "baseUrl"
+          else
+            echo "tsconfig.json NOT FOUND"
+          fi
+          echo "Files in ${{ matrix.service }}:"
+          ls -la "./${{ matrix.service }}/" | head -20
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
