@@ -69,7 +69,7 @@ jobs:
         id: lowercase
         run: echo "repo_owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
-      - name: Debug - Check tsconfig.json
+      - name: Debug - Check tsconfig.json and lib directory
         run: |
           echo "Checking tsconfig.json for ${{ matrix.service }}"
           if [ -f "./${{ matrix.service }}/tsconfig.json" ]; then
@@ -80,6 +80,17 @@ jobs:
           fi
           echo "Files in ${{ matrix.service }}:"
           ls -la "./${{ matrix.service }}/" | head -20
+          if [ "${{ matrix.service }}" = "frontend" ]; then
+            echo "Checking lib directory:"
+            if [ -d "./${{ matrix.service }}/lib" ]; then
+              echo "lib directory exists"
+              ls -la "./${{ matrix.service }}/lib/"
+              echo "lib/validations contents:"
+              ls -la "./${{ matrix.service }}/lib/validations/" | head -10
+            else
+              echo "lib directory NOT FOUND"
+            fi
+          fi
 
       - name: Extract metadata
         id: meta
