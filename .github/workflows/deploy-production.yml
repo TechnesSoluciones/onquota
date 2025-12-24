@@ -17,7 +17,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}
 
 jobs:
   # ============================================================
@@ -97,11 +96,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set lowercase repository owner
+        id: lowercase
+        run: echo "repo_owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_PREFIX }}/onquota-${{ matrix.service }}
+          images: ${{ env.REGISTRY }}/${{ steps.lowercase.outputs.repo_owner }}/onquota-${{ matrix.service }}
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
@@ -115,8 +118,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.IMAGE_PREFIX }}/onquota-${{ matrix.service }}:buildcache
-          cache-to: type=registry,ref=${{ env.IMAGE_PREFIX }}/onquota-${{ matrix.service }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ steps.lowercase.outputs.repo_owner }}/onquota-${{ matrix.service }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ steps.lowercase.outputs.repo_owner }}/onquota-${{ matrix.service }}:buildcache,mode=max
           build-args: |
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
             VCS_REF=${{ github.sha }}
@@ -271,17 +274,22 @@ jobs:
             chmod 600 .env.production
           EOF
 
+      - name: Set lowercase repository owner
+        id: lowercase
+        run: echo "repo_owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: Pull Docker images on VPS
         run: |
-          ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} << 'EOF'
+          REPO_OWNER_LC="${{ steps.lowercase.outputs.repo_owner }}"
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} << EOF
             cd /opt/onquota
 
             # Login to GitHub Container Registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             # Pull latest images
-            docker pull ${{ env.IMAGE_PREFIX }}/onquota-backend:latest
-            docker pull ${{ env.IMAGE_PREFIX }}/onquota-frontend:latest
+            docker pull ghcr.io/${REPO_OWNER_LC}/onquota-backend:latest
+            docker pull ghcr.io/${REPO_OWNER_LC}/onquota-frontend:latest
           EOF
 
       - name: Backup current deployment (if exists)
