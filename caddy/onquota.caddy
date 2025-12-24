@@ -1,0 +1,91 @@
+# ============================================================
+# OnQuota - Caddy Configuration
+# Domain: onquota.app
+# ============================================================
+
+# Frontend OnQuota
+onquota.app, www.onquota.app {
+    encode gzip zstd
+
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Redirect www to non-www
+    @www host www.onquota.app
+    redir @www https://onquota.app{uri} permanent
+
+    # API routes → Backend
+    handle /api/v1/* {
+        reverse_proxy onquota-backend:8000 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+
+            health_uri /api/v1/health
+            health_interval 30s
+            health_timeout 10s
+        }
+    }
+
+    # NextAuth routes → Frontend
+    handle /api/auth/* {
+        reverse_proxy onquota-frontend:3000 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Frontend (all other routes)
+    handle {
+        reverse_proxy onquota-frontend:3000 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up Connection {>Connection}
+            header_up Upgrade {>Upgrade}
+
+            health_uri /api/health
+            health_interval 30s
+            health_timeout 10s
+        }
+    }
+
+    log {
+        output file /data/onquota-access.log {
+            roll_size 100mb
+            roll_keep 5
+        }
+        format json
+    }
+}
+
+# API subdomain (optional)
+api.onquota.app {
+    encode gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options "nosniff"
+    }
+
+    reverse_proxy onquota-backend:8000 {
+        header_up Host {upstream_hostport}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+
+        health_uri /api/v1/health
+        health_interval 30s
+        health_timeout 10s
+    }
+}

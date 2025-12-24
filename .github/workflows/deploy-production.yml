@@ -160,9 +160,13 @@ jobs:
             --exclude='.env.production' \
             docker-compose.production.yml \
             .env.production.example \
-            caddy/ \
             deployment/ \
             root@${{ secrets.VPS_HOST }}:/opt/onquota/
+
+          # Copy Caddy config to shared Caddy directory
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
+            caddy/onquota.caddy \
+            root@${{ secrets.VPS_HOST}}:/opt/caddy-proxy/caddy/
 
       - name: Create .env.production from secrets
         run: |
@@ -372,133 +376,21 @@ jobs:
           echo "Deployed to: https://onquota.app"
 
   # ============================================================
-  # Job 4: Update Caddy Configuration (Multi-App)
+  # Job 4: Reload Caddy Configuration
   # ============================================================
-  update-caddy:
-    name: Update Caddy for Multi-App
+  reload-caddy:
+    name: Reload Caddy
     runs-on: ubuntu-latest
     needs: deploy
     if: success()
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Backup current OnQuota Caddy config
-        run: |
-          ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} \
-            "cp /opt/caddy-proxy/caddy/onquota.caddy /opt/caddy-proxy/caddy/onquota.caddy.backup.$(date +%Y%m%d) || true"
-
-      - name: Update OnQuota Caddy configuration
-        run: |
-          ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} << 'EOF'
-            echo "Updating OnQuota Caddy configuration..."
-
-            # Create OnQuota Caddy config
-            cat > /opt/caddy-proxy/caddy/onquota.caddy << 'CADDYEOF'
-
-# ============================================================
-# OnQuota - Caddy Configuration
-# Domain: onquota.app
-# ============================================================
-
-# Frontend OnQuota
-onquota.app, www.onquota.app {
-    encode gzip zstd
-
-    # Security headers
-    header {
-        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-        X-Content-Type-Options "nosniff"
-        X-Frame-Options "DENY"
-        X-XSS-Protection "1; mode=block"
-        Referrer-Policy "strict-origin-when-cross-origin"
-    }
-
-    # Redirect www to non-www
-    @www host www.onquota.app
-    redir @www https://onquota.app{uri} permanent
-
-    # API routes → Backend
-    handle /api/v1/* {
-        reverse_proxy onquota-backend:8000 {
-            header_up Host {upstream_hostport}
-            header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Proto {scheme}
-
-            health_uri /api/v1/health
-            health_interval 30s
-            health_timeout 10s
-        }
-    }
-
-    # NextAuth routes → Frontend
-    handle /api/auth/* {
-        reverse_proxy onquota-frontend:3000 {
-            header_up Host {upstream_hostport}
-            header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Proto {scheme}
-        }
-    }
-
-    # Frontend (all other routes)
-    handle {
-        reverse_proxy onquota-frontend:3000 {
-            header_up Host {upstream_hostport}
-            header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Proto {scheme}
-            header_up Connection {>Connection}
-            header_up Upgrade {>Upgrade}
-
-            health_uri /api/health
-            health_interval 30s
-            health_timeout 10s
-        }
-    }
-
-    log {
-        output file /data/onquota-access.log {
-            roll_size 100mb
-            roll_keep 5
-        }
-        format json
-    }
-}
-
-# API subdomain (optional)
-api.onquota.app {
-    encode gzip
-
-    header {
-        Strict-Transport-Security "max-age=31536000"
-        X-Content-Type-Options "nosniff"
-    }
-
-    reverse_proxy onquota-backend:8000 {
-        header_up Host {upstream_hostport}
-        header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
-
-        health_uri /api/v1/health
-        health_interval 30s
-        health_timeout 10s
-    }
-}
-CADDYEOF
-
-            echo "✓ OnQuota Caddy configuration updated"
-          EOF
 
       - name: Reload Caddy configuration
         run: |
