@@ -87,7 +87,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ steps.lowercase.outputs.repo_owner }}/onquota-${{ matrix.service }}:buildcache
+          no-cache: true
+          # Temporarily disabled cache to force rebuild with tsconfig.json fix
+          # cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ steps.lowercase.outputs.repo_owner }}/onquota-${{ matrix.service }}:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ steps.lowercase.outputs.repo_owner }}/onquota-${{ matrix.service }}:buildcache,mode=max
           build-args: |
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
