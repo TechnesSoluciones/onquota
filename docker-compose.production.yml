@@ -84,7 +84,7 @@ services:
   # Backend API - FastAPI
   # ===========================================================================
   backend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-josedgomez}/onquota-backend:${IMAGE_TAG:-latest}
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-technessoluciones}/onquota-backend:${IMAGE_TAG:-latest}
     container_name: onquota-backend
     restart: unless-stopped
     expose:
@@ -126,7 +126,7 @@ services:
   # Celery Worker - Background Tasks
   # ===========================================================================
   celery-worker:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-josedgomez}/onquota-backend:${IMAGE_TAG:-latest}
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-technessoluciones}/onquota-backend:${IMAGE_TAG:-latest}
     container_name: onquota-celery-worker
     restart: unless-stopped
     env_file:
@@ -157,7 +157,7 @@ services:
   # Celery Beat - Task Scheduler
   # ===========================================================================
   celery-beat:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-josedgomez}/onquota-backend:${IMAGE_TAG:-latest}
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-technessoluciones}/onquota-backend:${IMAGE_TAG:-latest}
     container_name: onquota-celery-beat
     restart: unless-stopped
     env_file:
@@ -187,7 +187,7 @@ services:
   # Flower - Celery Monitoring (Optional)
   # ===========================================================================
   flower:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-josedgomez}/onquota-backend:${IMAGE_TAG:-latest}
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-technessoluciones}/onquota-backend:${IMAGE_TAG:-latest}
     container_name: onquota-flower
     restart: unless-stopped
     env_file:
@@ -216,7 +216,7 @@ services:
   # Frontend - Next.js
   # ===========================================================================
   frontend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-josedgomez}/onquota-frontend:${IMAGE_TAG:-latest}
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-technessoluciones}/onquota-frontend:${IMAGE_TAG:-latest}
     container_name: onquota-frontend
     restart: unless-stopped
     expose:

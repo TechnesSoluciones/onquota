@@ -31,7 +31,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: josedgomez
+  IMAGE_PREFIX: technessoluciones
 
 jobs:
   # ========================================================
@@ -268,7 +268,7 @@ jobs:
           GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
 
           # Repository owner for Docker images
-          GITHUB_REPOSITORY_OWNER=josedgomez
+          GITHUB_REPOSITORY_OWNER=technessoluciones
           IMAGE_TAG=latest
           ENVEOF
 
@@ -317,10 +317,10 @@ jobs:
             # ============================================
             echo ""
             echo "📥 Step 2/7: Pulling version ${VERSION_TAG}..."
-            export GITHUB_REPOSITORY_OWNER=josedgomez
+            export GITHUB_REPOSITORY_OWNER=technessoluciones
             export IMAGE_TAG=${VERSION_TAG}
-            docker pull ghcr.io/josedgomez/onquota-backend:${VERSION_TAG}
-            docker pull ghcr.io/josedgomez/onquota-frontend:${VERSION_TAG}
+            docker pull ghcr.io/technessoluciones/onquota-backend:${VERSION_TAG}
+            docker pull ghcr.io/technessoluciones/onquota-frontend:${VERSION_TAG}
             echo "✓ Images pulled successfully"
 
             # ============================================
