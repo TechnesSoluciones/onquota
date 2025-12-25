@@ -313,10 +313,20 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             # ============================================
-            # STEP 2: Pull new images
+            # STEP 2: Load environment variables
             # ============================================
             echo ""
-            echo "📥 Step 2/7: Pulling version ${VERSION_TAG}..."
+            echo "⚙️  Step 2/7: Loading environment variables..."
+            set -a
+            source .env.production
+            set +a
+            echo "✓ Environment loaded"
+
+            # ============================================
+            # STEP 3: Pull new images
+            # ============================================
+            echo ""
+            echo "📥 Step 3/7: Pulling version ${VERSION_TAG}..."
             export GITHUB_REPOSITORY_OWNER=technessoluciones
             export IMAGE_TAG=${VERSION_TAG}
             docker pull ghcr.io/technessoluciones/onquota-backend:${VERSION_TAG}
@@ -324,27 +334,25 @@ jobs:
             echo "✓ Images pulled successfully"
 
             # ============================================
-            # STEP 3: Clear cache BEFORE stopping services
+            # STEP 4: Clear cache BEFORE stopping services
             # ============================================
             echo ""
-            echo "🧹 Step 3/7: Clearing application cache..."
-
-            REDIS_PASS=$(grep REDIS_PASSWORD .env.production | cut -d'=' -f2 | tr -d '\r')
+            echo "🧹 Step 4/7: Clearing application cache..."
 
             if docker compose -f docker-compose.production.yml ps redis | grep -q "running"; then
               echo "  → Flushing Redis cache..."
-              docker compose -f docker-compose.production.yml exec -T redis redis-cli -a "$REDIS_PASS" --no-auth-warning FLUSHALL
-              REDIS_KEYS=$(docker compose -f docker-compose.production.yml exec -T redis redis-cli -a "$REDIS_PASS" --no-auth-warning DBSIZE)
+              docker compose -f docker-compose.production.yml exec -T redis redis-cli -a "$REDIS_PASSWORD" --no-auth-warning FLUSHALL
+              REDIS_KEYS=$(docker compose -f docker-compose.production.yml exec -T redis redis-cli -a "$REDIS_PASSWORD" --no-auth-warning DBSIZE)
               echo "  ✓ Redis cache cleared (keys remaining: $REDIS_KEYS)"
             else
               echo "  ⚠ Redis container not running, will start fresh"
             fi
 
             # ============================================
-            # STEP 4: Deploy Services (Recreate Strategy)
+            # STEP 5: Deploy Services (Recreate Strategy)
             # ============================================
             echo ""
-            echo "🔄 Step 4/7: Deploying services..."
+            echo "🔄 Step 5/7: Deploying services..."
 
             docker compose -f docker-compose.production.yml up -d --force-recreate backend frontend
 
@@ -352,10 +360,10 @@ jobs:
             sleep 20
 
             # ============================================
-            # STEP 5: Verify Services Health
+            # STEP 6: Verify Services Health
             # ============================================
             echo ""
-            echo "🔄 Step 5/7: Verifying services health..."
+            echo "🔄 Step 6/7: Verifying services health..."
 
             echo "  → Waiting for Backend to be healthy..."
             for i in {1..30}; do
@@ -386,10 +394,10 @@ jobs:
             done
 
             # ============================================
-            # STEP 6: Ensure Redis is running
+            # STEP 7: Ensure Redis is running
             # ============================================
             echo ""
-            echo "🔍 Step 6/7: Verifying Redis..."
+            echo "🔍 Step 7/7: Verifying Redis..."
 
             docker compose -f docker-compose.production.yml up -d redis
 
@@ -410,10 +418,10 @@ jobs:
             docker network prune -f > /dev/null 2>&1 || true
 
             # ============================================
-            # STEP 7: Verify deployment
+            # STEP 8: Verify deployment
             # ============================================
             echo ""
-            echo "✅ Step 7/7: Verifying deployment..."
+            echo "✅ Step 8/8: Verifying deployment..."
 
             echo ""
             echo "Container Status:"
@@ -421,7 +429,7 @@ jobs:
 
             echo ""
             echo "Cache Status:"
-            REDIS_KEYS=$(docker compose -f docker-compose.production.yml exec -T redis redis-cli -a "$REDIS_PASS" --no-auth-warning DBSIZE)
+            REDIS_KEYS=$(docker compose -f docker-compose.production.yml exec -T redis redis-cli -a "$REDIS_PASSWORD" --no-auth-warning DBSIZE)
             echo "  Redis keys: $REDIS_KEYS"
 
             # ============================================
