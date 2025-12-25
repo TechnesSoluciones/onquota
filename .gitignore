@@ -147,3 +147,4 @@ monitoring/grafana/data/
 backend/logs/*.log
 nginx_logs/
 .env.production
+# Trigger deployment
