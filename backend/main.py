@@ -175,7 +175,7 @@ async def root():
     }
 
 
-@app.get("/health")
+@app.get("/api/v1/health")
 async def health_check():
     """
     Health check endpoint
@@ -188,7 +188,7 @@ async def health_check():
     }
 
 
-@app.get("/health/ready")
+@app.get("/api/v1/health/ready")
 async def readiness_check():
     """
     Readiness check endpoint
@@ -222,7 +222,7 @@ async def readiness_check():
         )
 
 
-@app.get("/health/live")
+@app.get("/api/v1/health/live")
 async def liveness_check():
     """
     Liveness check endpoint

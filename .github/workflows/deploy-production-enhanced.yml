@@ -374,7 +374,7 @@ jobs:
 
             echo "  → Waiting for Backend to be healthy..."
             for i in {1..30}; do
-              if docker exec onquota-backend wget -q -O- http://localhost:8000/health > /dev/null 2>&1; then
+              if docker exec onquota-backend wget -q -O- http://localhost:8000/api/v1/health > /dev/null 2>&1; then
                 echo "  ✓ Backend is healthy"
                 break
               fi
