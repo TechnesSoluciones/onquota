@@ -6,6 +6,9 @@ const nextConfig = {
   // Enable standalone output for Docker production builds
   output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
 
+  // Fix for lucide-react icons not rendering in standalone build
+  transpilePackages: ['lucide-react'],
+
   eslint: {
     ignoreDuringBuilds: true,
   },
