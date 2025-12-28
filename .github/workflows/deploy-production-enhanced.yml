@@ -268,8 +268,10 @@ jobs:
           CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD_ENCODED}@redis:6379/0
 
           # Monitoring
+          FLOWER_USER=admin
           FLOWER_PASSWORD=${{ secrets.FLOWER_PASSWORD }}
           GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          GRAFANA_ROOT_URL=https://api.onquota.app/grafana
 
           # Repository owner for Docker images
           GITHUB_REPOSITORY_OWNER=technessoluciones
@@ -359,7 +361,7 @@ jobs:
             echo ""
             echo "🔄 Step 5/7: Deploying services..."
 
-            docker compose -f docker-compose.production.yml up -d --force-recreate backend frontend
+            docker compose -f docker-compose.production.yml up -d --force-recreate redis backend celery-worker celery-beat frontend
 
             echo "  → Waiting for services to start..."
             sleep 20
