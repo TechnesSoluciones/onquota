@@ -273,6 +273,7 @@ jobs:
           ENVEOF
 
             chmod 600 .env.production
+            ln -sf .env.production .env
           EOF
 
       - name: Determine version tag
