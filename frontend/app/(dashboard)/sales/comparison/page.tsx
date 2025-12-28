@@ -1,10 +1,16 @@
 'use client'
 
+/**
+ * Sales Comparison Page V2
+ * Monthly/yearly sales comparison with charts
+ * Updated with Design System V2
+ */
+
 import { useState } from 'react'
-import { Card } from '@/components/ui/card'
+import { Card, Button } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { Icon } from '@/components/icons'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
-import { Calendar, TrendingUp, TrendingDown, DollarSign, Download, Loader2, AlertCircle, FileText, Target, AlertTriangle } from 'lucide-react'
 import {
   BarChart,
   Bar,
@@ -79,16 +85,14 @@ export default function SalesComparisonPage() {
 
   if (error) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Comparación Mensual de Ventas</h1>
-          <p className="text-muted-foreground">
-            Analiza y compara las ventas entre diferentes períodos
-          </p>
-        </div>
+      <PageLayout
+        title="Comparación de Ventas"
+        description="Analiza y compara las ventas entre diferentes períodos"
+        backLink="/sales"
+      >
         <Card className="p-6">
-          <div className="flex items-center gap-4 text-red-600">
-            <AlertCircle className="h-6 w-6" />
+          <div className="flex items-center gap-4 text-error">
+            <Icon name="error" className="h-6 w-6" />
             <div>
               <p className="font-semibold">Error al cargar datos</p>
               <p className="text-sm">{error}</p>
@@ -96,31 +100,27 @@ export default function SalesComparisonPage() {
           </div>
           <Button onClick={refresh} className="mt-4">Reintentar</Button>
         </Card>
-      </div>
+      </PageLayout>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Comparación Mensual de Ventas</h1>
-          <p className="text-muted-foreground">
-            Analiza y compara las ventas entre diferentes períodos
-          </p>
-        </div>
+    <PageLayout
+      title="Comparación de Ventas"
+      description="Analiza y compara las ventas entre diferentes períodos"
+      backLink="/sales"
+      actions={
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => handleExport('excel')}>
-            <Download className="h-4 w-4 mr-2" />
+          <Button variant="outline" onClick={() => handleExport('excel')} leftIcon={<Icon name="download" />}>
             Exportar Excel
           </Button>
-          <Button variant="outline" onClick={() => handleExport('pdf')}>
-            <Download className="h-4 w-4 mr-2" />
+          <Button variant="outline" onClick={() => handleExport('pdf')} leftIcon={<Icon name="download" />}>
             Exportar PDF
           </Button>
         </div>
-      </div>
+      }
+    >
+      <div className="space-y-6">
 
       {/* Filters */}
       <Card className="p-4">
@@ -454,6 +454,7 @@ export default function SalesComparisonPage() {
           </Card>
         </>
       ) : null}
-    </div>
+      </div>
+    </PageLayout>
   )
 }

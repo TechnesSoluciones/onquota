@@ -1,21 +1,24 @@
 'use client'
 
 /**
- * Product Lines Page
+ * Product Lines Page V2
  * Main page for managing product lines
+ * Updated with Design System V2
  */
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Plus, Loader2, AlertCircle } from 'lucide-react'
+} from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { LoadingState } from '@/components/patterns'
+import { Icon } from '@/components/icons'
 import { ProductLineList } from '@/components/sales/product-lines/ProductLineList'
 import { ProductLineForm } from '@/components/sales/product-lines/ProductLineForm'
 import { useProductLines } from '@/hooks/useProductLines'
@@ -111,44 +114,41 @@ export default function ProductLinesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Product Lines</h1>
-          <p className="text-muted-foreground">
-            Manage your product line categories
-          </p>
-        </div>
-        <Button onClick={() => setCreateModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
+    <PageLayout
+      title="Product Lines"
+      description="Manage your product line categories"
+      breadcrumbs={[
+        { label: 'Ventas', href: '/sales' },
+        { label: 'Product Lines' }
+      ]}
+      actions={
+        <Button onClick={() => setCreateModalOpen(true)} leftIcon={<Icon name="add" />}>
           New Product Line
         </Button>
-      </div>
-
-      {/* Error State */}
-      {error && (
-        <div className="p-4 bg-red-50 border-l-4 border-red-500 flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="font-medium text-red-800">Error loading product lines</p>
-            <p className="text-sm text-red-700">{error}</p>
+      }
+    >
+      <div className="space-y-6">
+        {/* Error State */}
+        {error && (
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-error/10 border border-error/20">
+            <Icon name="error" className="h-5 w-5 text-error flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-error">Error loading product lines</p>
+              <p className="text-sm text-error/80">{error}</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Loading State */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : (
-        <ProductLineList
-          productLines={productLines}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      )}
+        {/* Loading State */}
+        {isLoading ? (
+          <LoadingState message="Loading product lines..." />
+        ) : (
+          <ProductLineList
+            productLines={productLines}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        )}
 
       {/* Create Modal */}
       <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
@@ -187,6 +187,7 @@ export default function ProductLinesPage() {
           />
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </PageLayout>
   )
 }

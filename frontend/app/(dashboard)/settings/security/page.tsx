@@ -1,21 +1,33 @@
+/**
+ * Security Settings Page V2
+ * Manage account security and two-factor authentication
+ * Updated with Design System V2
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useTwoFactor } from '@/hooks/useTwoFactor';
 import { TwoFactorSetup } from '@/components/settings/TwoFactorSetup';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import {
+  Button,
+  Input,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Alert,
+  AlertDescription,
+  Badge,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Loader2, ShieldCheck, ShieldOff, Key } from 'lucide-react';
+} from '@/components/ui-v2';
+import { PageLayout } from '@/components/layouts';
+import { Icon } from '@/components/icons';
 
 export default function SecuritySettingsPage() {
   const { getStatus, disable2FA, regenerateBackupCodes, loading } = useTwoFactor();
@@ -94,37 +106,41 @@ export default function SecuritySettingsPage() {
 
   if (showSetup) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <TwoFactorSetup
-          onComplete={() => {
-            setShowSetup(false);
-            loadStatus();
-          }}
-          onCancel={() => setShowSetup(false)}
-        />
-      </div>
+      <PageLayout
+        title="Security Settings"
+        description="Set up two-factor authentication"
+        backLink="/settings"
+      >
+        <div className="max-w-2xl mx-auto">
+          <TwoFactorSetup
+            onComplete={() => {
+              setShowSetup(false);
+              loadStatus();
+            }}
+            onCancel={() => setShowSetup(false)}
+          />
+        </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div>
-        <h1 className="text-3xl font-bold">Security Settings</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage your account security and two-factor authentication
-        </p>
-      </div>
-
-      {/* Two-Factor Authentication Card */}
-      <Card>
+    <PageLayout
+      title="Security Settings"
+      description="Manage your account security and two-factor authentication"
+      backLink="/settings"
+    >
+      <div className="space-y-6 max-w-4xl">
+        {/* Two-Factor Authentication Card */}
+        <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
                 {is2FAEnabled ? (
-                  <ShieldCheck className="h-5 w-5 text-green-600" />
+                  <Icon name="verified_user" className="h-5 w-5 text-green-600" />
                 ) : (
-                  <ShieldOff className="h-5 w-5 text-muted-foreground" />
+                  <Icon name="shield" className="h-5 w-5 text-muted-foreground" />
                 )}
                 Two-Factor Authentication
               </CardTitle>
@@ -148,7 +164,7 @@ export default function SecuritySettingsPage() {
 
               <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
                 <div className="flex items-center gap-3">
-                  <Key className="h-5 w-5 text-muted-foreground" />
+                  <Icon name="vpn_key" className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="font-medium">Backup Codes</p>
                     <p className="text-sm text-muted-foreground">
@@ -237,7 +253,7 @@ export default function SecuritySettingsPage() {
                 disabled={loading || !disablePassword}
                 className="flex-1"
               >
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {loading && <Icon name="progress_activity" className="mr-2 h-4 w-4 animate-spin" />}
                 Disable
               </Button>
             </div>
@@ -303,7 +319,7 @@ export default function SecuritySettingsPage() {
                   disabled={loading || !regeneratePassword || regenerateCode.length !== 6}
                   className="flex-1"
                 >
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {loading && <Icon name="progress_activity" className="mr-2 h-4 w-4 animate-spin" />}
                   Regenerate
                 </Button>
               </div>
@@ -348,6 +364,7 @@ export default function SecuritySettingsPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </PageLayout>
   );
 }

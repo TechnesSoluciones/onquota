@@ -1,14 +1,17 @@
 'use client'
 
 /**
- * Quotation Detail Page
+ * Quotation Detail Page V2
  * View and edit quotation, with win/lose actions for pending quotations
+ * Updated with Design System V2
  */
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { LoadingState } from '@/components/patterns'
+import { Icon } from '@/components/icons'
 import { QuotationForm } from '@/components/sales/quotations/QuotationForm'
 import { QuotationWinDialog } from '@/components/sales/quotations/QuotationWinDialog'
 import {
@@ -19,7 +22,6 @@ import {
 } from '@/hooks/useQuotations'
 import { useProductLines } from '@/hooks/useProductLines'
 import { useToast } from '@/hooks/use-toast'
-import { ArrowLeft, CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { QuotationStatus } from '@/types/sales'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
@@ -115,71 +117,62 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <PageLayout title="Quotation Details" description="Loading...">
+        <LoadingState message="Loading quotation..." />
+      </PageLayout>
     )
   }
 
   if (!quotation) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">Quotation not found</p>
-      </div>
+      <PageLayout title="Quotation Details" description="Not found">
+        <div className="text-center py-12">
+          <Icon name="error" className="h-12 w-12 text-error mx-auto mb-4" />
+          <p className="text-neutral-500 dark:text-neutral-400">Quotation not found</p>
+        </div>
+      </PageLayout>
     )
   }
 
   const isPending = quotation.status === QuotationStatus.PENDING
 
   return (
-    <div className="space-y-6">
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        onClick={() => router.push('/sales/quotations')}
-        className="mb-4"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Quotations
-      </Button>
-
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            {quotation.quotation_number}
-          </h1>
-          <p className="text-muted-foreground">{quotation.client_name}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {isPending && (
-            <>
-              <Button
-                onClick={handleMarkWon}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Mark as Won
-              </Button>
-              <Button
-                onClick={handleMarkLost}
-                variant="destructive"
-              >
-                <XCircle className="h-4 w-4 mr-2" />
-                Mark as Lost
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-
+    <PageLayout
+      title={quotation.quotation_number}
+      description={quotation.client_name}
+      breadcrumbs={[
+        { label: 'Ventas', href: '/sales' },
+        { label: 'Quotations', href: '/sales/quotations' },
+        { label: quotation.quotation_number }
+      ]}
+      actions={
+        isPending && (
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleMarkWon}
+              className="bg-success hover:bg-success/90"
+              leftIcon={<Icon name="check_circle" size="sm" />}
+            >
+              Mark as Won
+            </Button>
+            <Button
+              onClick={handleMarkLost}
+              variant="destructive"
+              leftIcon={<Icon name="cancel" size="sm" />}
+            >
+              Mark as Lost
+            </Button>
+          </div>
+        )
+      }
+    >
       {/* Quotation Details */}
       {!isEditing ? (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Quotation Details</CardTitle>
-              <Button onClick={() => setIsEditing(true)} variant="outline">
+              <Button onClick={() => setIsEditing(true)} variant="outline" leftIcon={<Icon name="edit" size="sm" />}>
                 Edit
               </Button>
             </div>
@@ -187,7 +180,7 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
                   Quotation Number
                 </p>
                 <p className="text-base font-semibold">
@@ -195,7 +188,7 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
                 </p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
                   Quotation Date
                 </p>
                 <p className="text-base font-semibold">
@@ -203,11 +196,11 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
                 </p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Client</p>
+                <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Client</p>
                 <p className="text-base font-semibold">{quotation.client_name}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
                   Total Amount
                 </p>
                 <p className="text-base font-semibold">
@@ -218,14 +211,14 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
                 </p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Status</p>
+                <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Status</p>
                 <p className="text-base font-semibold capitalize">
                   {quotation.status}
                 </p>
               </div>
               {quotation.validity_days && (
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
                     Validity
                   </p>
                   <p className="text-base font-semibold">
@@ -236,10 +229,10 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
             </div>
             {quotation.notes && (
               <div>
-                <p className="text-sm font-medium text-muted-foreground mb-2">
+                <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">
                   Notes
                 </p>
-                <p className="text-base text-slate-700 whitespace-pre-wrap">
+                <p className="text-base text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">
                   {quotation.notes}
                 </p>
               </div>
@@ -271,6 +264,6 @@ export default function QuotationDetailPage({ params }: QuotationDetailPageProps
         productLines={productLines}
         isLoading={isSubmitting}
       />
-    </div>
+    </PageLayout>
   )
 }

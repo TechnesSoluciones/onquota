@@ -1,33 +1,26 @@
 'use client'
 
+/**
+ * Quote Detail Page V2
+ * Displays full quote information including items, client, and status
+ * Updated with Design System V2
+ */
+
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { salesApi } from '@/lib/api/sales'
 import type { QuoteWithItems } from '@/types/quote'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
+import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { LoadingState } from '@/components/patterns'
+import { Icon } from '@/components/icons'
 import { StatusBadge } from '@/components/sales/StatusBadge'
 import { QuoteItemsTable, type QuoteItemRow } from '@/components/sales/QuoteItemsTable'
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils'
 import { SaleStatus } from '@/types/quote'
-import {
-  Loader2,
-  ArrowLeft,
-  Edit,
-  Trash2,
-  Calendar,
-  FileText,
-  User,
-  Send,
-} from 'lucide-react'
-import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
 
-/**
- * Quote detail page
- * Displays full quote information including items, client, and status
- */
 export default function QuoteDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -116,20 +109,23 @@ export default function QuoteDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <PageLayout title="Detalle de Cotización" description="Cargando información...">
+        <LoadingState message="Cargando información de la cotización..." />
+      </PageLayout>
     )
   }
 
   if (error || !quote) {
     return (
-      <div className="text-center py-12">
-        <p className="text-red-600 mb-4">{error || 'Cotización no encontrada'}</p>
-        <Button asChild>
-          <Link href="/sales">Volver a Ventas</Link>
-        </Button>
-      </div>
+      <PageLayout title="Detalle de Cotización" description="Error al cargar">
+        <div className="text-center py-12">
+          <Icon name="error" className="h-12 w-12 text-error mx-auto mb-4" />
+          <p className="text-error mb-4">{error || 'Cotización no encontrada'}</p>
+          <Button asChild>
+            <Link href="/sales">Volver a Ventas</Link>
+          </Button>
+        </div>
+      </PageLayout>
     )
   }
 
@@ -156,26 +152,19 @@ export default function QuoteDetailPage() {
   const canEdit = quote.status === SaleStatus.DRAFT
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/sales">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Detalle de Cotización</h1>
-            <p className="text-muted-foreground font-mono">{quote.quote_number}</p>
-          </div>
-        </div>
-
+    <PageLayout
+      title="Detalle de Cotización"
+      description={quote.quote_number}
+      breadcrumbs={[
+        { label: 'Ventas', href: '/sales' },
+        { label: quote.quote_number }
+      ]}
+      actions={
         <div className="flex items-center gap-2">
           {canEdit && (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/sales?edit=${quote.id}`}>
-                <Edit className="h-4 w-4 mr-2" />
+                <Icon name="edit" size="sm" className="mr-2" />
                 Editar
               </Link>
             </Button>
@@ -184,15 +173,14 @@ export default function QuoteDetailPage() {
             variant="destructive"
             size="sm"
             onClick={handleDelete}
-            disabled={isDeleting}
+            isLoading={isDeleting}
           >
-            {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            <Trash2 className="h-4 w-4 mr-2" />
+            <Icon name="delete" size="sm" className="mr-2" />
             Eliminar
           </Button>
         </div>
-      </div>
-
+      }
+    >
       <div className="grid gap-6 md:grid-cols-3">
         {/* Información Principal */}
         <Card className="md:col-span-2">
@@ -200,7 +188,7 @@ export default function QuoteDetailPage() {
             <div className="flex items-start justify-between">
               <div>
                 <CardTitle className="text-2xl">Cotización</CardTitle>
-                <p className="text-muted-foreground mt-1 font-mono">
+                <p className="text-neutral-500 dark:text-neutral-400 mt-1 font-mono">
                   {quote.quote_number}
                 </p>
               </div>
@@ -210,20 +198,20 @@ export default function QuoteDetailPage() {
           <CardContent className="space-y-6">
             {/* Monto Total */}
             <div>
-              <p className="text-sm text-muted-foreground">Monto Total</p>
-              <p className="text-4xl font-bold">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">Monto Total</p>
+              <p className="text-4xl font-bold text-neutral-900 dark:text-white">
                 {formatCurrency(amountNumber, quote.currency)}
               </p>
             </div>
 
-            <Separator />
+            <div className="border-t border-neutral-200 dark:border-neutral-800" />
 
             {/* Detalles */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="flex items-start gap-3">
-                <User className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <Icon name="person" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Cliente</p>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">Cliente</p>
                   <p className="font-medium text-sm font-mono">
                     {quote.client_id.substring(0, 8)}...
                   </p>
@@ -231,17 +219,17 @@ export default function QuoteDetailPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <Calendar className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <Icon name="event" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Válida Hasta</p>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">Válida Hasta</p>
                   <p className="font-medium">{formatDate(quote.valid_until)}</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <User className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <Icon name="badge" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Representante de Ventas</p>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">Representante de Ventas</p>
                   <p className="font-medium text-sm font-mono">
                     {quote.sales_rep_id.substring(0, 8)}...
                   </p>
@@ -249,7 +237,7 @@ export default function QuoteDetailPage() {
               </div>
             </div>
 
-            <Separator />
+            <div className="border-t border-neutral-200 dark:border-neutral-800" />
 
             {/* Items de la Cotización */}
             <div>
@@ -265,12 +253,12 @@ export default function QuoteDetailPage() {
             {/* Notas */}
             {quote.notes && (
               <>
-                <Separator />
+                <div className="border-t border-neutral-200 dark:border-neutral-800" />
                 <div className="flex items-start gap-3">
-                  <FileText className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <Icon name="description" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-sm text-muted-foreground mb-1">Notas</p>
-                    <p className="text-sm whitespace-pre-wrap">{quote.notes}</p>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-1">Notas</p>
+                    <p className="text-sm whitespace-pre-wrap text-neutral-600 dark:text-neutral-400">{quote.notes}</p>
                   </div>
                 </div>
               </>
@@ -291,12 +279,9 @@ export default function QuoteDetailPage() {
                   <Button
                     className="w-full"
                     onClick={() => handleUpdateStatus(SaleStatus.SENT)}
-                    disabled={isUpdatingStatus}
+                    isLoading={isUpdatingStatus}
+                    leftIcon={<Icon name="send" size="sm" />}
                   >
-                    {isUpdatingStatus && (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    )}
-                    <Send className="h-4 w-4 mr-2" />
                     Marcar como Enviada
                   </Button>
                 )}
@@ -305,7 +290,8 @@ export default function QuoteDetailPage() {
                     className="w-full"
                     variant="default"
                     onClick={() => handleUpdateStatus(SaleStatus.ACCEPTED)}
-                    disabled={isUpdatingStatus}
+                    isLoading={isUpdatingStatus}
+                    leftIcon={<Icon name="check_circle" size="sm" />}
                   >
                     Marcar como Aceptada
                   </Button>
@@ -315,7 +301,8 @@ export default function QuoteDetailPage() {
                     className="w-full"
                     variant="destructive"
                     onClick={() => handleUpdateStatus(SaleStatus.REJECTED)}
-                    disabled={isUpdatingStatus}
+                    isLoading={isUpdatingStatus}
+                    leftIcon={<Icon name="cancel" size="sm" />}
                   >
                     Marcar como Rechazada
                   </Button>
@@ -329,29 +316,34 @@ export default function QuoteDetailPage() {
             <CardHeader>
               <CardTitle className="text-base">Información</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm">
+            <CardContent className="space-y-4 text-sm">
               <div>
-                <p className="text-muted-foreground">Creado</p>
-                <p className="text-sm">{formatDateTime(quote.created_at)}</p>
+                <p className="text-neutral-500 dark:text-neutral-400">Creado</p>
+                <p className="font-medium">{formatDateTime(quote.created_at)}</p>
               </div>
+              <div className="border-t border-neutral-200 dark:border-neutral-800" />
               {quote.updated_at && (
-                <div>
-                  <p className="text-muted-foreground">Actualizado</p>
-                  <p className="text-sm">{formatDateTime(quote.updated_at)}</p>
-                </div>
+                <>
+                  <div>
+                    <p className="text-neutral-500 dark:text-neutral-400">Actualizado</p>
+                    <p className="font-medium">{formatDateTime(quote.updated_at)}</p>
+                  </div>
+                  <div className="border-t border-neutral-200 dark:border-neutral-800" />
+                </>
               )}
               <div>
-                <p className="text-muted-foreground">ID de la Cotización</p>
+                <p className="text-neutral-500 dark:text-neutral-400">ID de la Cotización</p>
                 <p className="font-mono text-xs break-all">{quote.id}</p>
               </div>
+              <div className="border-t border-neutral-200 dark:border-neutral-800" />
               <div>
-                <p className="text-muted-foreground">Tenant ID</p>
+                <p className="text-neutral-500 dark:text-neutral-400">Tenant ID</p>
                 <p className="font-mono text-xs break-all">{quote.tenant_id}</p>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
-    </div>
+    </PageLayout>
   )
 }

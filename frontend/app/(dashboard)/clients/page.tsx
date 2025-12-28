@@ -1,13 +1,30 @@
 'use client'
 
+/**
+ * Clients List Page V2
+ * Displays all clients with filters, pagination, and CRUD operations
+ * Updated with Design System V2
+ */
+
 import { useState } from 'react'
+import Link from 'next/link'
 import { useClients } from '@/hooks/useClients'
 import { ClientFilters } from '@/components/clients/ClientFilters'
 import { CreateClientModal } from '@/components/clients/CreateClientModal'
 import { EditClientModal } from '@/components/clients/EditClientModal'
-import { Button } from '@/components/ui/button'
-import { Plus, Loader2, AlertCircle, Edit, Eye } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import {
+  Button,
+  Badge,
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { LoadingState, EmptyState } from '@/components/patterns'
+import { Icon } from '@/components/icons'
 import { formatDate } from '@/lib/utils'
 import {
   CLIENT_STATUS_LABELS,
@@ -15,7 +32,6 @@ import {
   CLIENT_TYPE_LABELS,
 } from '@/constants/client'
 import type { ClientResponse } from '@/types/client'
-import Link from 'next/link'
 
 export default function ClientsPage() {
   const {
@@ -35,129 +51,110 @@ export default function ClientsPage() {
   const [selectedClient, setSelectedClient] = useState<ClientResponse | null>(null)
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Clientes</h1>
-          <p className="text-muted-foreground">
-            Gestiona tu cartera de clientes y prospectos
-          </p>
-        </div>
-        <Button onClick={() => setCreateModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
+    <PageLayout
+      title="Clientes"
+      description="Gestiona tu cartera de clientes y prospectos"
+      actions={
+        <Button onClick={() => setCreateModalOpen(true)} leftIcon={<Icon name="add" />}>
           Nuevo Cliente
         </Button>
-      </div>
+      }
+    >
+      <div className="space-y-6">
+        {/* Filtros */}
+        <ClientFilters
+          filters={filters}
+          onFilterChange={updateFilters}
+          onClear={clearFilters}
+        />
 
-      {/* Filtros */}
-      <ClientFilters
-        filters={filters}
-        onFilterChange={updateFilters}
-        onClear={clearFilters}
-      />
-
-      {/* Lista de Clientes */}
-      <div className="bg-white rounded-lg shadow">
+        {/* Error State */}
         {error && (
-          <div className="p-4 bg-red-50 border-l-4 border-red-500 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-error/10 border border-error/20">
+            <Icon name="error" className="h-5 w-5 text-error flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-red-800">Error al cargar clientes</p>
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="font-medium text-error">Error al cargar clientes</p>
+              <p className="text-sm text-error/80">{error}</p>
             </div>
           </div>
         )}
 
+        {/* Loading State */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
+          <LoadingState message="Cargando clientes..." />
         ) : clients.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No se encontraron clientes</p>
-            {Object.keys(filters).length > 0 && (
-              <Button
-                variant="link"
-                onClick={clearFilters}
-                className="mt-2"
-              >
-                Limpiar filtros
-              </Button>
-            )}
-          </div>
+          /* Empty State */
+          <EmptyState
+            icon="person"
+            title="No hay clientes"
+            description={
+              Object.keys(filters).length > 0
+                ? 'No se encontraron clientes con los filtros aplicados'
+                : 'Comienza agregando tu primer cliente'
+            }
+            action={
+              Object.keys(filters).length > 0
+                ? { label: 'Limpiar filtros', onClick: clearFilters }
+                : { label: 'Nuevo Cliente', onClick: () => setCreateModalOpen(true) }
+            }
+          />
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-slate-50 border-b">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                      Cliente
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                      Tipo
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                      Contacto
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                      Estado
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                      Fecha de Registro
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {clients.map((client) => (
-                    <tr key={client.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4 text-sm">
-                        <div>
-                          <div className="font-medium text-slate-900">{client.name}</div>
-                          {client.tax_id && (
-                            <div className="text-muted-foreground text-xs">
-                              NIT: {client.tax_id}
-                            </div>
-                          )}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Contacto</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Fecha de Registro</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {clients.map((client) => (
+                  <TableRow key={client.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium text-neutral-900 dark:text-white">
+                          {client.name}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {CLIENT_TYPE_LABELS[client.client_type]}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <div>
-                          {client.email && (
-                            <div className="text-slate-900">{client.email}</div>
-                          )}
-                          {client.phone && (
-                            <div className="text-muted-foreground text-xs">
-                              {client.phone}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge
-                          variant="outline"
-                          className={CLIENT_STATUS_COLORS[client.status]}
-                        >
-                          {CLIENT_STATUS_LABELS[client.status]}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                        {formatDate(client.created_at)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2 flex justify-end">
-                        <Link href={`/clients/${client.id}`}>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4 mr-2" />
+                        {client.tax_id && (
+                          <div className="text-neutral-500 dark:text-neutral-400 text-xs">
+                            NIT: {client.tax_id}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>{CLIENT_TYPE_LABELS[client.client_type]}</TableCell>
+                    <TableCell>
+                      <div>
+                        {client.email && (
+                          <div className="text-neutral-900 dark:text-white">{client.email}</div>
+                        )}
+                        {client.phone && (
+                          <div className="text-neutral-500 dark:text-neutral-400 text-xs">
+                            {client.phone}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={CLIENT_STATUS_COLORS[client.status]}>
+                        {CLIENT_STATUS_LABELS[client.status]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-neutral-500 dark:text-neutral-400">
+                      {formatDate(client.created_at)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/clients/${client.id}`}>
+                            <Icon name="visibility" size="sm" className="mr-2" />
                             Ver
-                          </Button>
-                        </Link>
+                          </Link>
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -166,20 +163,21 @@ export default function ClientsPage() {
                             setEditModalOpen(true)
                           }}
                         >
-                          <Edit className="h-4 w-4 mr-2" />
+                          <Icon name="edit" size="sm" className="mr-2" />
                           Editar
                         </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
 
             {/* Paginación */}
-            <div className="px-6 py-4 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="text-sm text-muted-foreground">
-                Mostrando {clients.length === 0 ? 0 : (pagination.page - 1) * pagination.page_size + 1} a{' '}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4">
+              <div className="text-sm text-neutral-600 dark:text-neutral-400">
+                Mostrando{' '}
+                {clients.length === 0 ? 0 : (pagination.page - 1) * pagination.page_size + 1} a{' '}
                 {Math.min(pagination.page * pagination.page_size, pagination.total)} de{' '}
                 {pagination.total} clientes
               </div>
@@ -190,10 +188,11 @@ export default function ClientsPage() {
                     size="sm"
                     onClick={() => goToPage(pagination.page - 1)}
                     disabled={pagination.page === 1}
+                    leftIcon={<Icon name="chevron_left" size="sm" />}
                   >
                     Anterior
                   </Button>
-                  <span className="text-sm whitespace-nowrap">
+                  <span className="text-sm whitespace-nowrap text-neutral-700 dark:text-neutral-300">
                     Página {pagination.page} de {pagination.pages}
                   </span>
                   <Button
@@ -201,6 +200,7 @@ export default function ClientsPage() {
                     size="sm"
                     onClick={() => goToPage(pagination.page + 1)}
                     disabled={pagination.page === pagination.pages}
+                    rightIcon={<Icon name="chevron_right" size="sm" />}
                   >
                     Siguiente
                   </Button>
@@ -228,6 +228,6 @@ export default function ClientsPage() {
           setSelectedClient(null)
         }}
       />
-    </div>
+    </PageLayout>
   )
 }

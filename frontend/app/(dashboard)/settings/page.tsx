@@ -1,16 +1,17 @@
 /**
- * Settings Overview Page
+ * Settings Overview Page V2
  * Main dashboard for settings with stats, quick access, and recent activity
+ * Updated with Design System V2
  */
 
 'use client'
 
 import { StatsCards } from '@/components/settings'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, Settings, FileText, ArrowRight } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { Icon } from '@/components/icons'
 import Link from 'next/link'
 import { useAuditLogs } from '@/hooks/useAuditLogs'
-import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -24,7 +25,7 @@ export default function SettingsPage() {
     {
       title: 'User Management',
       description: 'Manage user accounts, roles, and permissions',
-      icon: Users,
+      icon: 'people',
       href: '/settings/users',
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
@@ -32,15 +33,23 @@ export default function SettingsPage() {
     {
       title: 'General Settings',
       description: 'Configure tenant settings and preferences',
-      icon: Settings,
+      icon: 'settings',
       href: '/settings/general',
       color: 'text-green-600',
       bgColor: 'bg-green-50',
     },
     {
+      title: 'Security',
+      description: 'Security settings and authentication',
+      icon: 'security',
+      href: '/settings/security',
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+    },
+    {
       title: 'Audit Logs',
       description: 'View system activity and track changes',
-      icon: FileText,
+      icon: 'description',
       href: '/settings/audit-logs',
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
@@ -66,16 +75,18 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <PageLayout
+      title="Settings"
+      description="Manage your system configuration and preferences"
+    >
       {/* Stats Cards */}
       <StatsCards />
 
       {/* Quick Access Section */}
       <div>
         <h2 className="mb-4 text-xl font-semibold">Quick Access</h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           {quickAccessCards.map((card) => {
-            const Icon = card.icon
             return (
               <Link key={card.href} href={card.href}>
                 <Card className="group cursor-pointer transition-all hover:shadow-md">
@@ -84,9 +95,9 @@ export default function SettingsPage() {
                       <div
                         className={`rounded-lg p-3 ${card.bgColor} transition-transform group-hover:scale-110`}
                       >
-                        <Icon className={`h-6 w-6 ${card.color}`} />
+                        <Icon name={card.icon} className={`h-6 w-6 ${card.color}`} />
                       </div>
-                      <ArrowRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
+                      <Icon name="arrow_forward" className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
                     </div>
                     <CardTitle className="mt-4">{card.title}</CardTitle>
                     <CardDescription>{card.description}</CardDescription>
@@ -132,7 +143,7 @@ export default function SettingsPage() {
               </div>
             ) : logs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <FileText className="mb-2 h-12 w-12 text-muted-foreground" />
+                <Icon name="description" className="mb-2 h-12 w-12 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">
                   No hay registros de actividad recientes
                 </p>
@@ -178,6 +189,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageLayout>
   )
 }

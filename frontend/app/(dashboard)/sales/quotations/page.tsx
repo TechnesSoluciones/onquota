@@ -1,22 +1,17 @@
 'use client'
 
 /**
- * Quotations Page
+ * Quotations Page V2
  * Main page for managing quotations with stats and filters
+ * Updated with Design System V2
  */
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Plus, Loader2, AlertCircle, DollarSign, TrendingUp, FileText } from 'lucide-react'
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { LoadingState } from '@/components/patterns'
+import { Icon } from '@/components/icons'
 import { QuotationList } from '@/components/sales/quotations/QuotationList'
 import { QuotationWinDialog } from '@/components/sales/quotations/QuotationWinDialog'
 import { useQuotations, useQuotationStats, useMarkQuotationWon, useMarkQuotationLost } from '@/hooks/useQuotations'
@@ -105,125 +100,123 @@ export default function QuotationsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Quotations</h1>
-          <p className="text-muted-foreground">
-            Manage your sales quotations and opportunities
-          </p>
-        </div>
-        <Button onClick={() => router.push('/sales/quotations/new')}>
-          <Plus className="h-4 w-4 mr-2" />
+    <PageLayout
+      title="Quotations"
+      description="Manage your sales quotations and opportunities"
+      breadcrumbs={[
+        { label: 'Ventas', href: '/sales' },
+        { label: 'Quotations' }
+      ]}
+      actions={
+        <Button onClick={() => router.push('/sales/quotations/new')} leftIcon={<Icon name="add" />}>
           New Quotation
         </Button>
-      </div>
+      }
+    >
+      <div className="space-y-6">
+        {/* Stats Cards */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                  Total Quotations
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Icon name="description" className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
+                  <p className="text-2xl font-bold">{stats.total_quotations}</p>
+                </div>
+              </CardContent>
+            </Card>
 
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Quotations
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                <p className="text-2xl font-bold">{stats.total_quotations}</p>
-              </div>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                  Win Rate
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Icon name="trending_up" className="h-5 w-5 text-success" />
+                  <p className="text-2xl font-bold text-success">
+                    {stats.win_rate.toFixed(1)}%
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Win Rate
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-green-600" />
-                <p className="text-2xl font-bold text-green-600">
-                  {stats.win_rate.toFixed(1)}%
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                  Total Value
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Icon name="payments" className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
+                  <p className="text-2xl font-bold">
+                    {formatCurrency(stats.total_quotation_value, 'COP')}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Value
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                <p className="text-2xl font-bold">
-                  {formatCurrency(stats.total_quotation_value, 'COP')}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Won Value
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-green-600" />
-                <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(stats.total_won_value, 'COP')}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <div className="p-4 bg-red-50 border-l-4 border-red-500 flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="font-medium text-red-800">Error loading quotations</p>
-            <p className="text-sm text-red-700">{error}</p>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                  Won Value
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Icon name="payments" className="h-5 w-5 text-success" />
+                  <p className="text-2xl font-bold text-success">
+                    {formatCurrency(stats.total_won_value, 'COP')}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Loading State */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : (
-        <QuotationList
-          quotations={quotations}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onMarkWon={handleMarkWon}
-          onMarkLost={handleMarkLost}
-        />
-      )}
+        {/* Error State */}
+        {error && (
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-error/10 border border-error/20">
+            <Icon name="error" className="h-5 w-5 text-error flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-error">Error loading quotations</p>
+              <p className="text-sm text-error/80">{error}</p>
+            </div>
+          </div>
+        )}
 
-      {/* Win Dialog */}
-      {selectedQuotation && (
-        <QuotationWinDialog
-          open={winDialogOpen}
-          onOpenChange={setWinDialogOpen}
-          quotationAmount={selectedQuotation.total_amount}
-          onSubmit={handleWinSubmit}
-          productLines={productLines}
-          isLoading={isSubmitting}
-        />
-      )}
-    </div>
+        {/* Loading State */}
+        {isLoading ? (
+          <LoadingState message="Loading quotations..." />
+        ) : (
+          <QuotationList
+            quotations={quotations}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onMarkWon={handleMarkWon}
+            onMarkLost={handleMarkLost}
+          />
+        )}
+
+        {/* Win Dialog */}
+        {selectedQuotation && (
+          <QuotationWinDialog
+            open={winDialogOpen}
+            onOpenChange={setWinDialogOpen}
+            quotationAmount={selectedQuotation.total_amount}
+            onSubmit={handleWinSubmit}
+            productLines={productLines}
+            isLoading={isSubmitting}
+          />
+        )}
+      </div>
+    </PageLayout>
   )
 }

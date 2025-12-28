@@ -1,13 +1,27 @@
 'use client'
 
 /**
- * Sales Control Detail Page
+ * Sales Control Detail Page V2
  * View sales control details and manage lifecycle
+ * Updated with Design System V2
  */
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
+  Button,
+} from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { LoadingState } from '@/components/patterns'
+import { Icon } from '@/components/icons'
 import { SalesControlDetail } from '@/components/sales/controls/SalesControlDetail'
 import {
   useSalesControl,
@@ -18,17 +32,6 @@ import {
   useCancelSalesControl,
 } from '@/hooks/useSalesControls'
 import { useToast } from '@/hooks/use-toast'
-import { ArrowLeft, Loader2 } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 
 interface SalesControlDetailPageProps {
   params: {
@@ -167,32 +170,33 @@ export default function SalesControlDetailPage({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <PageLayout title="Sales Control Details" description="Loading...">
+        <LoadingState message="Loading sales control..." />
+      </PageLayout>
     )
   }
 
   if (!salesControl) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">Sales control not found</p>
-      </div>
+      <PageLayout title="Sales Control Details" description="Not found">
+        <div className="text-center py-12">
+          <Icon name="error" className="h-12 w-12 text-error mx-auto mb-4" />
+          <p className="text-neutral-500 dark:text-neutral-400">Sales control not found</p>
+        </div>
+      </PageLayout>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        onClick={() => router.push('/sales/controls')}
-        className="mb-4"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Sales Controls
-      </Button>
-
+    <PageLayout
+      title={salesControl.po_number || 'Sales Control Details'}
+      description={salesControl.client_name || 'View and manage sales control'}
+      breadcrumbs={[
+        { label: 'Ventas', href: '/sales' },
+        { label: 'Controls', href: '/sales/controls' },
+        { label: salesControl.po_number || 'Details' }
+      ]}
+    >
       {/* Detail Component */}
       <SalesControlDetail
         salesControl={salesControl}
@@ -329,6 +333,6 @@ export default function SalesControlDetailPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageLayout>
   )
 }

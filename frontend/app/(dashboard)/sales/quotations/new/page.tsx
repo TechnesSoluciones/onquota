@@ -1,17 +1,17 @@
 'use client'
 
 /**
- * New Quotation Page
+ * New Quotation Page V2
  * Page for creating a new quotation
+ * Updated with Design System V2
  */
 
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
 import { QuotationForm } from '@/components/sales/quotations/QuotationForm'
 import { useCreateQuotation } from '@/hooks/useQuotations'
 import { useToast } from '@/hooks/use-toast'
-import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 
 export default function NewQuotationPage() {
   const router = useRouter()
@@ -41,28 +41,15 @@ export default function NewQuotationPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        onClick={() => router.push('/sales/quotations')}
-        className="mb-4"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Quotations
-      </Button>
-
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">
-          Create New Quotation
-        </h1>
-        <p className="text-muted-foreground">
-          Create a new sales quotation for a client
-        </p>
-      </div>
-
-      {/* Form Card */}
+    <PageLayout
+      title="Create New Quotation"
+      description="Create a new sales quotation for a client"
+      breadcrumbs={[
+        { label: 'Ventas', href: '/sales' },
+        { label: 'Quotations', href: '/sales/quotations' },
+        { label: 'New' }
+      ]}
+    >
       <Card>
         <CardHeader>
           <CardTitle>Quotation Information</CardTitle>
@@ -71,6 +58,6 @@ export default function NewQuotationPage() {
           <QuotationForm onSubmit={handleSubmit} onCancel={handleCancel} />
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   )
 }

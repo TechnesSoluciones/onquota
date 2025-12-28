@@ -1,24 +1,16 @@
 /**
- * Analytics Upload Page
+ * Analytics Upload Page V2
  * Upload sales data for analysis
+ * Updated with Design System V2
  */
 
 'use client'
 
 import { useRouter } from 'next/navigation'
 import { FileUploadZone } from '@/components/analytics/FileUploadZone'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import {
-  ArrowLeft,
-  FileSpreadsheet,
-  BarChart3,
-  TrendingUp,
-  Package,
-  AlertCircle,
-} from 'lucide-react'
-import Link from 'next/link'
+import { Button, Card, Separator } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { Icon } from '@/components/icons'
 
 export default function AnalyticsUploadPage() {
   const router = useRouter()
@@ -29,22 +21,11 @@ export default function AnalyticsUploadPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" asChild>
-          <Link href="/analytics">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Upload Sales Data</h1>
-          <p className="text-muted-foreground mt-1">
-            Upload your sales file to generate ABC analysis and insights
-          </p>
-        </div>
-      </div>
-
+    <PageLayout
+      title="Upload Sales Data"
+      description="Upload your sales file to generate ABC analysis and insights"
+      backLink="/analytics"
+    >
       <Separator />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -56,7 +37,7 @@ export default function AnalyticsUploadPage() {
           <Card className="p-6">
             <div className="flex items-start gap-3">
               <div className="p-2 rounded-lg bg-blue-100">
-                <AlertCircle className="h-5 w-5 text-blue-600" />
+                <Icon name="info" className="h-5 w-5 text-blue-600" />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold mb-2">File Requirements</h3>
@@ -111,7 +92,7 @@ export default function AnalyticsUploadPage() {
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-green-100">
-                  <BarChart3 className="h-5 w-5 text-green-600" />
+                  <Icon name="bar_chart" className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
                   <p className="font-medium text-sm">ABC Classification</p>
@@ -123,7 +104,7 @@ export default function AnalyticsUploadPage() {
 
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-blue-100">
-                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                  <Icon name="trending_up" className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
                   <p className="font-medium text-sm">Sales Trends</p>
@@ -135,7 +116,7 @@ export default function AnalyticsUploadPage() {
 
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-purple-100">
-                  <Package className="h-5 w-5 text-purple-600" />
+                  <Icon name="inventory" className="h-5 w-5 text-purple-600" />
                 </div>
                 <div>
                   <p className="font-medium text-sm">Top Products</p>
@@ -147,7 +128,7 @@ export default function AnalyticsUploadPage() {
 
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-yellow-100">
-                  <FileSpreadsheet className="h-5 w-5 text-yellow-600" />
+                  <Icon name="description" className="h-5 w-5 text-yellow-600" />
                 </div>
                 <div>
                   <p className="font-medium text-sm">Export Reports</p>
@@ -182,13 +163,17 @@ export default function AnalyticsUploadPage() {
             <p className="text-sm text-muted-foreground mb-4">
               Download our sample template to see the expected format.
             </p>
-            <Button variant="outline" className="w-full" size="sm">
-              <FileSpreadsheet className="mr-2 h-4 w-4" />
+            <Button
+              variant="outline"
+              className="w-full"
+              size="sm"
+              leftIcon={<Icon name="description" />}
+            >
               Download Sample Template
             </Button>
           </Card>
         </div>
       </div>
-    </div>
+    </PageLayout>
   )
 }

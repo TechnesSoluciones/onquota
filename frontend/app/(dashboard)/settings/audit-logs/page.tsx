@@ -1,14 +1,16 @@
 /**
- * Audit Logs Page
+ * Audit Logs Page V2
  * View system activity and track changes with statistics
+ * Updated with Design System V2
  */
 
 'use client'
 
 import { AuditLogsTable } from '@/components/settings'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { Icon } from '@/components/icons'
 import { useAuditStats } from '@/hooks/useAuditLogs'
-import { FileText, Calendar, TrendingUp } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export default function AuditLogsPage() {
@@ -19,39 +21,35 @@ export default function AuditLogsPage() {
     {
       title: 'Total Logs',
       value: stats?.total_audit_logs || 0,
-      icon: FileText,
+      icon: 'description',
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
     },
     {
       title: 'Actions Today',
       value: stats?.actions_today || 0,
-      icon: Calendar,
+      icon: 'event',
       color: 'text-green-600',
       bgColor: 'bg-green-50',
     },
     {
       title: 'Actions This Week',
       value: stats?.actions_this_week || 0,
-      icon: TrendingUp,
+      icon: 'trending_up',
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
     },
   ]
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Audit Logs</h2>
-        <p className="text-muted-foreground">
-          View system activity and track changes
-        </p>
-      </div>
-
+    <PageLayout
+      title="Audit Logs"
+      description="View system activity and track changes"
+      backLink="/settings"
+    >
       {/* Mini Stats Cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {statsCards.map((card) => {
-          const Icon = card.icon
           return (
             <Card key={card.title}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -59,7 +57,7 @@ export default function AuditLogsPage() {
                   {card.title}
                 </CardTitle>
                 <div className={`rounded-lg p-2 ${card.bgColor}`}>
-                  <Icon className={`h-4 w-4 ${card.color}`} />
+                  <Icon name={card.icon} className={`h-4 w-4 ${card.color}`} />
                 </div>
               </CardHeader>
               <CardContent>
@@ -112,6 +110,6 @@ export default function AuditLogsPage() {
 
       {/* Audit Logs Table */}
       <AuditLogsTable />
-    </div>
+    </PageLayout>
   )
 }

@@ -1,48 +1,41 @@
 /**
- * Analytics Results Page
+ * Analytics Results Page V2
  * View detailed analysis results for a specific job
+ * Updated with Design System V2
  */
 
 'use client'
 
 import { useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAnalytics } from '@/hooks/useAnalytics'
 import { AnalysisResults } from '@/components/analytics/AnalysisResults'
 import { AnalysisStatus } from '@/types/analytics'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { Badge } from '@/components/ui/badge'
-import {
-  ArrowLeft,
-  Loader2,
-  FileSpreadsheet,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-} from 'lucide-react'
-import Link from 'next/link'
+import { Button, Card, Separator, Badge } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { Icon } from '@/components/icons'
+import { LoadingState } from '@/components/patterns'
 
 const STATUS_CONFIG = {
   [AnalysisStatus.PENDING]: {
     label: 'Pending',
-    icon: Clock,
+    iconName: 'schedule',
     className: 'bg-gray-100 text-gray-700',
   },
   [AnalysisStatus.PROCESSING]: {
     label: 'Processing',
-    icon: Loader2,
+    iconName: 'progress_activity',
     className: 'bg-blue-100 text-blue-700',
   },
   [AnalysisStatus.COMPLETED]: {
     label: 'Completed',
-    icon: CheckCircle,
+    iconName: 'check_circle',
     className: 'bg-green-100 text-green-700',
   },
   [AnalysisStatus.FAILED]: {
     label: 'Failed',
-    icon: AlertCircle,
+    iconName: 'error',
     className: 'bg-red-100 text-red-700',
   },
 }
@@ -75,72 +68,55 @@ export default function AnalyticsResultsPage() {
 
   if (isLoading && !currentJob) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground">Loading analysis...</p>
-        </div>
-      </div>
+      <PageLayout title="Analysis Results" description="Loading analysis details..." backLink="/analytics">
+        <LoadingState message="Loading analysis..." />
+      </PageLayout>
     )
   }
 
   if (!currentJob) {
     return (
-      <div className="p-6">
+      <PageLayout title="Analysis Not Found" description="The requested analysis could not be found" backLink="/analytics">
         <Card className="p-12 text-center">
-          <FileSpreadsheet className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+          <Icon name="description" className="h-16 w-16 mx-auto text-gray-400 mb-4" />
           <h3 className="text-lg font-semibold mb-2">Analysis not found</h3>
           <p className="text-muted-foreground mb-4">
             The analysis you're looking for doesn't exist or has been deleted.
           </p>
-          <Button asChild>
+          <Button asChild leftIcon={<Icon name="arrow_back" />}>
             <Link href="/analytics">
-              <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Analytics
             </Link>
           </Button>
         </Card>
-      </div>
+      </PageLayout>
     )
   }
 
-  const StatusIcon = STATUS_CONFIG[currentJob.status].icon
+  const statusIconName = STATUS_CONFIG[currentJob.status].iconName
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" asChild>
-            <Link href="/analytics">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              {currentJob.file_name}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Analysis ID: {currentJob.id.slice(0, 8)}...
-            </p>
-          </div>
-        </div>
-
+    <PageLayout
+      title={currentJob.file_name}
+      description={`Analysis ID: ${currentJob.id.slice(0, 8)}...`}
+      backLink="/analytics"
+      actions={
         <Badge className={STATUS_CONFIG[currentJob.status].className}>
-          <StatusIcon
+          <Icon
+            name={statusIconName}
             className={`mr-1 h-3 w-3 ${currentJob.status === AnalysisStatus.PROCESSING ? 'animate-spin' : ''}`}
           />
           {STATUS_CONFIG[currentJob.status].label}
         </Badge>
-      </div>
-
+      }
+    >
       <Separator />
 
       {/* Error State */}
       {currentJob.status === AnalysisStatus.FAILED && (
         <Card className="p-6 bg-destructive/10 border-destructive">
           <div className="flex items-start gap-3">
-            <AlertCircle className="h-6 w-6 text-destructive flex-shrink-0 mt-1" />
+            <Icon name="error" className="h-6 w-6 text-destructive flex-shrink-0 mt-1" />
             <div className="space-y-2">
               <h3 className="font-semibold text-destructive">Analysis Failed</h3>
               <p className="text-sm text-destructive/90">
@@ -166,7 +142,7 @@ export default function AnalyticsResultsPage() {
       {/* Processing State */}
       {currentJob.status === AnalysisStatus.PROCESSING && (
         <Card className="p-12 text-center">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary mb-4" />
+          <Icon name="progress_activity" className="h-12 w-12 animate-spin mx-auto text-primary mb-4" />
           <h3 className="text-lg font-semibold mb-2">Processing Sales Data</h3>
           <p className="text-muted-foreground max-w-md mx-auto">
             Please wait while we analyze your sales data and generate insights. This
@@ -187,7 +163,7 @@ export default function AnalyticsResultsPage() {
       {currentJob.status === AnalysisStatus.PENDING && (
         <Card className="p-12 text-center">
           <div className="h-12 w-12 rounded-full bg-blue-100 mx-auto mb-4 flex items-center justify-center">
-            <Clock className="h-6 w-6 text-blue-600" />
+            <Icon name="schedule" className="h-6 w-6 text-blue-600" />
           </div>
           <h3 className="text-lg font-semibold mb-2">Job Queued</h3>
           <p className="text-muted-foreground">
@@ -206,6 +182,6 @@ export default function AnalyticsResultsPage() {
           isExporting={isLoading}
         />
       )}
-    </div>
+    </PageLayout>
   )
 }

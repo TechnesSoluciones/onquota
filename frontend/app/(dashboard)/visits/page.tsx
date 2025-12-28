@@ -1,40 +1,39 @@
+/**
+ * Visits and Calls Page V2
+ * Manage client visits and phone calls
+ * Updated with Design System V2
+ */
+
 'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import Link from 'next/link'
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Button,
+  Badge,
+  Input,
+  Label,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { Icon } from '@/components/icons'
 import { useVisits, useCalls } from '@/hooks/useVisitsEnhanced'
 import { useSeedDefaultTopics } from '@/hooks/useVisitTopics'
 import { formatDateTime, formatDate } from '@/lib/utils'
-import {
-  Phone,
-  MapPin,
-  Plus,
-  Filter,
-  Calendar,
-  User,
-  Building2,
-  Clock,
-  MapPinIcon,
-  Loader2,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Sparkles
-} from 'lucide-react'
-import Link from 'next/link'
 
 export default function VisitsPage() {
   const router = useRouter()
@@ -74,64 +73,52 @@ export default function VisitsPage() {
   }
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { label: string; variant: any; icon: any }> = {
-      completed: { label: 'Completada', variant: 'default', icon: CheckCircle2 },
-      scheduled: { label: 'Programada', variant: 'secondary', icon: Calendar },
-      in_progress: { label: 'En progreso', variant: 'default', icon: Clock },
-      cancelled: { label: 'Cancelada', variant: 'destructive', icon: XCircle },
+    const statusMap: Record<string, { label: string; variant: any; icon: string }> = {
+      completed: { label: 'Completada', variant: 'default', icon: 'check_circle' },
+      scheduled: { label: 'Programada', variant: 'secondary', icon: 'event' },
+      in_progress: { label: 'En progreso', variant: 'default', icon: 'schedule' },
+      cancelled: { label: 'Cancelada', variant: 'destructive', icon: 'cancel' },
     }
 
-    const config = statusMap[status] || { label: status, variant: 'secondary', icon: AlertCircle }
-    const Icon = config.icon
+    const config = statusMap[status] || { label: status, variant: 'secondary', icon: 'error' }
 
     return (
       <Badge variant={config.variant} className="gap-1">
-        <Icon className="h-3 w-3" />
+        <Icon name={config.icon} className="h-3 w-3" />
         {config.label}
       </Badge>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Visitas y Llamadas</h1>
-          <p className="text-muted-foreground">
-            Gestiona tus visitas a clientes y llamadas telefónicas
-          </p>
-        </div>
+    <PageLayout
+      title="Visitas y Llamadas"
+      description="Gestiona tus visitas a clientes y llamadas telefónicas"
+      actions={
         <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={handleSeedTopics}
             disabled={seedTopics.isPending}
+            leftIcon={seedTopics.isPending ? <Icon name="progress_activity" className="animate-spin" /> : <Icon name="auto_awesome" />}
           >
-            {seedTopics.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Creando...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Crear Temas Predefinidos
-              </>
-            )}
+            {seedTopics.isPending ? 'Creando...' : 'Crear Temas Predefinidos'}
           </Button>
-          <Button onClick={() => router.push('/visits/new')}>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button
+            onClick={() => router.push('/visits/new')}
+            leftIcon={<Icon name="add" />}
+          >
             Nueva Visita
           </Button>
         </div>
-      </div>
+      }
+    >
 
       {/* Filters Card */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Filter className="h-5 w-5" />
+            <Icon name="filter_list" className="h-5 w-5" />
             Filtros
           </CardTitle>
         </CardHeader>
@@ -195,8 +182,10 @@ export default function VisitsPage() {
             >
               Limpiar
             </Button>
-            <Button onClick={() => activeTab === 'visits' ? refetchVisits() : refetchCalls()}>
-              <Filter className="h-4 w-4 mr-2" />
+            <Button
+              onClick={() => activeTab === 'visits' ? refetchVisits() : refetchCalls()}
+              leftIcon={<Icon name="filter_list" />}
+            >
               Aplicar Filtros
             </Button>
           </div>
@@ -207,11 +196,11 @@ export default function VisitsPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="visits" className="flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
+            <Icon name="place" className="h-4 w-4" />
             Visitas {visitsData?.total ? `(${visitsData.total})` : ''}
           </TabsTrigger>
           <TabsTrigger value="calls" className="flex items-center gap-2">
-            <Phone className="h-4 w-4" />
+            <Icon name="phone" className="h-4 w-4" />
             Llamadas {callsData?.total ? `(${callsData.total})` : ''}
           </TabsTrigger>
         </TabsList>
@@ -220,7 +209,7 @@ export default function VisitsPage() {
         <TabsContent value="visits" className="space-y-4 mt-6">
           {visitsLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <Icon name="progress_activity" className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : visitsData && visitsData.items.length > 0 ? (
             <div className="grid gap-4">
@@ -245,25 +234,25 @@ export default function VisitsPage() {
                         {/* Details Grid */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                           <div className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            <Icon name="business" className="h-4 w-4 text-muted-foreground" />
                             <span>{visit.client?.name || 'Sin cliente'}</span>
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <Icon name="event" className="h-4 w-4 text-muted-foreground" />
                             <span>{formatDateTime(visit.visit_date)}</span>
                           </div>
 
                           {visit.contact_person_name && (
                             <div className="flex items-center gap-2">
-                              <User className="h-4 w-4 text-muted-foreground" />
+                              <Icon name="person" className="h-4 w-4 text-muted-foreground" />
                               <span>{visit.contact_person_name}</span>
                             </div>
                           )}
 
                           {visit.duration_minutes && (
                             <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <Icon name="schedule" className="h-4 w-4 text-muted-foreground" />
                               <span>{visit.duration_minutes} min</span>
                             </div>
                           )}
@@ -272,7 +261,7 @@ export default function VisitsPage() {
                         {/* Location */}
                         {(visit.location || visit.address) && (
                           <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                            <MapPinIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                            <Icon name="place" className="h-4 w-4 mt-0.5 flex-shrink-0" />
                             <span>{visit.location || visit.address}</span>
                           </div>
                         )}
@@ -290,13 +279,15 @@ export default function VisitsPage() {
           ) : (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <MapPin className="h-16 w-16 text-muted-foreground mb-4 opacity-50" />
+                <Icon name="place" className="h-16 w-16 text-muted-foreground mb-4 opacity-50" />
                 <h3 className="text-lg font-semibold mb-2">No hay visitas registradas</h3>
                 <p className="text-muted-foreground text-center mb-4">
                   Comienza registrando tu primera visita a un cliente
                 </p>
-                <Button onClick={() => router.push('/visits/new')}>
-                  <Plus className="h-4 w-4 mr-2" />
+                <Button
+                  onClick={() => router.push('/visits/new')}
+                  leftIcon={<Icon name="add" />}
+                >
                   Nueva Visita
                 </Button>
               </CardContent>
@@ -308,7 +299,7 @@ export default function VisitsPage() {
         <TabsContent value="calls" className="space-y-4 mt-6">
           {callsLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <Icon name="progress_activity" className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : callsData && callsData.items.length > 0 ? (
             <div className="grid gap-4">
@@ -333,18 +324,18 @@ export default function VisitsPage() {
                         {/* Details Grid */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                           <div className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            <Icon name="business" className="h-4 w-4 text-muted-foreground" />
                             <span>{call.client?.name || 'Sin cliente'}</span>
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <Icon name="event" className="h-4 w-4 text-muted-foreground" />
                             <span>{call.call_date ? formatDateTime(call.call_date) : 'Sin fecha'}</span>
                           </div>
 
                           {call.duration_minutes && (
                             <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <Icon name="schedule" className="h-4 w-4 text-muted-foreground" />
                               <span>{call.duration_minutes} min</span>
                             </div>
                           )}
@@ -363,13 +354,15 @@ export default function VisitsPage() {
           ) : (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <Phone className="h-16 w-16 text-muted-foreground mb-4 opacity-50" />
+                <Icon name="phone" className="h-16 w-16 text-muted-foreground mb-4 opacity-50" />
                 <h3 className="text-lg font-semibold mb-2">No hay llamadas registradas</h3>
                 <p className="text-muted-foreground text-center mb-4">
                   Comienza registrando tu primera llamada a un cliente
                 </p>
-                <Button onClick={() => router.push('/calls/new')}>
-                  <Plus className="h-4 w-4 mr-2" />
+                <Button
+                  onClick={() => router.push('/calls/new')}
+                  leftIcon={<Icon name="add" />}
+                >
                   Nueva Llamada
                 </Button>
               </CardContent>
@@ -377,6 +370,6 @@ export default function VisitsPage() {
           )}
         </TabsContent>
       </Tabs>
-    </div>
+    </PageLayout>
   )
 }

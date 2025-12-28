@@ -1,14 +1,22 @@
 'use client'
 
+/**
+ * Account Plan Detail Page V2
+ * Detailed view of strategic account plan
+ * Updated with Design System V2
+ */
+
 import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { LoadingState } from '@/components/patterns'
+import { Icon } from '@/components/icons'
 import { AccountOverview } from '@/components/accounts/AccountOverview'
 import { AddMilestoneModal } from '@/components/accounts/AddMilestoneModal'
 import { AddSWOTModal } from '@/components/accounts/AddSWOTModal'
 import { useAccountPlans } from '@/hooks/useAccountPlans'
 import { useRole } from '@/hooks/useRole'
-import { ChevronLeft, Loader2 } from 'lucide-react'
 import {
   MilestoneCreateFormData,
   SWOTItemCreateFormData,
@@ -124,48 +132,38 @@ export default function AccountPlanDetailPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading account plan...</p>
-        </div>
-      </div>
+      <PageLayout title="Account Plan" description="Loading..." backLink="/accounts">
+        <LoadingState message="Loading account plan..." />
+      </PageLayout>
     )
   }
 
   // Error state
   if (error || !selectedPlan || !stats) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="text-center">
+      <PageLayout title="Account Plan" description="Not found" backLink="/accounts">
+        <div className="text-center py-12">
+          <Icon name="error_outline" className="h-16 w-16 mx-auto text-error mb-4" />
           <h2 className="text-2xl font-bold">Plan Not Found</h2>
           <p className="mt-2 text-muted-foreground">
             {error || 'The account plan you are looking for does not exist.'}
           </p>
           <Button className="mt-4" onClick={() => router.push('/accounts')}>
-            <ChevronLeft className="mr-2 h-4 w-4" />
             Back to Plans
           </Button>
         </div>
-      </div>
+      </PageLayout>
     )
   }
 
   const readonly = !canEdit()
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span
-          className="cursor-pointer hover:text-foreground"
-          onClick={() => router.push('/accounts')}
-        >
-          Account Plans
-        </span>
-        <span>/</span>
-        <span>{selectedPlan.title}</span>
-      </div>
+    <PageLayout
+      title={selectedPlan.title}
+      description={`Account plan for ${selectedPlan.client?.name || 'Unknown Client'}`}
+      backLink="/accounts"
+    >
 
       {/* Overview Component */}
       <AccountOverview
@@ -202,6 +200,6 @@ export default function AccountPlanDetailPage() {
           />
         </>
       )}
-    </div>
+    </PageLayout>
   )
 }

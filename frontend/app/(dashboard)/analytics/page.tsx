@@ -1,12 +1,15 @@
 /**
- * Analytics Jobs List Page
+ * Analytics Jobs List Page V2
  * Main page for viewing and managing sales analytics
+ * Updated with Design System V2
  */
 
 'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { format } from 'date-fns'
 import { useAnalytics } from '@/hooks/useAnalytics'
 import { AnalysisJob, AnalysisStatus } from '@/types/analytics'
 import {
@@ -16,19 +19,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import {
+  Button,
+  Card,
+  Badge,
+  Separator,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -38,18 +37,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
-import {
-  Upload,
-  Eye,
-  Trash2,
-  FileSpreadsheet,
-  TrendingUp,
-  BarChart3,
-  Calendar,
-} from 'lucide-react'
-import Link from 'next/link'
-import { format } from 'date-fns'
+} from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { Icon } from '@/components/icons'
 
 const STATUS_CONFIG = {
   [AnalysisStatus.PENDING]: {
@@ -96,24 +86,17 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Sales Analytics</h1>
-          <p className="text-muted-foreground mt-2">
-            ABC analysis and sales performance insights
-          </p>
-        </div>
-
-        <Button size="lg" asChild>
+    <PageLayout
+      title="Sales Analytics"
+      description="ABC analysis and sales performance insights"
+      actions={
+        <Button size="lg" asChild leftIcon={<Icon name="upload" />}>
           <Link href="/analytics/upload">
-            <Upload className="mr-2 h-5 w-5" />
             New Analysis
           </Link>
         </Button>
-      </div>
-
+      }
+    >
       <Separator />
 
       {/* Stats Cards */}
@@ -121,7 +104,7 @@ export default function AnalyticsPage() {
         <Card className="p-6">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-lg bg-blue-100">
-              <FileSpreadsheet className="h-6 w-6 text-blue-600" />
+              <Icon name="description" className="h-6 w-6 text-blue-600" />
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">
@@ -135,7 +118,7 @@ export default function AnalyticsPage() {
         <Card className="p-6">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-lg bg-green-100">
-              <BarChart3 className="h-6 w-6 text-green-600" />
+              <Icon name="bar_chart" className="h-6 w-6 text-green-600" />
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">
@@ -151,7 +134,7 @@ export default function AnalyticsPage() {
         <Card className="p-6">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-lg bg-yellow-100">
-              <TrendingUp className="h-6 w-6 text-yellow-600" />
+              <Icon name="trending_up" className="h-6 w-6 text-yellow-600" />
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">
@@ -167,7 +150,7 @@ export default function AnalyticsPage() {
         <Card className="p-6">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-lg bg-purple-100">
-              <Calendar className="h-6 w-6 text-purple-600" />
+              <Icon name="event" className="h-6 w-6 text-purple-600" />
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">
@@ -229,16 +212,15 @@ export default function AnalyticsPage() {
             </div>
           ) : jobs.length === 0 ? (
             <div className="text-center py-12">
-              <FileSpreadsheet className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <Icon name="description" className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 No analysis jobs found
               </h3>
               <p className="text-sm text-gray-500 mb-4">
                 Upload a sales file to start analyzing your data
               </p>
-              <Button asChild>
+              <Button asChild leftIcon={<Icon name="upload" />}>
                 <Link href="/analytics/upload">
-                  <Upload className="mr-2 h-4 w-4" />
                   Upload Sales Data
                 </Link>
               </Button>
@@ -262,7 +244,7 @@ export default function AnalyticsPage() {
                       <TableRow key={job.id}>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
-                            <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                            <Icon name="description" className="h-4 w-4 text-green-600" />
                             <span className="truncate max-w-xs">
                               {job.file_name}
                             </span>
@@ -290,7 +272,7 @@ export default function AnalyticsPage() {
                             {job.status === AnalysisStatus.COMPLETED && (
                               <Button variant="ghost" size="sm" asChild>
                                 <Link href={`/analytics/${job.id}`}>
-                                  <Eye className="h-4 w-4" />
+                                  <Icon name="visibility" className="h-4 w-4" />
                                 </Link>
                               </Button>
                             )}
@@ -298,7 +280,7 @@ export default function AnalyticsPage() {
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="sm">
-                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                  <Icon name="delete" className="h-4 w-4 text-red-600" />
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
@@ -360,6 +342,6 @@ export default function AnalyticsPage() {
           )}
         </div>
       </Card>
-    </div>
+    </PageLayout>
   )
 }

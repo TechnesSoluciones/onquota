@@ -1,11 +1,21 @@
+/**
+ * SPA Detail Page V2
+ * View Special Price Agreement details
+ * Updated with Design System V2
+ */
+
 'use client'
 
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useSingleSPA } from '@/hooks/useSPAs'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Badge,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -15,9 +25,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
-import { ArrowLeft, Trash2, User } from 'lucide-react'
-import Link from 'next/link'
+} from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { Icon } from '@/components/icons'
+import { LoadingState } from '@/components/patterns'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
 interface SPADetailPageProps {
@@ -39,35 +50,19 @@ export default function SPADetailPage({ params }: SPADetailPageProps) {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <div className="h-8 w-24 bg-gray-200 animate-pulse rounded" />
-          <div className="h-8 flex-1 bg-gray-200 animate-pulse rounded" />
-        </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-48 bg-gray-200 animate-pulse rounded-lg" />
-          ))}
-        </div>
-      </div>
+      <PageLayout title="SPA Details" description="Loading SPA information..." backLink="/spa">
+        <LoadingState message="Cargando información del SPA..." />
+      </PageLayout>
     )
   }
 
   if (!spa) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/spa">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver
-            </Link>
-          </Button>
-        </div>
+      <PageLayout title="SPA Not Found" description="The requested SPA could not be found" backLink="/spa">
         <div className="text-center py-12">
           <p className="text-muted-foreground">SPA no encontrado</p>
         </div>
-      </div>
+      </PageLayout>
     )
   }
 
@@ -82,49 +77,37 @@ export default function SPADetailPage({ params }: SPADetailPageProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/spa">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver
-            </Link>
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight">
-                {spa.article_number}
-              </h1>
-              {getStatusBadge()}
-            </div>
-            <p className="text-muted-foreground">{spa.article_description || 'Sin descripción'}</p>
-          </div>
-        </div>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="destructive">
-              <Trash2 className="h-4 w-4 mr-2" />
-              Eliminar
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Esta acción eliminará el SPA permanentemente. Esta acción no se puede deshacer.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+    <PageLayout
+      title={spa.article_number}
+      description={spa.article_description || 'Sin descripción'}
+      backLink="/spa"
+      actions={
+        <div className="flex items-center gap-2">
+          {getStatusBadge()}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" leftIcon={<Icon name="delete" />}>
                 Eliminar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta acción eliminará el SPA permanentemente. Esta acción no se puede deshacer.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+                  Eliminar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      }
+    >
 
       {/* Content Grid */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -132,7 +115,7 @@ export default function SPADetailPage({ params }: SPADetailPageProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
+              <Icon name="person" className="h-5 w-5" />
               Información del Cliente
             </CardTitle>
           </CardHeader>
@@ -258,6 +241,6 @@ export default function SPADetailPage({ params }: SPADetailPageProps) {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageLayout>
   )
 }

@@ -1,12 +1,17 @@
 'use client'
 
+/**
+ * New Sale Page V2
+ * Create a new quotation
+ * Updated with Design System V2
+ */
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { QuotationForm } from '@/components/sales/quotations/QuotationForm'
 import { quotationsApi } from '@/lib/api/quotations'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { ArrowLeft } from 'lucide-react'
+import { Card } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
 import { useToast } from '@/hooks/use-toast'
 import type { QuotationCreate } from '@/types/sales'
 
@@ -42,25 +47,15 @@ export default function NewSalePage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push('/sales/quotations')}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">Nueva Cotización</h1>
-          <p className="text-muted-foreground">
-            Crea una nueva cotización para tus clientes
-          </p>
-        </div>
-      </div>
-
-      {/* Form Card */}
+    <PageLayout
+      title="Nueva Cotización"
+      description="Crea una nueva cotización para tus clientes"
+      breadcrumbs={[
+        { label: 'Ventas', href: '/sales' },
+        { label: 'Cotizaciones', href: '/sales/quotations' },
+        { label: 'Nueva' }
+      ]}
+    >
       <Card className="p-6">
         <QuotationForm
           onSubmit={handleSubmit}
@@ -68,6 +63,6 @@ export default function NewSalePage() {
           isLoading={isLoading}
         />
       </Card>
-    </div>
+    </PageLayout>
   )
 }

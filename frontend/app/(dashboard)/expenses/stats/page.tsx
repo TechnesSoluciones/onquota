@@ -1,16 +1,20 @@
+/**
+ * Expense Statistics Page V2
+ * Analytics and visualization of expenses
+ * Updated with Design System V2
+ */
+
 import { ExpenseStats } from '@/components/expenses/ExpenseStats'
+import { PageLayout } from '@/components/layouts'
 
 export default function ExpenseStatsPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Estadísticas de Gastos</h1>
-        <p className="text-muted-foreground">
-          Análisis y visualización de tus gastos
-        </p>
-      </div>
-
+    <PageLayout
+      title="Estadísticas de Gastos"
+      description="Análisis y visualización de tus gastos"
+      backLink="/expenses"
+    >
       <ExpenseStats />
-    </div>
+    </PageLayout>
   )
 }

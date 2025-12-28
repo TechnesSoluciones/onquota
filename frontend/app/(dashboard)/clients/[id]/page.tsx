@@ -1,13 +1,20 @@
 'use client'
 
+/**
+ * Client Detail Page V2
+ * Displays detailed information about a client
+ * Updated with Design System V2
+ */
+
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { clientsApi } from '@/lib/api/clients'
 import type { ClientResponse } from '@/types/client'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
+import { Card, CardContent, CardHeader, CardTitle, Badge, Button } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { LoadingState } from '@/components/patterns'
+import { Icon } from '@/components/icons'
 import { formatDate, formatDateTime } from '@/lib/utils'
 import {
   CLIENT_STATUS_LABELS,
@@ -15,25 +22,6 @@ import {
   CLIENT_TYPE_LABELS,
   INDUSTRY_LABELS
 } from '@/constants/client'
-import {
-  Loader2,
-  ArrowLeft,
-  Edit,
-  Trash2,
-  Building2,
-  Mail,
-  Phone,
-  MapPin,
-  Globe,
-  Calendar,
-  User,
-  Briefcase,
-  Tag,
-  FileText,
-  Linkedin,
-  Twitter
-} from 'lucide-react'
-import Link from 'next/link'
 import { ClientSPAManager } from '@/components/clients/ClientSPAManager'
 import { ClientLTAManager } from '@/components/clients/ClientLTAManager'
 
@@ -80,43 +68,39 @@ export default function ClientDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <PageLayout title="Perfil del Cliente" description="Cargando información...">
+        <LoadingState message="Cargando información del cliente..." />
+      </PageLayout>
     )
   }
 
   if (error || !client) {
     return (
-      <div className="text-center py-12">
-        <p className="text-red-600 mb-4">{error || 'Cliente no encontrado'}</p>
-        <Button asChild>
-          <Link href="/clients">Volver a Clientes</Link>
-        </Button>
-      </div>
+      <PageLayout title="Perfil del Cliente" description="Error al cargar">
+        <div className="text-center py-12">
+          <Icon name="error" className="h-12 w-12 text-error mx-auto mb-4" />
+          <p className="text-error mb-4">{error || 'Cliente no encontrado'}</p>
+          <Button asChild>
+            <Link href="/clients">Volver a Clientes</Link>
+          </Button>
+        </div>
+      </PageLayout>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/clients">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Perfil del Cliente</h1>
-            <p className="text-muted-foreground">ID: {client.id.slice(0, 8)}</p>
-          </div>
-        </div>
-
+    <PageLayout
+      title={client.name}
+      description={`${CLIENT_TYPE_LABELS[client.client_type]}${client.tax_id ? ` • NIT: ${client.tax_id}` : ''}`}
+      breadcrumbs={[
+        { label: 'Clientes', href: '/clients' },
+        { label: client.name }
+      ]}
+      actions={
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" asChild>
             <Link href={`/clients/${client.id}/edit`}>
-              <Edit className="h-4 w-4 mr-2" />
+              <Icon name="edit" size="sm" className="mr-2" />
               Editar
             </Link>
           </Button>
@@ -124,14 +108,14 @@ export default function ClientDetailPage() {
             variant="destructive"
             size="sm"
             onClick={handleDelete}
-            disabled={isDeleting}
+            isLoading={isDeleting}
           >
-            {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            <Trash2 className="h-4 w-4 mr-2" />
+            <Icon name="delete" size="sm" className="mr-2" />
             Eliminar
           </Button>
         </div>
-      </div>
+      }
+    >
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Información Principal */}
@@ -140,14 +124,12 @@ export default function ClientDetailPage() {
             <div className="flex items-start justify-between">
               <div>
                 <CardTitle className="text-2xl">{client.name}</CardTitle>
-                <p className="text-muted-foreground mt-1">
-                  {CLIENT_TYPE_LABELS[client.client_type]}
-                  {client.tax_id && ` • NIT: ${client.tax_id}`}
-                </p>
+                <div className="mt-2">
+                  <Badge className={CLIENT_STATUS_COLORS[client.status]}>
+                    {CLIENT_STATUS_LABELS[client.status]}
+                  </Badge>
+                </div>
               </div>
-              <Badge className={CLIENT_STATUS_COLORS[client.status]}>
-                {CLIENT_STATUS_LABELS[client.status]}
-              </Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -157,10 +139,10 @@ export default function ClientDetailPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 {client.email && (
                   <div className="flex items-start gap-3">
-                    <Mail className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <Icon name="mail" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
-                      <a href={`mailto:${client.email}`} className="font-medium hover:underline">
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400">Email</p>
+                      <a href={`mailto:${client.email}`} className="font-medium hover:underline text-primary">
                         {client.email}
                       </a>
                     </div>
@@ -169,10 +151,10 @@ export default function ClientDetailPage() {
 
                 {client.phone && (
                   <div className="flex items-start gap-3">
-                    <Phone className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <Icon name="phone" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Teléfono</p>
-                      <a href={`tel:${client.phone}`} className="font-medium hover:underline">
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400">Teléfono</p>
+                      <a href={`tel:${client.phone}`} className="font-medium hover:underline text-primary">
                         {client.phone}
                       </a>
                     </div>
@@ -181,10 +163,10 @@ export default function ClientDetailPage() {
 
                 {client.mobile && (
                   <div className="flex items-start gap-3">
-                    <Phone className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <Icon name="smartphone" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Móvil</p>
-                      <a href={`tel:${client.mobile}`} className="font-medium hover:underline">
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400">Móvil</p>
+                      <a href={`tel:${client.mobile}`} className="font-medium hover:underline text-primary">
                         {client.mobile}
                       </a>
                     </div>
@@ -193,14 +175,14 @@ export default function ClientDetailPage() {
 
                 {client.website && (
                   <div className="flex items-start gap-3">
-                    <Globe className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <Icon name="language" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Sitio Web</p>
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400">Sitio Web</p>
                       <a
                         href={client.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-medium hover:underline"
+                        className="font-medium hover:underline text-primary"
                       >
                         {client.website}
                       </a>
@@ -210,7 +192,7 @@ export default function ClientDetailPage() {
               </div>
             </div>
 
-            <Separator />
+            <div className="border-t border-neutral-200 dark:border-neutral-800" />
 
             {/* Dirección */}
             {(client.address_line1 || client.city) && (
@@ -218,11 +200,11 @@ export default function ClientDetailPage() {
                 <div>
                   <h3 className="font-semibold mb-3">Dirección</h3>
                   <div className="flex items-start gap-3">
-                    <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <Icon name="location_on" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                     <div>
                       {client.address_line1 && <p className="font-medium">{client.address_line1}</p>}
-                      {client.address_line2 && <p className="text-muted-foreground">{client.address_line2}</p>}
-                      <p className="text-muted-foreground">
+                      {client.address_line2 && <p className="text-neutral-500 dark:text-neutral-400">{client.address_line2}</p>}
+                      <p className="text-neutral-500 dark:text-neutral-400">
                         {[client.city, client.state, client.postal_code, client.country]
                           .filter(Boolean)
                           .join(', ')}
@@ -230,7 +212,7 @@ export default function ClientDetailPage() {
                     </div>
                   </div>
                 </div>
-                <Separator />
+                <div className="border-t border-neutral-200 dark:border-neutral-800" />
               </>
             )}
 
@@ -240,9 +222,9 @@ export default function ClientDetailPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 {client.industry && (
                   <div className="flex items-start gap-3">
-                    <Briefcase className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <Icon name="business_center" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Industria</p>
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400">Industria</p>
                       <p className="font-medium">{INDUSTRY_LABELS[client.industry]}</p>
                     </div>
                   </div>
@@ -250,9 +232,9 @@ export default function ClientDetailPage() {
 
                 {client.lead_source && (
                   <div className="flex items-start gap-3">
-                    <Tag className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <Icon name="label" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Fuente del Lead</p>
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400">Fuente del Lead</p>
                       <p className="font-medium">{client.lead_source}</p>
                     </div>
                   </div>
@@ -260,9 +242,9 @@ export default function ClientDetailPage() {
 
                 {client.first_contact_date && (
                   <div className="flex items-start gap-3">
-                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <Icon name="event" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Primer Contacto</p>
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400">Primer Contacto</p>
                       <p className="font-medium">{formatDate(client.first_contact_date)}</p>
                     </div>
                   </div>
@@ -270,9 +252,9 @@ export default function ClientDetailPage() {
 
                 {client.conversion_date && (
                   <div className="flex items-start gap-3">
-                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <Icon name="event_available" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Fecha de Conversión</p>
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400">Fecha de Conversión</p>
                       <p className="font-medium">{formatDate(client.conversion_date)}</p>
                     </div>
                   </div>
@@ -283,26 +265,26 @@ export default function ClientDetailPage() {
             {/* Persona de Contacto */}
             {client.contact_person_name && (
               <>
-                <Separator />
+                <div className="border-t border-neutral-200 dark:border-neutral-800" />
                 <div>
                   <h3 className="font-semibold mb-3">Persona de Contacto</h3>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="flex items-start gap-3">
-                      <User className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <Icon name="person" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Nombre</p>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">Nombre</p>
                         <p className="font-medium">{client.contact_person_name}</p>
                       </div>
                     </div>
 
                     {client.contact_person_email && (
                       <div className="flex items-start gap-3">
-                        <Mail className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <Icon name="mail" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm text-muted-foreground">Email</p>
+                          <p className="text-sm text-neutral-500 dark:text-neutral-400">Email</p>
                           <a
                             href={`mailto:${client.contact_person_email}`}
-                            className="font-medium hover:underline"
+                            className="font-medium hover:underline text-primary"
                           >
                             {client.contact_person_email}
                           </a>
@@ -312,12 +294,12 @@ export default function ClientDetailPage() {
 
                     {client.contact_person_phone && (
                       <div className="flex items-start gap-3">
-                        <Phone className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <Icon name="phone" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm text-muted-foreground">Teléfono</p>
+                          <p className="text-sm text-neutral-500 dark:text-neutral-400">Teléfono</p>
                           <a
                             href={`tel:${client.contact_person_phone}`}
-                            className="font-medium hover:underline"
+                            className="font-medium hover:underline text-primary"
                           >
                             {client.contact_person_phone}
                           </a>
@@ -332,20 +314,20 @@ export default function ClientDetailPage() {
             {/* Redes Sociales */}
             {(client.linkedin_url || client.twitter_handle) && (
               <>
-                <Separator />
+                <div className="border-t border-neutral-200 dark:border-neutral-800" />
                 <div>
                   <h3 className="font-semibold mb-3">Redes Sociales</h3>
                   <div className="grid gap-4 md:grid-cols-2">
                     {client.linkedin_url && (
                       <div className="flex items-start gap-3">
-                        <Linkedin className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <Icon name="share" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm text-muted-foreground">LinkedIn</p>
+                          <p className="text-sm text-neutral-500 dark:text-neutral-400">LinkedIn</p>
                           <a
                             href={client.linkedin_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="font-medium hover:underline"
+                            className="font-medium hover:underline text-primary"
                           >
                             Ver perfil
                           </a>
@@ -355,9 +337,9 @@ export default function ClientDetailPage() {
 
                     {client.twitter_handle && (
                       <div className="flex items-start gap-3">
-                        <Twitter className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <Icon name="share" className="h-5 w-5 text-neutral-500 dark:text-neutral-400 mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm text-muted-foreground">Twitter</p>
+                          <p className="text-sm text-neutral-500 dark:text-neutral-400">Twitter</p>
                           <p className="font-medium">{client.twitter_handle}</p>
                         </div>
                       </div>
@@ -370,13 +352,13 @@ export default function ClientDetailPage() {
             {/* Notas */}
             {client.notes && (
               <>
-                <Separator />
+                <div className="border-t border-neutral-200 dark:border-neutral-800" />
                 <div>
                   <h3 className="font-semibold mb-3 flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
+                    <Icon name="description" className="h-5 w-5" />
                     Notas
                   </h3>
-                  <p className="text-muted-foreground whitespace-pre-wrap">{client.notes}</p>
+                  <p className="text-neutral-600 dark:text-neutral-400 whitespace-pre-wrap">{client.notes}</p>
                 </div>
               </>
             )}
@@ -384,7 +366,7 @@ export default function ClientDetailPage() {
             {/* Tags */}
             {client.tags && (
               <>
-                <Separator />
+                <div className="border-t border-neutral-200 dark:border-neutral-800" />
                 <div>
                   <h3 className="font-semibold mb-3">Tags</h3>
                   <div className="flex flex-wrap gap-2">
@@ -409,27 +391,27 @@ export default function ClientDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
               <div>
-                <p className="text-muted-foreground">Idioma Preferido</p>
+                <p className="text-neutral-500 dark:text-neutral-400">Idioma Preferido</p>
                 <p className="font-medium">{client.preferred_language?.toUpperCase() || 'N/A'}</p>
               </div>
-              <Separator />
+              <div className="border-t border-neutral-200 dark:border-neutral-800" />
               <div>
-                <p className="text-muted-foreground">Moneda Preferida</p>
+                <p className="text-neutral-500 dark:text-neutral-400">Moneda Preferida</p>
                 <p className="font-medium">{client.preferred_currency || 'N/A'}</p>
               </div>
-              <Separator />
+              <div className="border-t border-neutral-200 dark:border-neutral-800" />
               <div>
-                <p className="text-muted-foreground">Estado</p>
+                <p className="text-neutral-500 dark:text-neutral-400">Estado</p>
                 <p className="font-medium">{client.is_active ? 'Activo' : 'Inactivo'}</p>
               </div>
-              <Separator />
+              <div className="border-t border-neutral-200 dark:border-neutral-800" />
               <div>
-                <p className="text-muted-foreground">Registrado</p>
+                <p className="text-neutral-500 dark:text-neutral-400">Registrado</p>
                 <p className="font-medium">{formatDateTime(client.created_at)}</p>
               </div>
-              <Separator />
+              <div className="border-t border-neutral-200 dark:border-neutral-800" />
               <div>
-                <p className="text-muted-foreground">Última Actualización</p>
+                <p className="text-neutral-500 dark:text-neutral-400">Última Actualización</p>
                 <p className="font-medium">{formatDateTime(client.updated_at)}</p>
               </div>
             </CardContent>
@@ -445,6 +427,6 @@ export default function ClientDetailPage() {
         {/* LTA Manager */}
         <ClientLTAManager clientId={client.id} bpid={client.bpid} />
       </div>
-    </div>
+    </PageLayout>
   )
 }

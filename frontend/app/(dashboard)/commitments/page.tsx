@@ -1,7 +1,25 @@
+/**
+ * Commitments Page V2
+ * Manage and track commitments and tasks
+ * Updated with Design System V2
+ */
+
 'use client';
 
 import { useState } from 'react';
-import { Plus, Loader2 } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  Button,
+  Badge,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui-v2';
+import { PageLayout } from '@/components/layouts';
+import { Icon } from '@/components/icons';
+import { LoadingState, EmptyState } from '@/components/patterns';
 import { useCommitments, usePendingCommitments, useOverdueCommitments, useCompleteCommitment } from '@/hooks/useCommitments';
 import { CommitmentCard } from '@/components/commitments';
 import { CommitmentStatus } from '@/types/visit';
@@ -32,106 +50,71 @@ export default function CommitmentsPage() {
   };
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Bit\u00e1cora de Compromisos</h1>
-          <p className="text-gray-600 mt-1">
-            Gestiona y da seguimiento a tus compromisos y tareas
-          </p>
-        </div>
-        <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-          <Plus className="h-5 w-5 mr-2" />
+    <PageLayout
+      title="Bit\u00e1cora de Compromisos"
+      description="Gestiona y da seguimiento a tus compromisos y tareas"
+      actions={
+        <Button leftIcon={<Icon name="add" />}>
           Nuevo Compromiso
-        </button>
-      </div>
-
+        </Button>
+      }
+    >
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Total</p>
-          <p className="text-2xl font-bold text-gray-900">
-            {allCommitments.data?.total || 0}
-          </p>
-        </div>
-        <div className="bg-yellow-50 rounded-lg p-4 shadow-sm border border-yellow-200">
-          <p className="text-sm text-yellow-700">Pendientes</p>
-          <p className="text-2xl font-bold text-yellow-900">
-            {pendingCommitments.data?.total || 0}
-          </p>
-        </div>
-        <div className="bg-red-50 rounded-lg p-4 shadow-sm border border-red-200">
-          <p className="text-sm text-red-700">Vencidos</p>
-          <p className="text-2xl font-bold text-red-900">
-            {overdueCommitments.data?.total || 0}
-          </p>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground">Total</p>
+            <p className="text-2xl font-bold">
+              {allCommitments.data?.total || 0}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-yellow-50 border-yellow-200">
+          <CardContent className="p-4">
+            <p className="text-sm text-yellow-700">Pendientes</p>
+            <p className="text-2xl font-bold text-yellow-900">
+              {pendingCommitments.data?.total || 0}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="p-4">
+            <p className="text-sm text-red-700">Vencidos</p>
+            <p className="text-2xl font-bold text-red-900">
+              {overdueCommitments.data?.total || 0}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-sm mb-6">
-        <div className="border-b border-gray-200">
-          <nav className="flex -mb-px">
-            <button
-              onClick={() => {
-                setActiveTab('pending');
-                setPage(1);
-              }}
-              className={`px-6 py-3 text-sm font-medium border-b-2 ${
-                activeTab === 'pending'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Pendientes
-              {pendingCommitments.data && pendingCommitments.data.total > 0 && (
-                <span className="ml-2 bg-yellow-100 text-yellow-800 py-0.5 px-2 rounded-full text-xs">
-                  {pendingCommitments.data.total}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('overdue');
-                setPage(1);
-              }}
-              className={`px-6 py-3 text-sm font-medium border-b-2 ${
-                activeTab === 'overdue'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Vencidos
-              {overdueCommitments.data && overdueCommitments.data.total > 0 && (
-                <span className="ml-2 bg-red-100 text-red-800 py-0.5 px-2 rounded-full text-xs">
-                  {overdueCommitments.data.total}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('all');
-                setPage(1);
-              }}
-              className={`px-6 py-3 text-sm font-medium border-b-2 ${
-                activeTab === 'all'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Todos
-            </button>
-          </nav>
-        </div>
+      <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value as 'all' | 'pending' | 'overdue'); setPage(1); }}>
+        <TabsList>
+          <TabsTrigger value="pending">
+            Pendientes
+            {pendingCommitments.data && pendingCommitments.data.total > 0 && (
+              <Badge variant="secondary" className="ml-2 bg-yellow-100 text-yellow-800">
+                {pendingCommitments.data.total}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="overdue">
+            Vencidos
+            {overdueCommitments.data && overdueCommitments.data.total > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {overdueCommitments.data.total}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="all">
+            Todos
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Content */}
-        <div className="p-6">
+        {/* Content for all tabs */}
+        <TabsContent value={activeTab} className="mt-6">
           {currentData.isLoading ? (
-            <div className="text-center py-12">
-              <Loader2 className="animate-spin h-8 w-8 text-blue-600 mx-auto" />
-              <p className="text-gray-500 mt-4">Cargando compromisos...</p>
-            </div>
+            <LoadingState message="Cargando compromisos..." />
           ) : currentData.data && currentData.data.items.length > 0 ? (
             <>
               <div className="grid gap-4">
@@ -176,12 +159,13 @@ export default function CommitmentsPage() {
               )}
             </>
           ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-500">No hay compromisos en esta categoría</p>
-            </div>
+            <EmptyState
+              title="No hay compromisos"
+              description="No hay compromisos en esta categoría"
+            />
           )}
-        </div>
-      </div>
-    </div>
+        </TabsContent>
+      </Tabs>
+    </PageLayout>
   );
 }

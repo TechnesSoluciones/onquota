@@ -1,14 +1,14 @@
 'use client'
 
 /**
- * Opportunities Page
+ * Opportunities Page V2
  * Kanban board view for managing sales opportunities
+ * Updated with Design System V2
  */
 
 import { useState } from 'react'
-import { Plus, RefreshCw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui-v2'
+import { Icon } from '@/components/icons'
 import { OpportunityBoard } from '@/components/opportunities/OpportunityBoard'
 import { PipelineStats } from '@/components/opportunities/PipelineStats'
 import { CreateOpportunityModal } from '@/components/opportunities/CreateOpportunityModal'
@@ -42,13 +42,13 @@ export default function OpportunitiesPage() {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="border-b bg-white px-6 py-4">
+      <div className="border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
               Sales Opportunities
             </h1>
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
               Manage your sales pipeline with drag and drop
             </p>
           </div>
@@ -58,12 +58,11 @@ export default function OpportunitiesPage() {
               size="sm"
               onClick={refetch}
               disabled={loading}
+              leftIcon={<Icon name="refresh" className={loading ? 'animate-spin' : ''} size="sm" />}
             >
-              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Button onClick={() => setCreateModalOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
+            <Button onClick={() => setCreateModalOpen(true)} leftIcon={<Icon name="add" size="sm" />}>
               New Opportunity
             </Button>
           </div>
@@ -71,9 +70,9 @@ export default function OpportunitiesPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden bg-gray-50">
+      <div className="flex-1 overflow-hidden bg-neutral-50 dark:bg-neutral-950">
         <Tabs defaultValue="board" className="flex h-full flex-col">
-          <div className="border-b bg-white px-6">
+          <div className="border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-6">
             <TabsList>
               <TabsTrigger value="board">Kanban Board</TabsTrigger>
               <TabsTrigger value="stats">Statistics</TabsTrigger>
@@ -85,8 +84,8 @@ export default function OpportunitiesPage() {
             {loading && opportunities.length === 0 ? (
               <div className="flex h-96 items-center justify-center">
                 <div className="text-center">
-                  <RefreshCw className="mx-auto h-8 w-8 animate-spin text-gray-400" />
-                  <p className="mt-2 text-sm text-gray-600">
+                  <Icon name="refresh" className="mx-auto h-8 w-8 animate-spin text-neutral-400 dark:text-neutral-600" />
+                  <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
                     Loading opportunities...
                   </p>
                 </div>

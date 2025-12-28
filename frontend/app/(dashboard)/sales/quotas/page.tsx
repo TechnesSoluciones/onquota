@@ -1,29 +1,33 @@
 'use client'
 
 /**
- * Quotas Dashboard Page
+ * Quotas Dashboard Page V2
  * Main page for viewing quota performance and trends
+ * Updated with Design System V2
  */
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
-import {
+  Label,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Plus, Loader2, AlertCircle, Calendar, User } from 'lucide-react'
+} from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { LoadingState } from '@/components/patterns'
+import { Icon } from '@/components/icons'
 import { QuotaDashboard } from '@/components/sales/quotas/QuotaDashboard'
 import { QuotaForm } from '@/components/sales/quotas/QuotaForm'
 import {
@@ -101,29 +105,28 @@ export default function QuotasPage() {
   const yearOptions = Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - 2 + i)
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Sales Quotas</h1>
-          <p className="text-muted-foreground">
-            Track quota achievement and performance trends
-          </p>
-        </div>
-        <Button onClick={() => setCreateModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
+    <PageLayout
+      title="Sales Quotas"
+      description="Track quota achievement and performance trends"
+      breadcrumbs={[
+        { label: 'Ventas', href: '/sales' },
+        { label: 'Quotas' }
+      ]}
+      actions={
+        <Button onClick={() => setCreateModalOpen(true)} leftIcon={<Icon name="add" />}>
           Set New Quota
         </Button>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Filters
-          </CardTitle>
-        </CardHeader>
+      }
+    >
+      <div className="space-y-6">
+        {/* Filters */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Icon name="calendar_month" className="h-5 w-5" />
+              Filters
+            </CardTitle>
+          </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* User Selection */}
@@ -189,30 +192,28 @@ export default function QuotasPage() {
         </CardContent>
       </Card>
 
-      {/* Error State */}
-      {dashboardError && (
-        <div className="p-4 bg-red-50 border-l-4 border-red-500 flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="font-medium text-red-800">Error loading quota data</p>
-            <p className="text-sm text-red-700">{dashboardError}</p>
+        {/* Error State */}
+        {dashboardError && (
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-error/10 border border-error/20">
+            <Icon name="error" className="h-5 w-5 text-error flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-error">Error loading quota data</p>
+              <p className="text-sm text-error/80">{dashboardError}</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Loading State */}
-      {dashboardLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : (
-        <QuotaDashboard
-          dashboard={dashboard}
-          trends={trends}
-          comparison={comparison}
-          currency="COP"
-        />
-      )}
+        {/* Loading State */}
+        {dashboardLoading ? (
+          <LoadingState message="Loading quota dashboard..." />
+        ) : (
+          <QuotaDashboard
+            dashboard={dashboard}
+            trends={trends}
+            comparison={comparison}
+            currency="COP"
+          />
+        )}
 
       {/* Create Quota Modal */}
       <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
@@ -232,6 +233,7 @@ export default function QuotasPage() {
           />
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </PageLayout>
   )
 }

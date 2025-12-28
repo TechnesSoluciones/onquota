@@ -1,14 +1,21 @@
 'use client'
 
+/**
+ * Account Plans Page V2
+ * Strategic account plans management and tracking
+ * Updated with Design System V2
+ */
+
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { Icon } from '@/components/icons'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PlanList } from '@/components/accounts/PlanList'
 import { useAccountPlans } from '@/hooks/useAccountPlans'
 import { useRole } from '@/hooks/useRole'
 import { PlanStatus } from '@/types/accounts'
-import { Plus } from 'lucide-react'
 
 export default function AccountPlansPage() {
   const router = useRouter()
@@ -42,32 +49,18 @@ export default function AccountPlansPage() {
     goToPage(page)
   }
 
-  // Get counts for each status
-  const getStatusCount = (status?: PlanStatus) => {
-    if (!status) {
-      return plans.length
-    }
-    return plans.filter((plan) => plan.status === status).length
-  }
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Account Plans</h1>
-          <p className="text-muted-foreground">
-            Manage strategic account plans and track progress
-          </p>
-        </div>
-        {canCreate() && (
-          <Button onClick={() => router.push('/accounts/new')}>
-            <Plus className="mr-2 h-4 w-4" />
+    <PageLayout
+      title="Account Plans"
+      description="Manage strategic account plans and track progress"
+      actions={
+        canCreate() ? (
+          <Button onClick={() => router.push('/accounts/new')} leftIcon={<Icon name="add" />}>
             New Plan
           </Button>
-        )}
-      </div>
-
+        ) : undefined
+      }
+    >
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
@@ -90,6 +83,6 @@ export default function AccountPlansPage() {
           />
         </TabsContent>
       </Tabs>
-    </div>
+    </PageLayout>
   )
 }

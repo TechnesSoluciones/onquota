@@ -1,6 +1,7 @@
 /**
- * Executive Dashboard Report Page
+ * Executive Dashboard Report Page V2
  * Comprehensive overview with KPIs, trends, and top performers
+ * Updated with Design System V2
  */
 
 'use client'
@@ -10,18 +11,23 @@ import { useExecutiveDashboard } from '@/hooks/useReports'
 import { KPIGrid } from '@/components/reports/dashboard/KPIGrid'
 import { AlertsPanel } from '@/components/reports/dashboard/AlertsPanel'
 import { DateRangePicker } from '@/components/reports/shared/DateRangePicker'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
-import { Loader2, AlertCircle, RefreshCcw, Download, TrendingUp } from 'lucide-react'
-import { Label } from '@/components/ui/label'
+  Separator,
+  Label,
+} from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { Icon } from '@/components/icons'
+import { LoadingState } from '@/components/patterns'
 
 export default function ExecutiveDashboardPage() {
   const [startDate, setStartDate] = useState('')
@@ -60,63 +66,56 @@ export default function ExecutiveDashboardPage() {
   // Show error state
   if (error && !isLoading && !dashboard) {
     return (
-      <div className="space-y-6 p-6">
-        <div>
-          <h1 className="text-3xl font-bold">Dashboard Ejecutivo</h1>
-          <p className="text-muted-foreground">
-            Análisis completo de KPIs, tendencias y desempeño
-          </p>
-        </div>
+      <PageLayout
+        title="Dashboard Ejecutivo"
+        description="Análisis completo de KPIs, tendencias y desempeño"
+      >
         <div className="flex items-center gap-3 p-4 bg-red-50 border-l-4 border-red-500 rounded">
-          <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+          <Icon name="error" className="h-5 w-5 text-red-500 flex-shrink-0" />
           <div>
             <p className="font-medium text-red-800">Error al cargar el dashboard</p>
             <p className="text-sm text-red-700">{error}</p>
           </div>
         </div>
-        <Button onClick={refresh}>
-          <RefreshCcw className="h-4 w-4 mr-2" />
+        <Button onClick={refresh} leftIcon={<Icon name="refresh" />}>
           Reintentar
         </Button>
-      </div>
+      </PageLayout>
     )
   }
 
   // Show loading state (first load)
   if (isLoading && !dashboard) {
     return (
-      <div className="flex items-center justify-center min-h-[600px]">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Cargando dashboard ejecutivo...</p>
-        </div>
-      </div>
+      <PageLayout
+        title="Dashboard Ejecutivo"
+        description="Análisis completo de KPIs, tendencias y desempeño"
+      >
+        <LoadingState message="Cargando dashboard ejecutivo..." />
+      </PageLayout>
     )
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Dashboard Ejecutivo</h1>
-          <p className="text-muted-foreground">
-            Análisis completo de KPIs, tendencias y desempeño
-          </p>
-        </div>
-
+    <PageLayout
+      title="Dashboard Ejecutivo"
+      description="Análisis completo de KPIs, tendencias y desempeño"
+      actions={
         <div className="flex gap-2">
-          <Button variant="outline" onClick={refresh} disabled={isLoading}>
-            <RefreshCcw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          <Button
+            variant="outline"
+            onClick={refresh}
+            disabled={isLoading}
+            leftIcon={<Icon name="refresh" className={isLoading ? 'animate-spin' : ''} />}
+          >
             Actualizar
           </Button>
-          <Button variant="outline" disabled>
-            <Download className="h-4 w-4 mr-2" />
+          <Button variant="outline" disabled leftIcon={<Icon name="download" />}>
             Exportar
           </Button>
         </div>
-      </div>
-
+      }
+    >
       <Separator />
 
       {/* Filters */}
@@ -193,7 +192,7 @@ export default function ExecutiveDashboardPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Top Clientes</CardTitle>
-              <TrendingUp className="h-5 w-5 text-muted-foreground" />
+              <Icon name="trending_up" className="h-5 w-5 text-muted-foreground" />
             </div>
           </CardHeader>
           <CardContent>
@@ -243,6 +242,6 @@ export default function ExecutiveDashboardPage() {
           Generado: {new Date(dashboard.generated_at).toLocaleString('es-ES')}
         </div>
       )}
-    </div>
+    </PageLayout>
   )
 }

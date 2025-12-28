@@ -1,32 +1,30 @@
 /**
- * General Settings Page
+ * General Settings Page V2
  * Configure tenant settings and preferences with system information sidebar
+ * Updated with Design System V2
  */
 
 'use client'
 
 import { SettingsForm } from '@/components/settings'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { Icon } from '@/components/icons'
 import { useAdminSettings, useSystemStats } from '@/hooks/useAdminSettings'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Building2, Calendar, CreditCard, Users } from 'lucide-react'
 
 export default function GeneralSettingsPage() {
   const { settings, isLoading } = useAdminSettings()
   const { stats } = useSystemStats()
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">General Settings</h2>
-        <p className="text-muted-foreground">
-          Configure tenant settings and preferences
-        </p>
-      </div>
-
+    <PageLayout
+      title="General Settings"
+      description="Configure tenant settings and preferences"
+      backLink="/settings"
+    >
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Settings Form - Main Column */}
         <div className="lg:col-span-2">
@@ -55,7 +53,7 @@ export default function GeneralSettingsPage() {
                   {/* Tenant ID */}
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                      <Building2 className="h-4 w-4" />
+                      <Icon name="badge" className="h-4 w-4" />
                       Tenant ID
                     </div>
                     <p className="font-mono text-sm">{settings.id}</p>
@@ -64,7 +62,7 @@ export default function GeneralSettingsPage() {
                   {/* Company Name */}
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                      <Building2 className="h-4 w-4" />
+                      <Icon name="business" className="h-4 w-4" />
                       Company Name
                     </div>
                     <p className="text-sm font-medium">{settings.company_name}</p>
@@ -73,7 +71,7 @@ export default function GeneralSettingsPage() {
                   {/* Subscription Plan */}
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                      <CreditCard className="h-4 w-4" />
+                      <Icon name="credit_card" className="h-4 w-4" />
                       Subscription Plan
                     </div>
                     <Badge variant="outline" className="capitalize">
@@ -84,7 +82,7 @@ export default function GeneralSettingsPage() {
                   {/* Created At */}
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
+                      <Icon name="event" className="h-4 w-4" />
                       Created At
                     </div>
                     <p className="text-sm">
@@ -97,7 +95,7 @@ export default function GeneralSettingsPage() {
                   {/* Total Users */}
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                      <Users className="h-4 w-4" />
+                      <Icon name="people" className="h-4 w-4" />
                       Total Users
                     </div>
                     <p className="text-sm font-medium">
@@ -151,6 +149,6 @@ export default function GeneralSettingsPage() {
           </Card>
         </div>
       </div>
-    </div>
+    </PageLayout>
   )
 }

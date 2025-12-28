@@ -1,14 +1,27 @@
+/**
+ * Two-Factor Authentication Verification Page V2
+ * Verify 2FA code or backup code for login
+ * Updated with Design System V2
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useTwoFactor } from '@/hooks/useTwoFactor';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, ShieldCheck, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useTwoFactor } from '@/hooks/useTwoFactor';
+import {
+  Button,
+  Input,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Alert,
+  AlertDescription,
+} from '@/components/ui-v2';
+import { Icon } from '@/components/icons';
 
 export default function Verify2FAPage() {
   const router = useRouter();
@@ -60,12 +73,11 @@ export default function Verify2FAPage() {
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl flex items-center gap-2">
-              <ShieldCheck className="h-6 w-6 text-blue-600" />
+              <Icon name="shield" className="h-6 w-6 text-blue-600" />
               Two-Factor Authentication
             </CardTitle>
             <Link href="/login">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-1" />
+              <Button variant="ghost" size="sm" leftIcon={<Icon name="arrow_back" />}>
                 Back
               </Button>
             </Link>
@@ -105,8 +117,8 @@ export default function Verify2FAPage() {
               type="submit"
               className="w-full"
               disabled={loading || code.length < (useBackupCode ? 8 : 6)}
+              leftIcon={loading ? <Icon name="progress_activity" className="animate-spin" /> : undefined}
             >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Verify
             </Button>
 

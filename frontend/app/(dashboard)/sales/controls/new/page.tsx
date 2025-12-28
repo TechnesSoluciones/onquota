@@ -1,18 +1,18 @@
 'use client'
 
 /**
- * New Sales Control Page
+ * New Sales Control Page V2
  * Page for creating a new sales control
+ * Updated with Design System V2
  */
 
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
 import { SalesControlForm } from '@/components/sales/controls/SalesControlForm'
 import { useCreateSalesControl } from '@/hooks/useSalesControls'
 import { useProductLines } from '@/hooks/useProductLines'
 import { useToast } from '@/hooks/use-toast'
-import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 
 // Mock users - in real app, fetch from API
 const MOCK_USERS = [
@@ -50,28 +50,15 @@ export default function NewSalesControlPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        onClick={() => router.push('/sales/controls')}
-        className="mb-4"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Sales Controls
-      </Button>
-
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">
-          Create New Sales Control
-        </h1>
-        <p className="text-muted-foreground">
-          Create a new purchase order and track its lifecycle
-        </p>
-      </div>
-
-      {/* Form Card */}
+    <PageLayout
+      title="Create New Sales Control"
+      description="Create a new purchase order and track its lifecycle"
+      breadcrumbs={[
+        { label: 'Ventas', href: '/sales' },
+        { label: 'Controls', href: '/sales/controls' },
+        { label: 'New' }
+      ]}
+    >
       <Card>
         <CardHeader>
           <CardTitle>Sales Control Information</CardTitle>
@@ -85,6 +72,6 @@ export default function NewSalesControlPage() {
           />
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   )
 }

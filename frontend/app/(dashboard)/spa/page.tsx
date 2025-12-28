@@ -1,21 +1,28 @@
+/**
+ * SPAs List Page V2
+ * Manage Special Price Agreements
+ * Updated with Design System V2
+ */
+
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Button } from '@/components/ui/button'
-import { SPAFilters } from '@/components/spa/SPAFilters'
-import { SPATable } from '@/components/spa/SPATable'
-import { SPAStats } from '@/components/spa/SPAStats'
+import Link from 'next/link'
 import {
+  Button,
   Pagination,
   PaginationContent,
   PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '@/components/ui/pagination'
+} from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { Icon } from '@/components/icons'
+import { SPAFilters } from '@/components/spa/SPAFilters'
+import { SPATable } from '@/components/spa/SPATable'
+import { SPAStats } from '@/components/spa/SPAStats'
 import { useSPAs, useSPAStats } from '@/hooks/useSPAs'
-import { Upload, Download } from 'lucide-react'
-import Link from 'next/link'
 import type { SPASearchParams } from '@/types/spa'
 
 const DEFAULT_FILTERS: SPASearchParams = {
@@ -75,28 +82,22 @@ export default function SPAPage() {
   }, [exportToFile, filters.is_active])
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">SPAs</h1>
-          <p className="text-muted-foreground">
-            Gestiona los Special Price Agreements
-          </p>
-        </div>
+    <PageLayout
+      title="SPAs"
+      description="Gestiona los Special Price Agreements"
+      actions={
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
+          <Button variant="outline" onClick={handleExport} leftIcon={<Icon name="download" />}>
             Exportar
           </Button>
-          <Button asChild>
+          <Button asChild leftIcon={<Icon name="upload" />}>
             <Link href="/spa/upload">
-              <Upload className="h-4 w-4 mr-2" />
               Cargar archivo
             </Link>
           </Button>
         </div>
-      </div>
+      }
+    >
 
       {/* Stats */}
       <SPAStats stats={stats} loading={statsLoading} />
@@ -149,6 +150,6 @@ export default function SPAPage() {
           </Pagination>
         </div>
       )}
-    </div>
+    </PageLayout>
   )
 }

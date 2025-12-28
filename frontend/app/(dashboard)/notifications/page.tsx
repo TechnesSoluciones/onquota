@@ -1,24 +1,23 @@
 /**
- * Notifications Page
+ * Notifications Page V2
  * Full-page view for managing all notifications
+ * Updated with Design System V2
  */
 
-import { NotificationCenter } from '@/components/notifications/NotificationCenter'
+'use client'
 
-export const metadata = {
-  title: 'Notifications - OnQuota',
-  description: 'View and manage your notifications',
-}
+import { NotificationCenter } from '@/components/notifications/NotificationCenter'
+import { PageLayout } from '@/components/layouts'
 
 export default function NotificationsPage() {
   return (
-    <div className="flex h-full flex-col">
-      {/* Content */}
-      <div className="flex-1 overflow-auto bg-gray-50 p-6">
-        <div className="mx-auto max-w-4xl">
-          <NotificationCenter />
-        </div>
+    <PageLayout
+      title="Notificaciones"
+      description="Gestiona y revisa todas tus notificaciones"
+    >
+      <div className="mx-auto max-w-4xl">
+        <NotificationCenter />
       </div>
-    </div>
+    </PageLayout>
   )
 }

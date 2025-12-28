@@ -1,23 +1,22 @@
 /**
- * Users Management Page
+ * Users Management Page V2
  * Manage user accounts, roles, and permissions
+ * Updated with Design System V2
  */
 
 'use client'
 
+import { PageLayout } from '@/components/layouts'
 import { UsersList } from '@/components/settings'
 
 export default function UsersPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">User Management</h2>
-        <p className="text-muted-foreground">
-          Manage user accounts, roles, and permissions
-        </p>
-      </div>
-
+    <PageLayout
+      title="User Management"
+      description="Manage user accounts, roles, and permissions"
+      backLink="/settings"
+    >
       <UsersList />
-    </div>
+    </PageLayout>
   )
 }

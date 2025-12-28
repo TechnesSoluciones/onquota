@@ -1,29 +1,15 @@
 'use client'
 
 /**
- * Opportunity Detail Page
+ * Opportunity Detail Page V2
  * Detailed view of a single opportunity
+ * Updated with Design System V2
  */
 
 import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
-import {
-  ArrowLeft,
-  Calendar,
-  DollarSign,
-  TrendingUp,
-  User,
-  Edit,
-  Trash2,
-  Building2,
-  FileText,
-  Clock,
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { Separator } from '@/components/ui/separator'
+import { Button, Card, Badge, Progress } from '@/components/ui-v2'
+import { Icon } from '@/components/icons'
 import { EditOpportunityModal } from '@/components/opportunities/EditOpportunityModal'
 import { useSingleOpportunity } from '@/hooks/useOpportunities'
 import { STAGE_CONFIG } from '@/types/opportunities'
@@ -50,8 +36,8 @@ export default function OpportunityDetailPage() {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
-          <p className="mt-4 text-sm text-gray-600">Loading opportunity...</p>
+          <Icon name="refresh" className="h-8 w-8 animate-spin text-neutral-400 dark:text-neutral-600 mx-auto" />
+          <p className="mt-4 text-sm text-neutral-600 dark:text-neutral-400">Loading opportunity...</p>
         </div>
       </div>
     )
@@ -61,15 +47,16 @@ export default function OpportunityDetailPage() {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <p className="text-lg font-semibold text-gray-900">
+          <Icon name="error" className="h-12 w-12 text-error mx-auto mb-4" />
+          <p className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
             Opportunity not found
           </p>
           <Button
             className="mt-4"
             variant="outline"
             onClick={() => router.push('/opportunities')}
+            leftIcon={<Icon name="arrow_back" size="sm" />}
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Opportunities
           </Button>
         </div>
@@ -82,7 +69,7 @@ export default function OpportunityDetailPage() {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="border-b bg-white px-6 py-4">
+      <div className="border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
@@ -90,10 +77,10 @@ export default function OpportunityDetailPage() {
               size="sm"
               onClick={() => router.push('/opportunities')}
             >
-              <ArrowLeft className="h-4 w-4" />
+              <Icon name="arrow_back" size="sm" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                 {opportunity.name}
               </h1>
               <div className="mt-1 flex items-center gap-2">
@@ -102,19 +89,17 @@ export default function OpportunityDetailPage() {
                 >
                   {stageConfig.label}
                 </Badge>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-neutral-600 dark:text-neutral-400">
                   Created {format(new Date(opportunity.created_at), 'MMM d, yyyy')}
                 </span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => setEditModalOpen(true)}>
-              <Edit className="mr-2 h-4 w-4" />
+            <Button variant="outline" onClick={() => setEditModalOpen(true)} leftIcon={<Icon name="edit" size="sm" />}>
               Edit
             </Button>
-            <Button variant="outline" onClick={handleDelete}>
-              <Trash2 className="mr-2 h-4 w-4" />
+            <Button variant="destructive" onClick={handleDelete} leftIcon={<Icon name="delete" size="sm" />}>
               Delete
             </Button>
           </div>
@@ -122,25 +107,25 @@ export default function OpportunityDetailPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto bg-gray-50 p-6">
+      <div className="flex-1 overflow-auto bg-neutral-50 dark:bg-neutral-950 p-6">
         <div className="mx-auto max-w-5xl space-y-6">
           {/* Key Metrics */}
           <div className="grid gap-4 md:grid-cols-3">
             <Card className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">
+                  <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
                     Estimated Value
                   </p>
-                  <p className="mt-2 text-2xl font-bold text-gray-900">
+                  <p className="mt-2 text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                     {formatCurrency(
                       opportunity.estimated_value,
                       opportunity.currency
                     )}
                   </p>
                 </div>
-                <div className="rounded-lg bg-green-100 p-3">
-                  <DollarSign className="h-5 w-5 text-green-600" />
+                <div className="rounded-lg bg-success/10 p-3">
+                  <Icon name="payments" className="h-5 w-5 text-success" />
                 </div>
               </div>
             </Card>
@@ -148,10 +133,10 @@ export default function OpportunityDetailPage() {
             <Card className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">
+                  <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
                     Probability
                   </p>
-                  <p className="mt-2 text-2xl font-bold text-gray-900">
+                  <p className="mt-2 text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                     {opportunity.probability}%
                   </p>
                   <Progress
@@ -159,8 +144,8 @@ export default function OpportunityDetailPage() {
                     className="mt-2 h-2"
                   />
                 </div>
-                <div className="rounded-lg bg-purple-100 p-3">
-                  <TrendingUp className="h-5 w-5 text-purple-600" />
+                <div className="rounded-lg bg-primary/10 p-3">
+                  <Icon name="trending_up" className="h-5 w-5 text-primary" />
                 </div>
               </div>
             </Card>
@@ -168,10 +153,10 @@ export default function OpportunityDetailPage() {
             <Card className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">
+                  <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
                     Expected Close
                   </p>
-                  <p className="mt-2 text-2xl font-bold text-gray-900">
+                  <p className="mt-2 text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                     {opportunity.expected_close_date
                       ? format(
                           new Date(opportunity.expected_close_date),
@@ -180,8 +165,8 @@ export default function OpportunityDetailPage() {
                       : 'Not set'}
                   </p>
                 </div>
-                <div className="rounded-lg bg-blue-100 p-3">
-                  <Calendar className="h-5 w-5 text-blue-600" />
+                <div className="rounded-lg bg-info/10 p-3">
+                  <Icon name="calendar_month" className="h-5 w-5 text-info" />
                 </div>
               </div>
             </Card>
@@ -191,16 +176,16 @@ export default function OpportunityDetailPage() {
           <div className="grid gap-6 md:grid-cols-2">
             {/* Left Column */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                 Opportunity Details
               </h2>
-              <Separator className="my-4" />
+              <div className="border-t border-neutral-200 dark:border-neutral-800 my-4" />
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <Building2 className="mt-0.5 h-5 w-5 text-gray-400" />
+                  <Icon name="business" className="mt-0.5 h-5 w-5 text-neutral-400 dark:text-neutral-600" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600">Client</p>
-                    <p className="mt-1 text-sm text-gray-900">
+                    <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Client</p>
+                    <p className="mt-1 text-sm text-neutral-900 dark:text-neutral-100">
                       {opportunity.client_name}
                     </p>
                   </div>
@@ -208,12 +193,12 @@ export default function OpportunityDetailPage() {
 
                 {opportunity.sales_rep_name && (
                   <div className="flex items-start gap-3">
-                    <User className="mt-0.5 h-5 w-5 text-gray-400" />
+                    <Icon name="person" className="mt-0.5 h-5 w-5 text-neutral-400 dark:text-neutral-600" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-600">
+                      <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
                         Sales Representative
                       </p>
-                      <p className="mt-1 text-sm text-gray-900">
+                      <p className="mt-1 text-sm text-neutral-900 dark:text-neutral-100">
                         {opportunity.sales_rep_name}
                       </p>
                     </div>
@@ -221,12 +206,12 @@ export default function OpportunityDetailPage() {
                 )}
 
                 <div className="flex items-start gap-3">
-                  <Clock className="mt-0.5 h-5 w-5 text-gray-400" />
+                  <Icon name="schedule" className="mt-0.5 h-5 w-5 text-neutral-400 dark:text-neutral-600" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600">
+                    <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
                       Last Updated
                     </p>
-                    <p className="mt-1 text-sm text-gray-900">
+                    <p className="mt-1 text-sm text-neutral-900 dark:text-neutral-100">
                       {format(
                         new Date(opportunity.updated_at),
                         'MMM d, yyyy h:mm a'
@@ -239,17 +224,17 @@ export default function OpportunityDetailPage() {
 
             {/* Right Column */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                 Additional Information
               </h2>
-              <Separator className="my-4" />
+              <div className="border-t border-neutral-200 dark:border-neutral-800 my-4" />
               <div className="space-y-4">
                 {opportunity.description && (
                   <div>
-                    <p className="text-sm font-medium text-gray-600">
+                    <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
                       Description
                     </p>
-                    <p className="mt-1 text-sm text-gray-900">
+                    <p className="mt-1 text-sm text-neutral-900 dark:text-neutral-100">
                       {opportunity.description}
                     </p>
                   </div>
@@ -257,16 +242,16 @@ export default function OpportunityDetailPage() {
 
                 {opportunity.notes && (
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Notes</p>
-                    <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
+                    <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Notes</p>
+                    <p className="mt-1 text-sm text-neutral-900 dark:text-neutral-100 whitespace-pre-wrap">
                       {opportunity.notes}
                     </p>
                   </div>
                 )}
 
                 {!opportunity.description && !opportunity.notes && (
-                  <div className="flex items-center gap-3 text-gray-400">
-                    <FileText className="h-5 w-5" />
+                  <div className="flex items-center gap-3 text-neutral-400 dark:text-neutral-600">
+                    <Icon name="description" className="h-5 w-5" />
                     <p className="text-sm">No additional information</p>
                   </div>
                 )}

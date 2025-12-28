@@ -12,21 +12,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import {
+  Button,
+  Input,
+  Label,
+  Textarea,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui-v2'
+import { Icon } from '@/components/icons'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2 } from 'lucide-react'
 import {
   CLIENT_TYPE_LABELS,
   CLIENT_STATUS_LABELS,
@@ -153,7 +154,7 @@ export function CreateClientModal({
                     placeholder="Ej: Acme Corporation S.A."
                   />
                   {errors.name && (
-                    <p className="text-sm text-red-600">{errors.name.message}</p>
+                    <p className="text-sm text-error">{errors.name.message}</p>
                   )}
                 </div>
 
@@ -178,7 +179,7 @@ export function CreateClientModal({
                     )}
                   />
                   {errors.client_type && (
-                    <p className="text-sm text-red-600">{errors.client_type.message}</p>
+                    <p className="text-sm text-error">{errors.client_type.message}</p>
                   )}
                 </div>
 
@@ -203,7 +204,7 @@ export function CreateClientModal({
                     )}
                   />
                   {errors.status && (
-                    <p className="text-sm text-red-600">{errors.status.message}</p>
+                    <p className="text-sm text-error">{errors.status.message}</p>
                   )}
                 </div>
 
@@ -245,7 +246,7 @@ export function CreateClientModal({
                     {...register('bpid')}
                     placeholder="Ej: BP-12345"
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
                     ID para relacionar con marca/SPA. Debe ser único.
                   </p>
                 </div>
@@ -264,7 +265,7 @@ export function CreateClientModal({
                     placeholder="cliente@empresa.com"
                   />
                   {errors.email && (
-                    <p className="text-sm text-red-600">{errors.email.message}</p>
+                    <p className="text-sm text-error">{errors.email.message}</p>
                   )}
                 </div>
 
@@ -294,7 +295,7 @@ export function CreateClientModal({
                     placeholder="https://www.empresa.com"
                   />
                   {errors.website && (
-                    <p className="text-sm text-red-600">{errors.website.message}</p>
+                    <p className="text-sm text-error">{errors.website.message}</p>
                   )}
                 </div>
 
@@ -378,7 +379,7 @@ export function CreateClientModal({
                         placeholder="juan.perez@empresa.com"
                       />
                       {errors.contact_person_email && (
-                        <p className="text-sm text-red-600">
+                        <p className="text-sm text-error">
                           {errors.contact_person_email.message}
                         </p>
                       )}
@@ -439,7 +440,7 @@ export function CreateClientModal({
                     {...register('conversion_date')}
                   />
                   {errors.conversion_date && (
-                    <p className="text-sm text-red-600">{errors.conversion_date.message}</p>
+                    <p className="text-sm text-error">{errors.conversion_date.message}</p>
                   )}
                 </div>
 
@@ -500,7 +501,7 @@ export function CreateClientModal({
                     placeholder="https://linkedin.com/company/empresa"
                   />
                   {errors.linkedin_url && (
-                    <p className="text-sm text-red-600">{errors.linkedin_url.message}</p>
+                    <p className="text-sm text-error">{errors.linkedin_url.message}</p>
                   )}
                 </div>
 
@@ -520,7 +521,7 @@ export function CreateClientModal({
                     {...register('tags')}
                     placeholder="importante, cliente-vip, tecnología"
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
                     Separa los tags con comas
                   </p>
                 </div>
@@ -547,8 +548,7 @@ export function CreateClientModal({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            <Button type="submit" isLoading={isLoading}>
               Crear Cliente
             </Button>
           </DialogFooter>

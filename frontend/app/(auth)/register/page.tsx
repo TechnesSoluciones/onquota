@@ -1,8 +1,9 @@
 'use client'
 
 /**
- * Register Page
+ * Register Page V2
  * New user and tenant registration
+ * Updated with Design System V2
  */
 
 import { useState } from 'react'
@@ -12,17 +13,17 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { registerSchema, type RegisterFormData } from '@/lib/validations/auth'
 import { useAuth } from '@/hooks/useAuth'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
+  Button,
+  Input,
   Card,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from '@/components/ui-v2'
+import { Icon } from '@/components/icons'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -63,201 +64,136 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card className="w-full shadow-lg">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Crear Cuenta</CardTitle>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Crear Cuenta</CardTitle>
         <CardDescription>
           Completa el formulario para crear tu cuenta y comenzar
         </CardDescription>
       </CardHeader>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {/* General error message */}
           {error && (
-            <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-              <p className="text-sm text-red-600">{error}</p>
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-error/10 border border-error/20">
+              <Icon name="error" size="sm" className="text-error mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-error">{error}</p>
             </div>
           )}
 
           {/* Company Information */}
-          <div className="space-y-4 pt-2">
-            <h3 className="text-sm font-semibold text-gray-700">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
               Información de la Empresa
             </h3>
 
             {/* Company Name */}
-            <div className="space-y-2">
-              <Label htmlFor="company_name">
-                Nombre de la Empresa <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="company_name"
-                type="text"
-                placeholder="Mi Empresa S.A."
-                autoComplete="organization"
-                disabled={isLoading}
-                {...register('company_name')}
-                className={errors.company_name ? 'border-red-500' : ''}
-              />
-              {errors.company_name && (
-                <p className="text-sm text-red-500">
-                  {errors.company_name.message}
-                </p>
-              )}
-            </div>
+            <Input
+              type="text"
+              placeholder="Mi Empresa S.A."
+              autoComplete="organization"
+              disabled={isLoading}
+              leftIcon={<Icon name="business" size="sm" />}
+              error={errors.company_name?.message}
+              helperText="Nombre legal de tu empresa"
+              {...register('company_name')}
+            />
 
             {/* Domain (optional) */}
-            <div className="space-y-2">
-              <Label htmlFor="domain">
-                Dominio <span className="text-gray-400">(Opcional)</span>
-              </Label>
-              <Input
-                id="domain"
-                type="text"
-                placeholder="empresa.com"
-                autoComplete="off"
-                disabled={isLoading}
-                {...register('domain')}
-                className={errors.domain ? 'border-red-500' : ''}
-              />
-              {errors.domain && (
-                <p className="text-sm text-red-500">{errors.domain.message}</p>
-              )}
-            </div>
+            <Input
+              type="text"
+              placeholder="empresa.com (Opcional)"
+              autoComplete="off"
+              disabled={isLoading}
+              leftIcon={<Icon name="language" size="sm" />}
+              error={errors.domain?.message}
+              {...register('domain')}
+            />
           </div>
 
           {/* Personal Information */}
-          <div className="space-y-4 pt-2">
-            <h3 className="text-sm font-semibold text-gray-700">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
               Información Personal
             </h3>
 
             {/* Full Name */}
-            <div className="space-y-2">
-              <Label htmlFor="full_name">
-                Nombre Completo <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="full_name"
-                type="text"
-                placeholder="Juan Pérez"
-                autoComplete="name"
-                disabled={isLoading}
-                {...register('full_name')}
-                className={errors.full_name ? 'border-red-500' : ''}
-              />
-              {errors.full_name && (
-                <p className="text-sm text-red-500">
-                  {errors.full_name.message}
-                </p>
-              )}
-            </div>
+            <Input
+              type="text"
+              placeholder="Juan Pérez"
+              autoComplete="name"
+              disabled={isLoading}
+              leftIcon={<Icon name="person" size="sm" />}
+              error={errors.full_name?.message}
+              {...register('full_name')}
+            />
 
             {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email">
-                Email <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="tu@email.com"
-                autoComplete="email"
-                disabled={isLoading}
-                {...register('email')}
-                className={errors.email ? 'border-red-500' : ''}
-              />
-              {errors.email && (
-                <p className="text-sm text-red-500">{errors.email.message}</p>
-              )}
-            </div>
+            <Input
+              type="email"
+              placeholder="tu@email.com"
+              autoComplete="email"
+              disabled={isLoading}
+              leftIcon={<Icon name="mail" size="sm" />}
+              error={errors.email?.message}
+              {...register('email')}
+            />
 
             {/* Phone (optional) */}
-            <div className="space-y-2">
-              <Label htmlFor="phone">
-                Teléfono <span className="text-gray-400">(Opcional)</span>
-              </Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="+56 9 1234 5678"
-                autoComplete="tel"
-                disabled={isLoading}
-                {...register('phone')}
-                className={errors.phone ? 'border-red-500' : ''}
-              />
-              {errors.phone && (
-                <p className="text-sm text-red-500">{errors.phone.message}</p>
-              )}
-            </div>
+            <Input
+              type="tel"
+              placeholder="+56 9 1234 5678 (Opcional)"
+              autoComplete="tel"
+              disabled={isLoading}
+              leftIcon={<Icon name="phone" size="sm" />}
+              error={errors.phone?.message}
+              {...register('phone')}
+            />
           </div>
 
           {/* Security */}
-          <div className="space-y-4 pt-2">
-            <h3 className="text-sm font-semibold text-gray-700">Seguridad</h3>
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Seguridad</h3>
 
             {/* Password */}
-            <div className="space-y-2">
-              <Label htmlFor="password">
-                Contraseña <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                autoComplete="new-password"
-                disabled={isLoading}
-                {...register('password')}
-                className={errors.password ? 'border-red-500' : ''}
-              />
-              {errors.password && (
-                <p className="text-sm text-red-500">
-                  {errors.password.message}
-                </p>
-              )}
-              <p className="text-xs text-gray-500">
-                Mínimo 8 caracteres, debe incluir mayúsculas, minúsculas y
-                números
-              </p>
-            </div>
+            <Input
+              type="password"
+              placeholder="Contraseña"
+              autoComplete="new-password"
+              disabled={isLoading}
+              leftIcon={<Icon name="lock" size="sm" />}
+              error={errors.password?.message}
+              helperText="Mínimo 8 caracteres, debe incluir mayúsculas, minúsculas y números"
+              {...register('password')}
+            />
 
             {/* Confirm Password */}
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">
-                Confirmar Contraseña <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                autoComplete="new-password"
-                disabled={isLoading}
-                {...register('confirmPassword')}
-                className={errors.confirmPassword ? 'border-red-500' : ''}
-              />
-              {errors.confirmPassword && (
-                <p className="text-sm text-red-500">
-                  {errors.confirmPassword.message}
-                </p>
-              )}
-            </div>
+            <Input
+              type="password"
+              placeholder="Confirmar Contraseña"
+              autoComplete="new-password"
+              disabled={isLoading}
+              leftIcon={<Icon name="lock" size="sm" />}
+              error={errors.confirmPassword?.message}
+              {...register('confirmPassword')}
+            />
           </div>
 
           {/* Terms */}
-          <div className="pt-2">
-            <p className="text-xs text-gray-600">
+          <div>
+            <p className="text-xs text-neutral-600 dark:text-neutral-400">
               Al registrarte, aceptas nuestros{' '}
               <Link
                 href="/terms"
-                className="text-blue-600 hover:text-blue-700 underline"
+                className="text-primary hover:text-primary-700 underline"
               >
                 Términos de Servicio
               </Link>{' '}
               y{' '}
               <Link
                 href="/privacy"
-                className="text-blue-600 hover:text-blue-700 underline"
+                className="text-primary hover:text-primary-700 underline"
               >
                 Política de Privacidad
               </Link>
@@ -267,22 +203,19 @@ export default function RegisterPage() {
         </CardContent>
 
         <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Creando cuenta...</span>
-              </div>
-            ) : (
-              'Crear Cuenta'
-            )}
+          <Button
+            type="submit"
+            className="w-full"
+            isLoading={isLoading}
+          >
+            Crear Cuenta
           </Button>
 
-          <div className="text-sm text-center text-gray-600">
+          <div className="text-sm text-center text-neutral-600 dark:text-neutral-400">
             ¿Ya tienes una cuenta?{' '}
             <Link
               href="/login"
-              className="text-blue-600 hover:text-blue-700 font-semibold hover:underline"
+              className="text-primary hover:text-primary-700 font-semibold hover:underline"
             >
               Inicia sesión aquí
             </Link>

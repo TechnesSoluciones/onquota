@@ -1,22 +1,23 @@
 /**
- * OCR Job Detail Page
+ * OCR Job Detail Page V2
  * Review and confirm extracted data from a receipt
+ * Updated with Design System V2
  */
 
 'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { format } from 'date-fns'
 import { useOCR } from '@/hooks/useOCR'
 import { OCRJob, OCRJobStatus } from '@/types/ocr'
 import { OCRReview } from '@/components/ocr/OCRReview'
 import { OCRJobStatusBadge } from '@/components/ocr/OCRJobStatus'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, FileImage, Loader2 } from 'lucide-react'
-import Link from 'next/link'
-import { format } from 'date-fns'
+import { Button, Card, Separator } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { Icon } from '@/components/icons'
+import { LoadingState } from '@/components/patterns'
 
 export default function OCRJobDetailPage() {
   const params = useParams()
@@ -38,61 +39,44 @@ export default function OCRJobDetailPage() {
 
   if (isLoading && !currentJob) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground">Loading job details...</p>
-        </div>
-      </div>
+      <PageLayout title="Review Receipt" description="Loading job details..." backLink="/ocr">
+        <LoadingState message="Loading job details..." />
+      </PageLayout>
     )
   }
 
   if (!currentJob) {
     return (
-      <div className="p-6">
+      <PageLayout title="Job Not Found" description="The requested OCR job could not be found" backLink="/ocr">
         <Card className="p-12 text-center">
-          <FileImage className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+          <Icon name="image" className="h-16 w-16 mx-auto text-gray-400 mb-4" />
           <h3 className="text-lg font-semibold mb-2">Job not found</h3>
           <p className="text-muted-foreground mb-4">
             The OCR job you're looking for doesn't exist or has been deleted.
           </p>
-          <Button asChild>
+          <Button asChild leftIcon={<Icon name="arrow_back" />}>
             <Link href="/ocr">
-              <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Jobs
             </Link>
           </Button>
         </Card>
-      </div>
+      </PageLayout>
     )
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" asChild>
-            <Link href="/ocr">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Review Receipt</h1>
-            <p className="text-muted-foreground mt-1">
-              Job ID: {currentJob.id.slice(0, 8)}... "{' '}
-              {format(new Date(currentJob.created_at), 'MMM dd, yyyy HH:mm')}
-            </p>
-          </div>
-        </div>
-
+    <PageLayout
+      title="Review Receipt"
+      description={`Job ID: ${currentJob.id.slice(0, 8)}... • ${format(new Date(currentJob.created_at), 'MMM dd, yyyy HH:mm')}`}
+      backLink="/ocr"
+      actions={
         <OCRJobStatusBadge
           status={currentJob.status}
           confidence={currentJob.confidence}
           showProgress={currentJob.status === OCRJobStatus.PROCESSING}
         />
-      </div>
-
+      }
+    >
       <Separator />
 
       {/* Error State */}
@@ -110,7 +94,7 @@ export default function OCRJobDetailPage() {
       {/* Processing State */}
       {currentJob.status === OCRJobStatus.PROCESSING && (
         <Card className="p-12 text-center">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary mb-4" />
+          <Icon name="progress_activity" className="h-12 w-12 animate-spin mx-auto text-primary mb-4" />
           <h3 className="text-lg font-semibold mb-2">Processing Receipt</h3>
           <p className="text-muted-foreground">
             Please wait while we extract data from your receipt...
@@ -122,7 +106,7 @@ export default function OCRJobDetailPage() {
       {currentJob.status === OCRJobStatus.PENDING && (
         <Card className="p-12 text-center">
           <div className="h-12 w-12 rounded-full bg-blue-100 mx-auto mb-4 flex items-center justify-center">
-            <FileImage className="h-6 w-6 text-blue-600" />
+            <Icon name="image" className="h-6 w-6 text-blue-600" />
           </div>
           <h3 className="text-lg font-semibold mb-2">Job Queued</h3>
           <p className="text-muted-foreground">
@@ -148,7 +132,7 @@ export default function OCRJobDetailPage() {
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <FileImage className="h-16 w-16 mx-auto text-muted-foreground mb-2" />
+                    <Icon name="image" className="h-16 w-16 mx-auto text-muted-foreground mb-2" />
                     <p className="text-sm text-muted-foreground">
                       Image not available
                     </p>
@@ -171,9 +155,8 @@ export default function OCRJobDetailPage() {
                     Create Expense from this Receipt
                   </Link>
                 </Button>
-                <Button variant="outline" className="w-full" asChild>
+                <Button variant="outline" className="w-full" asChild leftIcon={<Icon name="arrow_back" />}>
                   <Link href="/ocr">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to All Jobs
                   </Link>
                 </Button>
@@ -182,6 +165,6 @@ export default function OCRJobDetailPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageLayout>
   )
 }

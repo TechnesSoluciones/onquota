@@ -1,17 +1,17 @@
 'use client'
 
 /**
- * New Product Line Page
+ * New Product Line Page V2
  * Page for creating a new product line
+ * Updated with Design System V2
  */
 
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
 import { ProductLineForm } from '@/components/sales/product-lines/ProductLineForm'
 import { useProductLines } from '@/hooks/useProductLines'
 import { useToast } from '@/hooks/use-toast'
-import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 
 export default function NewProductLinePage() {
   const router = useRouter()
@@ -41,28 +41,15 @@ export default function NewProductLinePage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        onClick={() => router.push('/sales/product-lines')}
-        className="mb-4"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Product Lines
-      </Button>
-
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">
-          Create New Product Line
-        </h1>
-        <p className="text-muted-foreground">
-          Add a new product line category to organize your sales
-        </p>
-      </div>
-
-      {/* Form Card */}
+    <PageLayout
+      title="Create New Product Line"
+      description="Add a new product line category to organize your sales"
+      breadcrumbs={[
+        { label: 'Ventas', href: '/sales' },
+        { label: 'Product Lines', href: '/sales/product-lines' },
+        { label: 'New' }
+      ]}
+    >
       <Card>
         <CardHeader>
           <CardTitle>Product Line Information</CardTitle>
@@ -71,6 +58,6 @@ export default function NewProductLinePage() {
           <ProductLineForm onSubmit={handleSubmit} onCancel={handleCancel} />
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   )
 }

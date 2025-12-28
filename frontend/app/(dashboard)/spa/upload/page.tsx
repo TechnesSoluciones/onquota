@@ -1,10 +1,14 @@
+/**
+ * SPA Upload Page V2
+ * Upload Special Price Agreements from Excel/TSV files
+ * Updated with Design System V2
+ */
+
 'use client'
 
 import { useRouter } from 'next/navigation'
 import { SPAUploadForm } from '@/components/spa/SPAUploadForm'
-import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
+import { PageLayout } from '@/components/layouts'
 import type { SPAUploadResult } from '@/types/spa'
 
 export default function SPAUploadPage() {
@@ -20,22 +24,11 @@ export default function SPAUploadPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/spa">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Cargar archivo SPA</h1>
-          <p className="text-muted-foreground">
-            Importa Special Price Agreements desde un archivo Excel o TSV
-          </p>
-        </div>
-      </div>
+    <PageLayout
+      title="Cargar archivo SPA"
+      description="Importa Special Price Agreements desde un archivo Excel o TSV"
+      backLink="/spa"
+    >
 
       {/* Upload Form */}
       <div className="max-w-3xl">
@@ -63,6 +56,6 @@ export default function SPAUploadPage() {
           <li><strong>End Date</strong>: Fecha de fin de vigencia</li>
         </ul>
       </div>
-    </div>
+    </PageLayout>
   )
 }

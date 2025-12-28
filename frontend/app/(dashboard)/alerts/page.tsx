@@ -1,12 +1,19 @@
+/**
+ * Alerts Dashboard Page V2
+ * Central dashboard for system alerts and notifications
+ * Updated with Design System V2
+ */
+
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card } from '@/components/ui/card'
-import { AlertTriangle, TrendingDown, TrendingUp, Target, DollarSign, Calendar } from 'lucide-react'
+import Link from 'next/link'
+import { Card } from '@/components/ui-v2'
+import { PageLayout } from '@/components/layouts'
+import { Icon } from '@/components/icons'
 import { useExpenseComparison } from '@/hooks/useExpenseComparison'
 import { useSalesComparison } from '@/hooks/useSalesComparison'
 import { formatCurrency } from '@/lib/utils'
-import Link from 'next/link'
 
 interface Alert {
   id: string
@@ -15,7 +22,7 @@ interface Alert {
   title: string
   message: string
   value: number
-  icon: any
+  iconName: string
   link: string
 }
 
@@ -46,7 +53,7 @@ export default function AlertsDashboardPage() {
           title: 'Caída en Gastos',
           message: `Los gastos han disminuido un ${Math.abs(expenseData.summary.percent_change).toFixed(1)}% comparado con el año anterior.`,
           value: expenseData.summary.percent_change,
-          icon: TrendingDown,
+          iconName: 'trending_down',
           link: '/expenses/comparison'
         })
       }
@@ -59,7 +66,7 @@ export default function AlertsDashboardPage() {
           title: 'Incremento Significativo en Gastos',
           message: `Los gastos han aumentado un ${expenseData.summary.percent_change.toFixed(1)}% (${formatCurrency(expenseData.summary.total_actual - expenseData.summary.total_previous, 'DOP')}).`,
           value: expenseData.summary.percent_change,
-          icon: AlertTriangle,
+          iconName: 'warning',
           link: '/expenses/comparison'
         })
       }
@@ -75,7 +82,7 @@ export default function AlertsDashboardPage() {
           title: 'Caída Significativa en Ventas',
           message: `Las ventas han disminuido un ${Math.abs(salesData.summary.percent_change).toFixed(1)}% comparado con el año anterior.`,
           value: salesData.summary.percent_change,
-          icon: TrendingDown,
+          iconName: 'trending_down',
           link: '/sales/comparison'
         })
       }
@@ -88,7 +95,7 @@ export default function AlertsDashboardPage() {
           title: 'Baja Tasa de Aceptación',
           message: `La tasa de aceptación es de ${salesData.summary.acceptance_rate}%, por debajo del objetivo del 40%.`,
           value: salesData.summary.acceptance_rate,
-          icon: Target,
+          iconName: 'gps_fixed',
           link: '/sales/comparison'
         })
       }
@@ -101,7 +108,7 @@ export default function AlertsDashboardPage() {
           title: 'Excelente Desempeño en Ventas',
           message: `Las ventas han aumentado un ${salesData.summary.percent_change.toFixed(1)}% (${formatCurrency(salesData.summary.total_actual - salesData.summary.total_previous, 'DOP')}).`,
           value: salesData.summary.percent_change,
-          icon: TrendingUp,
+          iconName: 'trending_up',
           link: '/sales/comparison'
         })
       }
@@ -152,21 +159,16 @@ export default function AlertsDashboardPage() {
   const successAlerts = alerts.filter(a => a.type === 'success')
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard de Alertas</h1>
-        <p className="text-muted-foreground">
-          Centro de notificaciones y alertas del sistema
-        </p>
-      </div>
-
+    <PageLayout
+      title="Dashboard de Alertas"
+      description="Centro de notificaciones y alertas del sistema"
+    >
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card className="p-6">
           <div className="flex items-center gap-4">
             <div className="rounded-full bg-blue-100 p-3">
-              <Calendar className="h-6 w-6 text-blue-600" />
+              <Icon name="event" className="h-6 w-6 text-blue-600" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Alertas</p>
@@ -178,7 +180,7 @@ export default function AlertsDashboardPage() {
         <Card className="p-6">
           <div className="flex items-center gap-4">
             <div className="rounded-full bg-red-100 p-3">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
+              <Icon name="warning" className="h-6 w-6 text-red-600" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Críticas</p>
@@ -190,7 +192,7 @@ export default function AlertsDashboardPage() {
         <Card className="p-6">
           <div className="flex items-center gap-4">
             <div className="rounded-full bg-orange-100 p-3">
-              <AlertTriangle className="h-6 w-6 text-orange-600" />
+              <Icon name="warning" className="h-6 w-6 text-orange-600" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Advertencias</p>
@@ -202,7 +204,7 @@ export default function AlertsDashboardPage() {
         <Card className="p-6">
           <div className="flex items-center gap-4">
             <div className="rounded-full bg-green-100 p-3">
-              <TrendingUp className="h-6 w-6 text-green-600" />
+              <Icon name="trending_up" className="h-6 w-6 text-green-600" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Positivas</p>
@@ -217,7 +219,7 @@ export default function AlertsDashboardPage() {
         <Card className="p-12">
           <div className="text-center">
             <div className="rounded-full bg-green-100 p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <TrendingUp className="h-8 w-8 text-green-600" />
+              <Icon name="trending_up" className="h-8 w-8 text-green-600" />
             </div>
             <h3 className="text-lg font-semibold mb-2">Todo en Orden</h3>
             <p className="text-muted-foreground">
@@ -231,17 +233,16 @@ export default function AlertsDashboardPage() {
       {dangerAlerts.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-xl font-semibold flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
+            <Icon name="warning" className="h-5 w-5 text-red-600" />
             Alertas Críticas
           </h2>
           {dangerAlerts.map((alert) => {
             const colors = getAlertColor(alert.type)
-            const Icon = alert.icon
             return (
               <Link key={alert.id} href={alert.link}>
                 <Card className={`p-4 ${colors.border} ${colors.bg} hover:shadow-md transition-shadow cursor-pointer`}>
                   <div className="flex items-start gap-3">
-                    <Icon className={`h-5 w-5 ${colors.icon} mt-0.5`} />
+                    <Icon name={alert.iconName} className={`h-5 w-5 ${colors.icon} mt-0.5`} />
                     <div className="flex-1">
                       <h3 className={`font-semibold ${colors.text}`}>{alert.title}</h3>
                       <p className={`text-sm ${colors.subtext} mt-1`}>{alert.message}</p>
@@ -261,17 +262,16 @@ export default function AlertsDashboardPage() {
       {warningAlerts.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-xl font-semibold flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-orange-600" />
+            <Icon name="warning" className="h-5 w-5 text-orange-600" />
             Advertencias
           </h2>
           {warningAlerts.map((alert) => {
             const colors = getAlertColor(alert.type)
-            const Icon = alert.icon
             return (
               <Link key={alert.id} href={alert.link}>
                 <Card className={`p-4 ${colors.border} ${colors.bg} hover:shadow-md transition-shadow cursor-pointer`}>
                   <div className="flex items-start gap-3">
-                    <Icon className={`h-5 w-5 ${colors.icon} mt-0.5`} />
+                    <Icon name={alert.iconName} className={`h-5 w-5 ${colors.icon} mt-0.5`} />
                     <div className="flex-1">
                       <h3 className={`font-semibold ${colors.text}`}>{alert.title}</h3>
                       <p className={`text-sm ${colors.subtext} mt-1`}>{alert.message}</p>
@@ -291,17 +291,16 @@ export default function AlertsDashboardPage() {
       {successAlerts.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-xl font-semibold flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-green-600" />
+            <Icon name="trending_up" className="h-5 w-5 text-green-600" />
             Buenas Noticias
           </h2>
           {successAlerts.map((alert) => {
             const colors = getAlertColor(alert.type)
-            const Icon = alert.icon
             return (
               <Link key={alert.id} href={alert.link}>
                 <Card className={`p-4 ${colors.border} ${colors.bg} hover:shadow-md transition-shadow cursor-pointer`}>
                   <div className="flex items-start gap-3">
-                    <Icon className={`h-5 w-5 ${colors.icon} mt-0.5`} />
+                    <Icon name={alert.iconName} className={`h-5 w-5 ${colors.icon} mt-0.5`} />
                     <div className="flex-1">
                       <h3 className={`font-semibold ${colors.text}`}>{alert.title}</h3>
                       <p className={`text-sm ${colors.subtext} mt-1`}>{alert.message}</p>
@@ -316,6 +315,6 @@ export default function AlertsDashboardPage() {
           })}
         </div>
       )}
-    </div>
+    </PageLayout>
   )
 }
