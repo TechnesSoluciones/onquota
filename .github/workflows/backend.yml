@@ -2,7 +2,7 @@ name: Backend CI
 
 on:
   push:
-    branches: [ main, develop, staging ]
+    branches: [ develop, staging ]  # Removed 'main' - production builds handled by deploy-production-enhanced.yml
     paths:
       - 'backend/**'
       - '.github/workflows/backend.yml'
@@ -212,13 +212,13 @@ jobs:
             ./backend/htmlcov/
           retention-days: 30
 
-  # Docker build and push
+  # Docker build and push (only on develop/staging - main handled by deploy-production-enhanced.yml)
   build:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs: [quality, security, test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/staging')
 
     permissions:
       contents: read

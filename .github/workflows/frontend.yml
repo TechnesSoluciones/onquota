@@ -2,7 +2,7 @@ name: Frontend CI
 
 on:
   push:
-    branches: [ main, develop, staging ]
+    branches: [ develop, staging ]  # Removed 'main' - production builds handled by deploy-production-enhanced.yml
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend.yml'
@@ -162,13 +162,13 @@ jobs:
           path: ./frontend/.next/
           retention-days: 1
 
-  # Docker build (only on main branch)
+  # Docker build (only on develop/staging - main handled by deploy-production-enhanced.yml)
   docker:
     name: Build Docker Image
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs: [build]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/staging')
 
     permissions:
       contents: read
