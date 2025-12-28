@@ -107,12 +107,7 @@ services:
       - ENVIRONMENT=production
       - DEBUG=false
       - LOG_LEVEL=INFO
-      # External PostgreSQL
-      - DATABASE_URL=${DATABASE_URL}
-      # Redis connection
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
+      # DATABASE_URL and Redis URLs loaded from .env.production with proper URL encoding
     volumes:
       - backend-uploads:/app/uploads
       - backend-logs:/app/logs
@@ -145,10 +140,7 @@ services:
     environment:
       - ENVIRONMENT=production
       - DEBUG=false
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
+      # DATABASE_URL and Redis URLs loaded from .env.production with proper URL encoding
     volumes:
       - backend-uploads:/app/uploads
       - backend-logs:/app/logs
@@ -176,10 +168,7 @@ services:
     environment:
       - ENVIRONMENT=production
       - DEBUG=false
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
+      # DATABASE_URL and Redis URLs loaded from .env.production with proper URL encoding
     volumes:
       - backend-logs:/app/logs
     depends_on:
@@ -204,8 +193,7 @@ services:
     env_file:
       - .env.production
     environment:
-      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
+      # CELERY_BROKER_URL and CELERY_RESULT_BACKEND loaded from .env.production with proper URL encoding
       - FLOWER_BASIC_AUTH=${FLOWER_USER}:${FLOWER_PASSWORD}
     expose:
       - "5555"  # Accessed via Caddy proxy
