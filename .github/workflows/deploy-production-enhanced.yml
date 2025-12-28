@@ -669,32 +669,3 @@ jobs:
           echo "- [Frontend](https://onquota.app)" >> $GITHUB_STEP_SUMMARY
           echo "- [API Health](https://api.onquota.app/health)" >> $GITHUB_STEP_SUMMARY
 
-  # ========================================================
-  # Job 6: Reload Caddy Configuration
-  # ========================================================
-  reload-caddy:
-    name: Reload Caddy
-    runs-on: ubuntu-latest
-    needs: smoke-tests
-    if: success()
-
-    steps:
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Add VPS to known hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Reload Caddy configuration
-        run: |
-          ssh root@${{ secrets.VPS_HOST }} \
-            "docker exec caddy-proxy caddy reload --config /etc/caddy/Caddyfile || echo 'Caddy reload skipped'"
-
-      - name: Verify Caddy reload
-        run: |
-          ssh root@${{ secrets.VPS_HOST }} \
-            "docker logs caddy-proxy --tail=20 || echo 'Caddy logs unavailable'"
