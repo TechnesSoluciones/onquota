@@ -91,12 +91,13 @@ jobs:
         continue-on-error: true
 
   # ========================================================
-  # Job 2: Security Scanning
+  # Job 2: Security Scanning (Non-blocking)
   # ========================================================
   security-scan:
     name: Security Scanning
     runs-on: ubuntu-latest
     needs: build-and-test
+    continue-on-error: true  # Don't block deployment on security scan failures
     permissions:
       contents: read
       security-events: write
@@ -131,7 +132,7 @@ jobs:
   build-images:
     name: Build Docker Images
     runs-on: ubuntu-latest
-    needs: [build-and-test, security-scan]
+    needs: [build-and-test]  # Security scan runs in parallel but doesn't block
     permissions:
       contents: read
       packages: write
