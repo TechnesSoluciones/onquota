@@ -90,11 +90,11 @@ export default function AnalyticsPage() {
       title="Sales Analytics"
       description="ABC analysis and sales performance insights"
       actions={
-        <Button size="lg" asChild leftIcon={<Icon name="upload" />}>
-          <Link href="/analytics/upload">
+        <Link href="/analytics/upload">
+          <Button size="lg" leftIcon={<Icon name="upload" />}>
             New Analysis
-          </Link>
-        </Button>
+          </Button>
+        </Link>
       }
     >
       <Separator />
@@ -219,11 +219,11 @@ export default function AnalyticsPage() {
               <p className="text-sm text-gray-500 mb-4">
                 Upload a sales file to start analyzing your data
               </p>
-              <Button asChild leftIcon={<Icon name="upload" />}>
-                <Link href="/analytics/upload">
+              <Link href="/analytics/upload">
+                <Button leftIcon={<Icon name="upload" />}>
                   Upload Sales Data
-                </Link>
-              </Button>
+                </Button>
+              </Link>
             </div>
           ) : (
             <>
@@ -270,11 +270,11 @@ export default function AnalyticsPage() {
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
                             {job.status === AnalysisStatus.COMPLETED && (
-                              <Button variant="ghost" size="sm" asChild>
-                                <Link href={`/analytics/${job.id}`}>
+                              <Link href={`/analytics/${job.id}`}>
+                                <Button variant="ghost" size="sm">
                                   <Icon name="visibility" className="h-4 w-4" />
-                                </Link>
-                              </Button>
+                                </Button>
+                              </Link>
                             )}
 
                             <AlertDialog>

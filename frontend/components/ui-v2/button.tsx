@@ -87,6 +87,21 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const Comp = asChild ? Slot : 'button'
 
+    // When using asChild, Slot requires a single React child element
+    // We cannot inject leftIcon, rightIcon, or loading spinner
+    if (asChild) {
+      return (
+        <Comp
+          className={cn(buttonVariants({ variant, size, className }))}
+          ref={ref}
+          {...props}
+        >
+          {children}
+        </Comp>
+      )
+    }
+
+    // For regular buttons (not asChild), render with all features
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}

@@ -24,6 +24,7 @@ export * from './dropdown-menu'
 
 // Import from shadcn/ui for components not yet migrated to v2
 export { Separator } from '../ui/separator'
+export { Label } from '../ui/label'
 export {
   AlertDialog,
   AlertDialogAction,
