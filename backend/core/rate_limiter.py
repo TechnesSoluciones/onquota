@@ -67,25 +67,17 @@ def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> Res
     return _rate_limit_exceeded_handler(request, exc)
 
 
-# Create limiter instance with Redis backend for distributed rate limiting
-# This ensures rate limits work correctly across multiple workers/instances
-try:
-    limiter = Limiter(
-        key_func=get_identifier,
-        default_limits=[f"{settings.RATE_LIMIT_PER_MINUTE}/minute"],
-        storage_uri=settings.REDIS_URL if settings.REDIS_URL else None,
-        strategy="fixed-window",
-        headers_enabled=True,  # Add X-RateLimit-* headers to responses
-    )
-except Exception as e:
-    logger.error("rate_limiting_initialization_failed", error=str(e), redis_url_set=bool(settings.REDIS_URL))
-    # Create limiter without storage (in-memory, single-worker only)
-    limiter = Limiter(
-        key_func=get_identifier,
-        default_limits=[f"{settings.RATE_LIMIT_PER_MINUTE}/minute"],
-        strategy="fixed-window",
-        headers_enabled=True,
-    )
+# TEMPORARY: Create limiter WITHOUT Redis to avoid authentication errors
+# TODO: Fix Redis authentication and re-enable distributed rate limiting
+# Create limiter instance with in-memory storage (single-worker only)
+logger.warning("rate_limiting_using_memory", reason="temporary_redis_auth_debug")
+limiter = Limiter(
+    key_func=get_identifier,
+    default_limits=[f"{settings.RATE_LIMIT_PER_MINUTE}/minute"],
+    storage_uri=None,  # Use in-memory storage instead of Redis
+    strategy="fixed-window",
+    headers_enabled=True,  # Add X-RateLimit-* headers to responses
+)
 
 
 def configure_rate_limiting(app: FastAPI) -> Limiter:
@@ -99,21 +91,11 @@ def configure_rate_limiting(app: FastAPI) -> Limiter:
         Configured Limiter instance
 
     Security Notes:
-    - Uses Redis backend for distributed rate limiting across workers
+    - TEMPORARY: Using in-memory storage (not distributed)
     - Logs all rate limit violations for security monitoring
     - Returns 429 status with Retry-After header when limit exceeded
     - Supports both IP-based and user-based rate limiting
     """
-    # Skip rate limiting if Redis URL is not configured
-    if not settings.REDIS_URL or settings.REDIS_URL == "":
-        logger.warning("rate_limiting_disabled", reason="redis_url_not_configured")
-        return None
-
-    # TEMPORARY: Disable rate limiting entirely to debug Redis authentication issue
-    # TODO: Re-enable once Redis auth is fixed
-    logger.warning("rate_limiting_disabled", reason="temporary_debug_redis_auth")
-    return None
-
     # Attach limiter to app state
     app.state.limiter = limiter
 
