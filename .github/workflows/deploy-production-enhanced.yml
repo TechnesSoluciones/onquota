@@ -381,12 +381,13 @@ jobs:
 
             echo "  → Waiting for Backend to be healthy..."
             for i in {1..30}; do
-              if docker exec onquota-backend wget -q -O- http://localhost:8000/api/v1/health > /dev/null 2>&1; then
+              if docker exec onquota-backend curl -f -s http://localhost:8000/api/v1/health > /dev/null 2>&1; then
                 echo "  ✓ Backend is healthy"
                 break
               fi
               if [ $i -eq 30 ]; then
-                echo "  ❌ Backend health check failed"
+                echo "  ❌ Backend health check failed after 90 seconds"
+                echo "  → Showing last 50 lines of backend logs:"
                 docker compose -f docker-compose.production.yml logs --tail=50 backend
                 exit 1
               fi
@@ -395,12 +396,13 @@ jobs:
 
             echo "  → Waiting for Frontend to be healthy..."
             for i in {1..30}; do
-              if docker exec onquota-frontend wget -q -O- http://localhost:3001/api/health > /dev/null 2>&1; then
+              if docker exec onquota-frontend curl -f -s http://localhost:3001/api/health > /dev/null 2>&1; then
                 echo "  ✓ Frontend is healthy"
                 break
               fi
               if [ $i -eq 30 ]; then
-                echo "  ❌ Frontend health check failed"
+                echo "  ❌ Frontend health check failed after 90 seconds"
+                echo "  → Showing last 50 lines of frontend logs:"
                 docker compose -f docker-compose.production.yml logs --tail=50 frontend
                 exit 1
               fi

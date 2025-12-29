@@ -108,7 +108,7 @@ def configure_rate_limiting(app: FastAPI) -> Limiter:
     logger.info(
         "rate_limiting_configured",
         default_limit=f"{settings.RATE_LIMIT_PER_MINUTE}/minute",
-        storage="redis",
+        storage="memory",  # TEMPORARY: Using in-memory until Redis auth fixed
     )
 
     return limiter
