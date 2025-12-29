@@ -69,13 +69,23 @@ def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> Res
 
 # Create limiter instance with Redis backend for distributed rate limiting
 # This ensures rate limits work correctly across multiple workers/instances
-limiter = Limiter(
-    key_func=get_identifier,
-    default_limits=[f"{settings.RATE_LIMIT_PER_MINUTE}/minute"],
-    storage_uri=settings.REDIS_URL,
-    strategy="fixed-window",
-    headers_enabled=True,  # Add X-RateLimit-* headers to responses
-)
+try:
+    limiter = Limiter(
+        key_func=get_identifier,
+        default_limits=[f"{settings.RATE_LIMIT_PER_MINUTE}/minute"],
+        storage_uri=settings.REDIS_URL if settings.REDIS_URL else None,
+        strategy="fixed-window",
+        headers_enabled=True,  # Add X-RateLimit-* headers to responses
+    )
+except Exception as e:
+    logger.error("rate_limiting_initialization_failed", error=str(e), redis_url_set=bool(settings.REDIS_URL))
+    # Create limiter without storage (in-memory, single-worker only)
+    limiter = Limiter(
+        key_func=get_identifier,
+        default_limits=[f"{settings.RATE_LIMIT_PER_MINUTE}/minute"],
+        strategy="fixed-window",
+        headers_enabled=True,
+    )
 
 
 def configure_rate_limiting(app: FastAPI) -> Limiter:
