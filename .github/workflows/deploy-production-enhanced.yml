@@ -240,6 +240,12 @@ jobs:
           API_URL=https://api.onquota.app
           NEXT_PUBLIC_API_URL=https://api.onquota.app
 
+          # CORS
+          CORS_ORIGINS=https://onquota.app,https://api.onquota.app,http://localhost:3000
+          CORS_CREDENTIALS=true
+          CORS_METHODS=GET,POST,PUT,PATCH,DELETE,OPTIONS
+          CORS_HEADERS=*
+
           # Database (AsyncPG requires postgresql+asyncpg:// scheme)
           DATABASE_URL=postgresql+asyncpg://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@${{ secrets.POSTGRES_HOST }}:5432/onquota_db
           POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}
