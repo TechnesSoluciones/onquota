@@ -109,6 +109,11 @@ def configure_rate_limiting(app: FastAPI) -> Limiter:
         logger.warning("rate_limiting_disabled", reason="redis_url_not_configured")
         return None
 
+    # TEMPORARY: Disable rate limiting entirely to debug Redis authentication issue
+    # TODO: Re-enable once Redis auth is fixed
+    logger.warning("rate_limiting_disabled", reason="temporary_debug_redis_auth")
+    return None
+
     # Attach limiter to app state
     app.state.limiter = limiter
 
