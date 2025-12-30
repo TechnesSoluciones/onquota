@@ -25,6 +25,17 @@ interface KPIGridProps {
 }
 
 export function KPIGrid({ kpis, currency = 'USD', isLoading = false }: KPIGridProps) {
+  // FIX: Defensive validation - show skeletons if kpis doesn't exist
+  if (!kpis) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="h-32 bg-muted rounded animate-pulse" />
+        ))}
+      </div>
+    )
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {/* Revenue */}

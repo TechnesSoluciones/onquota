@@ -63,8 +63,8 @@ export default function ExecutiveDashboardPage() {
     })
   }
 
-  // Show error state
-  if (error && !isLoading && !dashboard) {
+  // FIX: Improved error state validation
+  if (error && !isLoading) {
     return (
       <PageLayout
         title="Dashboard Ejecutivo"
@@ -84,8 +84,8 @@ export default function ExecutiveDashboardPage() {
     )
   }
 
-  // Show loading state (first load)
-  if (isLoading && !dashboard) {
+  // FIX: Show loading state only on first load (when dashboard has no data)
+  if (isLoading && dashboard.kpis.total_revenue === 0 && dashboard.alerts.length === 0) {
     return (
       <PageLayout
         title="Dashboard Ejecutivo"
@@ -170,24 +170,20 @@ export default function ExecutiveDashboardPage() {
       </Card>
 
       {/* KPI Grid */}
-      {dashboard && (
-        <KPIGrid
-          kpis={dashboard.kpis}
-          currency={currency}
-          isLoading={isLoading}
-        />
-      )}
+      <KPIGrid
+        kpis={dashboard.kpis}
+        currency={currency}
+        isLoading={isLoading}
+      />
 
       {/* Alerts Panel */}
-      {dashboard && (
-        <AlertsPanel
-          alerts={dashboard.alerts}
-          isLoading={isLoading}
-        />
-      )}
+      <AlertsPanel
+        alerts={dashboard.alerts}
+        isLoading={isLoading}
+      />
 
-      {/* Top Performers Section */}
-      {dashboard && dashboard.top_clients.length > 0 && (
+      {/* Top Performers Section - FIX: Only check length, dashboard always exists now */}
+      {dashboard.top_clients.length > 0 && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -232,16 +228,14 @@ export default function ExecutiveDashboardPage() {
         </Card>
       )}
 
-      {/* Period Info */}
-      {dashboard && (
-        <div className="text-center text-xs text-muted-foreground">
-          Datos del período:{' '}
-          {dashboard.period.start_date} al {dashboard.period.end_date}
-          {dashboard.period.label && ` (${dashboard.period.label})`}
-          <br />
-          Generado: {new Date(dashboard.generated_at).toLocaleString('es-ES')}
-        </div>
-      )}
+      {/* Period Info - FIX: dashboard always exists now */}
+      <div className="text-center text-xs text-muted-foreground">
+        Datos del período:{' '}
+        {dashboard.period.start_date} al {dashboard.period.end_date}
+        {dashboard.period.label && ` (${dashboard.period.label})`}
+        <br />
+        Generado: {new Date(dashboard.generated_at).toLocaleString('es-ES')}
+      </div>
     </PageLayout>
   )
 }

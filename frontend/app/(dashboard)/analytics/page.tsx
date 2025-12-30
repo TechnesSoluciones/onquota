@@ -125,7 +125,7 @@ export default function AnalyticsPage() {
                 Completed
               </p>
               <p className="text-2xl font-bold">
-                {jobs.filter((j) => j.status === AnalysisStatus.COMPLETED).length}
+                {jobs && jobs.filter((j) => j.status === AnalysisStatus.COMPLETED).length || 0}
               </p>
             </div>
           </div>
@@ -141,7 +141,7 @@ export default function AnalyticsPage() {
                 Processing
               </p>
               <p className="text-2xl font-bold">
-                {jobs.filter((j) => j.status === AnalysisStatus.PROCESSING).length}
+                {jobs && jobs.filter((j) => j.status === AnalysisStatus.PROCESSING).length || 0}
               </p>
             </div>
           </div>
@@ -157,7 +157,7 @@ export default function AnalyticsPage() {
                 This Month
               </p>
               <p className="text-2xl font-bold">
-                {
+                {jobs &&
                   jobs.filter((j) => {
                     const jobDate = new Date(j.created_at)
                     const now = new Date()
@@ -165,7 +165,7 @@ export default function AnalyticsPage() {
                       jobDate.getMonth() === now.getMonth() &&
                       jobDate.getFullYear() === now.getFullYear()
                     )
-                  }).length
+                  }).length || 0
                 }
               </p>
             </div>
@@ -240,7 +240,8 @@ export default function AnalyticsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {jobs.map((job) => (
+                    {/* FIX: Defensive validation - ensure jobs exists before mapping */}
+                    {jobs && jobs.length > 0 && jobs.map((job) => (
                       <TableRow key={job.id}>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">

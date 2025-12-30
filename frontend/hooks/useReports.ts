@@ -15,10 +15,45 @@ import type {
 } from '@/types/reports'
 
 /**
+ * Helper function to create empty dashboard structure
+ * FIX: Provides safe default values to prevent undefined errors
+ */
+const getEmptyDashboard = (): ExecutiveDashboard => ({
+  period: {
+    start_date: new Date().toISOString().split('T')[0],
+    end_date: new Date().toISOString().split('T')[0],
+  },
+  kpis: {
+    total_revenue: 0,
+    revenue_growth: 0,
+    active_quotations: 0,
+    quotations_value: 0,
+    win_rate: 0,
+    pipeline_value: 0,
+    weighted_pipeline: 0,
+    visits_this_period: 0,
+    new_clients: 0,
+    avg_sales_cycle_days: 0,
+    conversion_rate: 0,
+    total_expenses: 0,
+    expense_to_revenue_ratio: 0,
+  },
+  revenue_trend: [],
+  quotations_trend: [],
+  visits_trend: [],
+  top_sales_reps: [],
+  top_clients: [],
+  top_product_lines: [],
+  alerts: [],
+  generated_at: new Date().toISOString(),
+})
+
+/**
  * Hook to fetch executive dashboard with KPIs and analytics
  */
 export function useExecutiveDashboard(initialFilters?: ReportFilters) {
-  const [dashboard, setDashboard] = useState<ExecutiveDashboard | null>(null)
+  // FIX: Initialize with empty structure instead of null to prevent undefined errors
+  const [dashboard, setDashboard] = useState<ExecutiveDashboard>(getEmptyDashboard())
   const [filters, setFilters] = useState<ReportFilters>(initialFilters || {})
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -34,7 +69,8 @@ export function useExecutiveDashboard(initialFilters?: ReportFilters) {
       const errorMessage =
         err?.detail || err?.message || 'Error loading executive dashboard'
       setError(errorMessage)
-      setDashboard(null)
+      // FIX: Reset to empty structure instead of null
+      setDashboard(getEmptyDashboard())
     } finally {
       setIsLoading(false)
     }

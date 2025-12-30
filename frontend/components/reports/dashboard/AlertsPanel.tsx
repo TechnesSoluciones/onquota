@@ -35,7 +35,8 @@ export function AlertsPanel({ alerts, isLoading = false, className }: AlertsPane
     )
   }
 
-  if (alerts.length === 0) {
+  // FIX: Defensive validation - check that alerts exists AND is empty
+  if (!alerts || alerts.length === 0) {
     return (
       <Card className={className}>
         <CardHeader>
